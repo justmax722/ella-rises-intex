@@ -4,10 +4,30 @@ const path = require('path');
 const session = require('express-session');
 const knex = require('knex');
 const knexConfig = require('./knexfile');
+const bcrypt = require('bcrypt');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const db = knex(knexConfig);
+
+// Test database connection on startup
+(async () => {
+  try {
+    await db.raw('SELECT 1');
+    console.log('✓ Database connection successful');
+    
+    // Check if users table exists, if not run migrations
+    const hasTable = await db.schema.hasTable('users');
+    if (!hasTable) {
+      console.log('Users table not found. Running migrations...');
+      await db.migrate.latest();
+      console.log('✓ Migrations completed');
+    }
+  } catch (error) {
+    console.error('✗ Database connection failed:', error.message);
+    console.error('Please check your database configuration.');
+  }
+})();
 
 // Set EJS as the view engine
 app.set('view engine', 'ejs');
@@ -26,7 +46,8 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Set to true if using HTTPS
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    httpOnly: true, // Prevent XSS attacks
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
@@ -84,11 +105,15 @@ app.post('/signup', async (req, res) => {
       });
     }
 
-    // Insert new user (password is stored as plain text for now - should be hashed in production)
+    // Hash password before storing
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Insert new user
     const [newUser] = await db('users')
       .insert({
         email,
-        password, // In production, hash this with bcrypt
+        password: hashedPassword,
         user_role
       })
       .returning(['id', 'email', 'user_role']);
@@ -130,8 +155,9 @@ app.post('/login', async (req, res) => {
       });
     }
 
-    // Check password (plain text comparison for now - should use bcrypt in production)
-    if (user.password !== password) {
+    // Check password using bcrypt
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
       return res.render('login', {
         error: 'Invalid email or password',
         success: null
@@ -179,8 +205,28 @@ app.get('/logout', (req, res) => {
   });
 });
 
+// Health check endpoint for Elastic Beanstalk
+app.get('/health', async (req, res) => {
+  try {
+    await db.raw('SELECT 1');
+    res.status(200).json({ status: 'healthy', database: 'connected' });
+  } catch (error) {
+    res.status(503).json({ status: 'unhealthy', database: 'disconnected', error: error.message });
+  }
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).render('login', {
+    error: 'An unexpected error occurred. Please try again.',
+    success: null
+  });
+});
+
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 

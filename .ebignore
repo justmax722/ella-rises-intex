@@ -1,0 +1,31 @@
+# Elastic Beanstalk ignore file
+# Files matching these patterns will be excluded from deployment
+
+# Git
+.git/
+.gitignore
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation (optional - remove if you want to include)
+*.md
+!README.md
+
