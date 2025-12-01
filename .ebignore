@@ -1,6 +1,8 @@
 # Elastic Beanstalk ignore file
 # Files matching these patterns will be excluded from deployment
 
+node_modules/
+
 # Git
 .git/
 .gitignore
