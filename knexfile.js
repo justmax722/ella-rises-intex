@@ -19,6 +19,7 @@ if (isRDS || process.env.AWS_EXECUTION_ENV || process.env.ELASTIC_BEANSTALK_ENVI
   connection.ssl = {
     rejectUnauthorized: false
   };
+  console.log('RDS connection detected - SSL enabled');
 }
 
 module.exports = {

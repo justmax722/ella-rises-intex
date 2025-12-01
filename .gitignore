@@ -3,3 +3,7 @@ node_modules/
 *.log
 .DS_Store
 *.zip
+
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

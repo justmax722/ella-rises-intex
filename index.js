@@ -7,7 +7,7 @@ const knexConfig = require('./knexfile');
 const bcrypt = require('bcrypt');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const db = knex(knexConfig);
 
 // Test database connection on startup
@@ -16,16 +16,24 @@ const db = knex(knexConfig);
     await db.raw('SELECT 1');
     console.log('✓ Database connection successful');
     
-    // Check if users table exists, if not run migrations
-    const hasTable = await db.schema.hasTable('users');
-    if (!hasTable) {
-      console.log('Users table not found. Running migrations...');
-      await db.migrate.latest();
-      console.log('✓ Migrations completed');
+    // Always check for and run new migrations (safe - won't re-run old ones)
+    console.log('Checking for pending migrations...');
+    const [batchNo, log] = await db.migrate.latest();
+    if (log.length === 0) {
+      console.log('✓ All migrations are up to date');
+    } else {
+      console.log(`✓ Applied ${log.length} new migration(s) in batch ${batchNo}`);
+      log.forEach(logEntry => console.log(`  - ${logEntry}`));
     }
   } catch (error) {
     console.error('✗ Database connection failed:', error.message);
-    console.error('Please check your database configuration.');
+    console.error('Connection details:', {
+      host: process.env.RDS_HOSTNAME || process.env.DB_HOST || 'localhost',
+      database: process.env.RDS_DB_NAME || process.env.DB_NAME || 'ella_rises',
+      user: process.env.RDS_USERNAME || process.env.DB_USER || 'postgres',
+      sslEnabled: !!(process.env.RDS_HOSTNAME || process.env.RDS_DB_NAME || process.env.AWS_EXECUTION_ENV)
+    });
+    console.error('Please check your database configuration and ensure RDS security groups allow connections.');
   }
 })();
 
@@ -41,8 +49,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // Session configuration
+const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret && process.env.NODE_ENV === 'production') {
+  console.warn('⚠️  WARNING: SESSION_SECRET not set in production! Using default (INSECURE).');
+}
+
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'ella-rises-secret-key-change-in-production',
+  secret: sessionSecret || 'ella-rises-secret-key-change-in-production',
   resave: false,
   saveUninitialized: false,
   cookie: {

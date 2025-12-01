@@ -7,8 +7,18 @@ exports.up = function(knex) {
     table.timestamps(true, true); // created_at and updated_at
   })
   .then(function() {
-    // Add CHECK constraint for user_role
-    return knex.schema.raw("ALTER TABLE users ADD CONSTRAINT check_user_role CHECK (user_role IN ('manager', 'user', 'donor'))");
+    // Add CHECK constraint for user_role (with error handling if exists)
+    return knex.schema.raw(`
+      DO $$ 
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'check_user_role'
+        ) THEN
+          ALTER TABLE users ADD CONSTRAINT check_user_role 
+          CHECK (user_role IN ('manager', 'user', 'donor'));
+        END IF;
+      END $$;
+    `);
   })
   .then(function() {
     // Create indexes for better performance
