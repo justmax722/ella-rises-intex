@@ -11,16 +11,9 @@ const connection = {
   user: process.env.RDS_USERNAME || process.env.DB_USER || 'postgres',
   password: process.env.RDS_PASSWORD || process.env.DB_PASSWORD || '',
   database: process.env.RDS_DB_NAME || process.env.DB_NAME || 'ella_rises',
+  ssl: { rejectUnauthorized: false },
 };
 
-// AWS RDS requires SSL connections - enable it when RDS variables are present
-// Also enable SSL if we detect we're in AWS (checking for EC2 metadata or EB environment)
-if (isRDS || process.env.AWS_EXECUTION_ENV || process.env.ELASTIC_BEANSTALK_ENVIRONMENT) {
-  connection.ssl = {
-    rejectUnauthorized: false
-  };
-  console.log('RDS connection detected - SSL enabled');
-}
 
 module.exports = {
   client: 'pg',
