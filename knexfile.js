@@ -1,20 +1,29 @@
 require('dotenv').config();
 
 // Determine if we're connecting to AWS RDS
-const isRDS = process.env.RDS_HOSTNAME || process.env.RDS_DB_NAME;
+const isRDS = !!(process.env.RDS_HOSTNAME || process.env.RDS_DB_NAME);
+
+// Build connection object
+const connection = {
+  // AWS RDS provides these environment variables automatically when linked to Elastic Beanstalk
+  host: process.env.RDS_HOSTNAME || process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.RDS_PORT || process.env.DB_PORT || '5432', 10),
+  user: process.env.RDS_USERNAME || process.env.DB_USER || 'postgres',
+  password: process.env.RDS_PASSWORD || process.env.DB_PASSWORD || '',
+  database: process.env.RDS_DB_NAME || process.env.DB_NAME || 'ella_rises',
+};
+
+// AWS RDS requires SSL connections - enable it when RDS variables are present
+// Also enable SSL if we detect we're in AWS (checking for EC2 metadata or EB environment)
+if (isRDS || process.env.AWS_EXECUTION_ENV || process.env.ELASTIC_BEANSTALK_ENVIRONMENT) {
+  connection.ssl = {
+    rejectUnauthorized: false
+  };
+}
 
 module.exports = {
   client: 'pg',
-  connection: {
-    // AWS RDS provides these environment variables automatically when linked to Elastic Beanstalk
-    host: process.env.RDS_HOSTNAME || process.env.DB_HOST || 'localhost',
-    port: process.env.RDS_PORT || process.env.DB_PORT || 5432,
-    user: process.env.RDS_USERNAME || process.env.DB_USER || 'postgres',
-    password: process.env.RDS_PASSWORD || process.env.DB_PASSWORD || '',
-    database: process.env.RDS_DB_NAME || process.env.DB_NAME || 'ella_rises',
-    // Enable SSL for RDS connections (required by AWS)
-    ssl: isRDS ? { rejectUnauthorized: false } : false,
-  },
+  connection: connection,
   pool: {
     min: 2,
     max: 10,

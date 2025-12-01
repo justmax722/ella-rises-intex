@@ -61,8 +61,7 @@ You still need to set:
 ella-rises-intex/
 ├── .ebextensions/        (Elastic Beanstalk configs)
 │   ├── 01-database.config
-│   ├── 02-migrations.config
-│   └── 03-node-command.config
+│   └── 02-migrations.config
 ├── migrations/           (Database migrations)
 │   └── create_users_table.js
 ├── views/               (EJS templates)
