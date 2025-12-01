@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Ella Rises</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="dashboard-card">
+            <h1 class="dashboard-title">Welcome to Ella Rises!</h1>
+            <div class="user-info">
+                <div class="info-item">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value"><%= user.email %></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Role:</span>
+                    <span class="info-value role-badge role-<%= user.role %>"><%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %></span>
+                </div>
+            </div>
+            <div class="dashboard-actions">
+                <a href="/logout" class="logout-button">Logout</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

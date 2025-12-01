@@ -1,0 +1,342 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #333;
+}
+
+.container {
+    width: 100%;
+    max-width: 500px;
+    padding: 20px;
+    text-align: center;
+}
+
+.container.auth-container-wrapper {
+    max-width: 1200px;
+}
+
+/* Landing Page Styles */
+.title {
+    font-size: 4rem;
+    color: white;
+    margin-bottom: 3rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.login-button {
+    display: inline-block;
+    padding: 18px 60px;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: white;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 2px solid white;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+}
+
+.login-button:hover {
+    background-color: white;
+    color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Auth Container (holds both login and signup) */
+.auth-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    align-items: center;
+}
+
+@media (min-width: 900px) {
+    .auth-container {
+        flex-direction: row;
+        justify-content: center;
+        align-items: flex-start;
+    }
+}
+
+/* Login Page Styles */
+.login-card {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 400px;
+}
+
+.signup-card {
+    margin-top: 0;
+}
+
+.login-title {
+    font-size: 2rem;
+    color: #667eea;
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
+@media (min-width: 900px) {
+    .login-title {
+        font-size: 2.5rem;
+    }
+}
+
+.login-form,
+.auth-form {
+    text-align: left;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    transition: border-color 0.3s ease;
+    font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.form-group select {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    transition: border-color 0.3s ease;
+    font-family: inherit;
+    background-color: white;
+    cursor: pointer;
+}
+
+.form-select {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    transition: border-color 0.3s ease;
+    font-family: inherit;
+    background-color: white;
+    cursor: pointer;
+}
+
+.submit-button {
+    width: 100%;
+    padding: 14px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-top: 10px;
+}
+
+.submit-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.submit-button:active {
+    transform: translateY(0);
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 20px;
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.back-link:hover {
+    color: #764ba2;
+}
+
+/* Success/Failure Pages */
+.container h1 {
+    color: white;
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+.container p {
+    color: white;
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+}
+
+.button {
+    display: inline-block;
+    padding: 12px 40px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 2px solid white;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.button:hover {
+    background-color: white;
+    color: #667eea;
+}
+
+/* Message Styles */
+.message {
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: 500;
+    width: 100%;
+    max-width: 400px;
+}
+
+.error-message {
+    background-color: #fee;
+    color: #c33;
+    border: 2px solid #fcc;
+}
+
+.success-message {
+    background-color: #efe;
+    color: #3c3;
+    border: 2px solid #cfc;
+}
+
+/* Dashboard Styles */
+.dashboard-card {
+    background: white;
+    padding: 50px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.dashboard-title {
+    font-size: 2.5rem;
+    color: #667eea;
+    margin-bottom: 40px;
+    font-weight: 700;
+}
+
+.user-info {
+    text-align: left;
+    margin-bottom: 30px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    margin-bottom: 15px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #555;
+    font-size: 1.1rem;
+}
+
+.info-value {
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.role-manager {
+    background-color: #ff6b6b;
+    color: white;
+}
+
+.role-user {
+    background-color: #4ecdc4;
+    color: white;
+}
+
+.role-donor {
+    background-color: #ffe66d;
+    color: #333;
+}
+
+.dashboard-actions {
+    margin-top: 30px;
+}
+
+.logout-button {
+    display: inline-block;
+    padding: 12px 40px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background-color: #ff6b6b;
+    border: none;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.logout-button:hover {
+    background-color: #ff5252;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+}
+
