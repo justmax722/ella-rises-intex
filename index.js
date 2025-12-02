@@ -266,6 +266,160 @@ app.get('/dashboard', requireAuth, async (req, res) => {
   }
 });
 
+// Participants route (protected)
+app.get('/participants', requireAuth, async (req, res) => {
+  try {
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole
+    };
+    res.render('participants', { user });
+  } catch (error) {
+    console.error('Participants error:', error);
+    res.redirect('/login');
+  }
+});
+
+// Events route (protected)
+app.get('/events', requireAuth, async (req, res) => {
+  try {
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole
+    };
+    res.render('events', { user });
+  } catch (error) {
+    console.error('Events error:', error);
+    res.redirect('/login');
+  }
+});
+
+// Surveys route (protected)
+app.get('/surveys', requireAuth, async (req, res) => {
+  try {
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole
+    };
+    res.render('surveys', { user });
+  } catch (error) {
+    console.error('Surveys error:', error);
+    res.redirect('/login');
+  }
+});
+
+// Milestones route (protected)
+app.get('/milestones', requireAuth, async (req, res) => {
+  try {
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole
+    };
+    res.render('milestones', { user });
+  } catch (error) {
+    console.error('Milestones error:', error);
+    res.redirect('/login');
+  }
+});
+
+// Donations route (protected)
+app.get('/donations', requireAuth, async (req, res) => {
+  try {
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole
+    };
+    res.render('donations', { user });
+  } catch (error) {
+    console.error('Donations error:', error);
+    res.redirect('/login');
+  }
+});
+
+// Users route (protected, manager only)
+app.get('/users', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.redirect('/dashboard');
+    }
+    
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole
+    };
+    res.render('users', { user, query: req.query });
+  } catch (error) {
+    console.error('Users error:', error);
+    res.redirect('/login');
+  }
+});
+
+// Update user role route (protected, manager only)
+app.post('/users/update', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.status(403).send('Forbidden');
+    }
+
+    const { email, role } = req.body;
+
+    if (!email || !role || !['manager', 'user'].includes(role)) {
+      return res.status(400).send('Invalid request');
+    }
+
+    // Don't allow updating demo accounts
+    if (email === 'manager@ellarises.org' || email === 'user@ellarises.org') {
+      return res.redirect('/users?error=demo_accounts_cannot_be_modified');
+    }
+
+    // Update user role in database
+    await db('users')
+      .where({ email })
+      .update({ user_role: role });
+
+    res.redirect('/users?success=role_updated');
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.redirect('/users?error=update_failed');
+  }
+});
+
+// Delete user route (protected, manager only)
+app.post('/users/delete', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.status(403).send('Forbidden');
+    }
+
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).send('Invalid request');
+    }
+
+    // Don't allow deleting demo accounts
+    if (email === 'manager@ellarises.org' || email === 'user@ellarises.org') {
+      return res.redirect('/users?error=demo_accounts_cannot_be_deleted');
+    }
+
+    // Don't allow deleting yourself
+    if (email === req.session.userEmail) {
+      return res.redirect('/users?error=cannot_delete_yourself');
+    }
+
+    // Delete user from database
+    await db('users').where({ email }).del();
+
+    res.redirect('/users?success=user_deleted');
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.redirect('/users?error=delete_failed');
+  }
+});
+
 // Logout route
 app.get('/logout', (req, res) => {
   req.session.destroy((err) => {

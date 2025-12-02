@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Participants - Ella Rises CRM</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-background min-h-screen flex">
+    <!-- Sidebar Navigation -->
+    <%- include('partials/sidebar', { user: user, currentPage: 'participants' }) %>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-6 overflow-auto">
+        <div class="space-y-6">
+            <!-- Page Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-serif font-bold text-primary">Participants</h1>
+                    <p class="text-muted-foreground mt-1">Manage participant profiles and tracking</p>
+                </div>
+                <% if (user.role === 'manager') { %>
+                <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus h-4 w-4">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5v14"></path>
+                    </svg>
+                    Add Participant
+                </button>
+                <% } %>
+            </div>
+
+            <!-- Participants Card -->
+            <div class="rounded-lg border bg-card text-card-foreground shadow-sm">
+                <!-- Search Section -->
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <div class="flex items-center gap-4">
+                        <div class="relative flex-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.3-4.3"></path>
+                            </svg>
+                            <input 
+                                type="text" 
+                                id="searchInput"
+                                placeholder="Search participants..." 
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pl-9"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table Section -->
+                <div class="p-6 pt-0">
+                    <div class="rounded-md border">
+                        <div class="relative w-full overflow-auto">
+                            <table class="w-full caption-bottom text-sm">
+                                <thead class="[&_tr]:border-b">
+                                    <tr class="border-b transition-colors hover:bg-muted/50">
+                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Name</th>
+                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Email</th>
+                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">School</th>
+                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Grade</th>
+                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Programs</th>
+                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Enrolled</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="participantsTable" class="[&_tr:last-child]:border-0">
+                                    <!-- Maria Garcia -->
+                                    <tr class="participant-row border-b transition-colors hover:bg-muted/50">
+                                        <td class="p-4 align-middle font-medium">Maria Garcia</td>
+                                        <td class="p-4 align-middle">maria.garcia@email.com</td>
+                                        <td class="p-4 align-middle">Phoenix High School</td>
+                                        <td class="p-4 align-middle">10th Grade</td>
+                                        <td class="p-4 align-middle">
+                                            <div class="flex flex-wrap gap-1">
+                                                <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 text-xs">STEAM Program</div>
+                                                <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 text-xs">Leadership</div>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 align-middle text-muted-foreground">1/14/2024</td>
+                                    </tr>
+                                    <!-- Sofia Rodriguez -->
+                                    <tr class="participant-row border-b transition-colors hover:bg-muted/50">
+                                        <td class="p-4 align-middle font-medium">Sofia Rodriguez</td>
+                                        <td class="p-4 align-middle">sofia.rodriguez@email.com</td>
+                                        <td class="p-4 align-middle">Desert Vista High</td>
+                                        <td class="p-4 align-middle">9th Grade</td>
+                                        <td class="p-4 align-middle">
+                                            <div class="flex flex-wrap gap-1">
+                                                <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 text-xs">Mariachi</div>
+                                                <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 text-xs">Workshop</div>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 align-middle text-muted-foreground">1/31/2024</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('.participant-row');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
