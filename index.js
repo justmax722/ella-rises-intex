@@ -186,6 +186,38 @@ app.post('/login', async (req, res) => {
       });
     }
 
+    // Hardcoded demo accounts
+    const demoAccounts = {
+      'manager@ellarises.org': {
+        password: 'password123',
+        role: 'manager',
+        id: 'demo-manager'
+      },
+      'user@ellarises.org': {
+        password: 'password123',
+        role: 'user',
+        id: 'demo-user'
+      }
+    };
+
+    // Check if it's a demo account
+    if (demoAccounts[email.toLowerCase()]) {
+      const demoAccount = demoAccounts[email.toLowerCase()];
+      if (password === demoAccount.password) {
+        // Set session for demo account
+        req.session.userId = demoAccount.id;
+        req.session.userEmail = email.toLowerCase();
+        req.session.userRole = demoAccount.role;
+        return res.redirect('/dashboard');
+      } else {
+        return res.render('login', {
+          error: 'Invalid email or password',
+          success: null,
+          showSignUp: false
+        });
+      }
+    }
+
     // Find user by email in database
     const user = await db('users').where({ email: email.toLowerCase() }).first();
 
@@ -226,6 +258,16 @@ app.post('/login', async (req, res) => {
 // Dashboard route (protected)
 app.get('/dashboard', requireAuth, async (req, res) => {
   try {
+    // Handle demo accounts (they don't exist in database)
+    if (req.session.userId === 'demo-manager' || req.session.userId === 'demo-user') {
+      return res.render('dashboard', {
+        user: {
+          email: req.session.userEmail,
+          role: req.session.userRole
+        }
+      });
+    }
+
     // Handle regular database users
     const user = await db('users').where({ id: req.session.userId }).first();
     if (!user) {
