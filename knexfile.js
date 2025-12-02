@@ -11,8 +11,8 @@ const connection = {
   user: process.env.RDS_USERNAME || process.env.DB_USER || 'postgres',
   password: process.env.RDS_PASSWORD || process.env.DB_PASSWORD || '',
   database: process.env.RDS_DB_NAME || process.env.DB_NAME || 'ella_rises',
-  // ssl: { rejectUnauthorized: false },
-  ssl: isRDS ? { rejectUnauthorized: false } : false,
+  ssl: { rejectUnauthorized: false },
+  // ssl: isRDS ? { rejectUnauthorized: false } : false,
 };
 
 
