@@ -97,36 +97,48 @@ app.get('/login', (req, res) => {
   if (req.session.userId) {
     return res.redirect('/dashboard');
   }
-  res.render('login', { error: null, success: null });
+  res.render('login', { error: null, success: null, showSignUp: false });
 });
 
 // Signup route (POST)
 app.post('/signup', async (req, res) => {
   try {
-    const { email, password, user_role } = req.body;
+    const { first_name, last_name, email, password, confirm_password } = req.body;
 
     // Validate input
-    if (!email || !password || !user_role) {
+    if (!first_name || !last_name || !email || !password || !confirm_password) {
       return res.render('login', {
         error: 'Please fill in all fields',
-        success: null
+        success: null,
+        showSignUp: true
       });
     }
 
-    // Validate role
-    if (!['manager', 'user', 'donor'].includes(user_role)) {
+    // Validate password match
+    if (password !== confirm_password) {
       return res.render('login', {
-        error: 'Invalid role selected',
-        success: null
+        error: 'Passwords do not match',
+        success: null,
+        showSignUp: true
+      });
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return res.render('login', {
+        error: 'Password must be at least 6 characters long',
+        success: null,
+        showSignUp: true
       });
     }
 
     // Check if email already exists
-    const existingUser = await db('users').where({ email }).first();
+    const existingUser = await db('users').where({ email: email.toLowerCase() }).first();
     if (existingUser) {
       return res.render('login', {
         error: 'Email already registered. Please login instead.',
-        success: null
+        success: null,
+        showSignUp: true
       });
     }
 
@@ -134,12 +146,14 @@ app.post('/signup', async (req, res) => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Insert new user
+    // Insert new user - all signups are "user" role
     const [newUser] = await db('users')
       .insert({
-        email,
+        email: email.toLowerCase(),
         password: hashedPassword,
-        user_role
+        user_role: 'user',
+        first_name: first_name,
+        last_name: last_name
       })
       .returning(['id', 'email', 'user_role']);
 
@@ -153,7 +167,8 @@ app.post('/signup', async (req, res) => {
     console.error('Signup error:', error);
     res.render('login', {
       error: 'An error occurred during signup. Please try again.',
-      success: null
+      success: null,
+      showSignUp: true
     });
   }
 });
@@ -166,48 +181,19 @@ app.post('/login', async (req, res) => {
     if (!email || !password) {
       return res.render('login', {
         error: 'Please provide both email and password',
-        success: null
+        success: null,
+        showSignUp: false
       });
     }
 
-    // Hardcoded demo accounts
-    const demoAccounts = {
-      'manager@ellarises.org': {
-        password: 'password123',
-        role: 'manager',
-        id: 'demo-manager'
-      },
-      'user@ellarises.org': {
-        password: 'password123',
-        role: 'user',
-        id: 'demo-user'
-      }
-    };
-
-    // Check if it's a demo account
-    if (demoAccounts[email.toLowerCase()]) {
-      const demoAccount = demoAccounts[email.toLowerCase()];
-      if (password === demoAccount.password) {
-        // Set session for demo account
-        req.session.userId = demoAccount.id;
-        req.session.userEmail = email.toLowerCase();
-        req.session.userRole = demoAccount.role;
-        return res.redirect('/dashboard');
-      } else {
-        return res.render('login', {
-          error: 'Invalid email or password',
-          success: null
-        });
-      }
-    }
-
     // Find user by email in database
-    const user = await db('users').where({ email }).first();
+    const user = await db('users').where({ email: email.toLowerCase() }).first();
 
     if (!user) {
       return res.render('login', {
         error: 'Invalid email or password',
-        success: null
+        success: null,
+        showSignUp: false
       });
     }
 
@@ -216,7 +202,8 @@ app.post('/login', async (req, res) => {
     if (!passwordMatch) {
       return res.render('login', {
         error: 'Invalid email or password',
-        success: null
+        success: null,
+        showSignUp: false
       });
     }
 
@@ -230,7 +217,8 @@ app.post('/login', async (req, res) => {
     console.error('Login error:', error);
     res.render('login', {
       error: 'An error occurred during login. Please try again.',
-      success: null
+      success: null,
+      showSignUp: false
     });
   }
 });
@@ -238,16 +226,6 @@ app.post('/login', async (req, res) => {
 // Dashboard route (protected)
 app.get('/dashboard', requireAuth, async (req, res) => {
   try {
-    // Handle demo accounts (they don't exist in database)
-    if (req.session.userId === 'demo-manager' || req.session.userId === 'demo-user') {
-      return res.render('dashboard', {
-        user: {
-          email: req.session.userEmail,
-          role: req.session.userRole
-        }
-      });
-    }
-
     // Handle regular database users
     const user = await db('users').where({ id: req.session.userId }).first();
     if (!user) {

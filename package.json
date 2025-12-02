@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node index.js",
-    "build:css": "tailwindcss -i ./public/css/styles.css -o ./public/css/styles.css --minify",
-    "watch:css": "tailwindcss -i ./public/css/styles.css -o ./public/css/styles.css --watch",
+    "build:css": "tailwindcss -i ./public/css/styles-source.css -o ./public/css/styles.css --minify",
+    "watch:css": "tailwindcss -i ./public/css/styles-source.css -o ./public/css/styles.css --watch",
     "migrate": "knex migrate:latest",
     "migrate:rollback": "knex migrate:rollback"
   },

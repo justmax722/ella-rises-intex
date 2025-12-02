@@ -76,6 +76,11 @@ module.exports = {
           4: 'hsl(var(--chart-4))',
           5: 'hsl(var(--chart-5))',
         },
+        sage: {
+          DEFAULT: 'hsl(var(--sage))',
+          foreground: 'hsl(var(--sage-foreground))',
+        },
+        cream: 'hsl(var(--cream))',
       },
       borderRadius: {
         lg: 'var(--radius)',

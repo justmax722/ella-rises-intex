@@ -1,0 +1,49 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Montserrat:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 42 39% 95%;
+    --foreground: 140 5% 24%;
+    --card: 0 0% 100%;
+    --card-foreground: 140 5% 24%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 140 5% 24%;
+    --primary: 140 5% 24%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 126 21% 62%;
+    --secondary-foreground: 140 5% 24%;
+    --muted: 42 39% 90%;
+    --muted-foreground: 140 5% 45%;
+    --accent: 358 87% 84%;
+    --accent-foreground: 140 5% 24%;
+    --dusty-blue: 210 29% 63%;
+    --dusty-blue-foreground: 140 5% 24%;
+    --purple: 267 38% 62%;
+    --purple-foreground: 0 0% 98%;
+    --peach: 25 100% 88%;
+    --peach-foreground: 140 5% 24%;
+    --coral: 14 100% 70%;
+    --coral-foreground: 0 0% 98%;
+    --magenta: 333 65% 64%;
+    --magenta-foreground: 0 0% 98%;
+    --chart-1: 358 87% 84%;
+    --chart-2: 126 21% 62%;
+    --chart-3: 210 29% 63%;
+    --chart-4: 267 38% 62%;
+    --chart-5: 14 100% 70%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 140 10% 85%;
+    --input: 140 10% 85%;
+    --ring: 140 5% 24%;
+    --radius: 0.5rem;
+    --sage: 120 25% 55%;
+    --sage-foreground: 0 0% 100%;
+    --cream: 45 30% 96%;
+  }
+}
+
