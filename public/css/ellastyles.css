@@ -1,0 +1,418 @@
+/* ----------------------------------
+   FONT IMPORTS
+   ---------------------------------- */
+/* DM Serif Display & Montserrat from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+/* TT Milk Script isn’t on Google Fonts – 
+   if you have the file you can add a @font-face.
+   For now we’ll use the name (if loaded locally) and fall back to a similar script. */
+
+/*
+@font-face {
+  font-family: "TT Milk Script";
+  src: url("/fonts/TTMilkScript.woff2") format("woff2");
+}
+*/
+
+/* ----------------------------------
+   COLOR PALETTE (from brand board)
+   ---------------------------------- */
+
+:root {
+  --ella-blue:    #99B7C6;
+  --ella-lilac:   #978EC4;
+  --ella-cream:   #F9F5EA;
+  --ella-blush:   #FFD8D1;
+  --ella-pink:    #F9AFB1;
+  --ella-sage:    #9AB59D;
+  --ella-charcoal:#3A3F3B;
+  --ella-peach:   #F4B092;
+  --ella-rose:    #CE325B;
+
+  /* Neutrals */
+  --ella-white:   #FFFFFF;
+  --ella-black:   #000000;
+
+  /* Common text colors */
+  --text-main:    var(--ella-charcoal);
+  --text-soft:    #5d6365;
+
+  /* Shadows */
+  --shadow-soft:  0 10px 25px rgba(0, 0, 0, 0.07);
+}
+
+/* ----------------------------------
+   GLOBAL RESETS & BASE
+   ---------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: "Montserrat", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text-main);
+  background-color: var(--ella-cream);
+  line-height: 1.6;
+}
+
+/* Nice default container */
+.container {
+  width: min(1120px, 100% - 2.5rem);
+  margin: 0 auto;
+}
+
+/* ----------------------------------
+   TYPOGRAPHY
+   ---------------------------------- */
+
+/* Script logo style (for word “Ella”) */
+.logo-script {
+  font-family: "TT Milk Script", "Pacifico", "Dancing Script", cursive;
+  font-size: clamp(2.8rem, 6vw, 4rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+/* Serif “RISES” style */
+.logo-serif,
+h1, h2, h3 {
+  font-family: "DM Serif Display", "Times New Roman", serif;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+h1, h2, h3, h4 {
+  margin: 0 0 0.6em;
+  color: var(--ella-charcoal);
+}
+
+h1 {
+  font-size: clamp(2.2rem, 4vw, 3rem);
+}
+
+h2 {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+}
+
+h3 {
+  font-size: 1.3rem;
+}
+
+p {
+  margin: 0 0 1rem;
+  color: var(--text-soft);
+  font-size: 1rem;
+}
+
+/* Tiny supporting label (good for section subtitles) */
+.label {
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Links */
+a {
+  color: var(--ella-rose);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* ----------------------------------
+   BRAND ELEMENTS
+   ---------------------------------- */
+
+/* Circular logo badge similar to your pink circle logo */
+.logo-badge {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 10px solid var(--ella-black);
+  background-color: var(--ella-blush);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.logo-badge .logo-script {
+  margin-bottom: 0.25rem;
+}
+
+.logo-badge .logo-serif {
+  font-size: 0.75rem;
+}
+
+/* Simple heart icon (can be used as divider) */
+.heart-icon {
+  font-family: "TT Milk Script", "Pacifico", cursive;
+  font-size: 1.6rem;
+}
+
+/* ----------------------------------
+   NAVBAR
+   ---------------------------------- */
+
+.navbar {
+  background-color: var(--ella-cream);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  padding: 0.9rem 0;
+}
+
+.navbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar-brand-text {
+  font-family: "DM Serif Display", serif;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.nav-links a {
+  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 500;
+}
+
+.nav-links a:hover {
+  color: var(--ella-rose);
+}
+
+/* ----------------------------------
+   HERO SECTION
+   ---------------------------------- */
+
+.hero {
+  padding: 4rem 0 3rem;
+  background: linear-gradient(
+    135deg,
+    var(--ella-blush),
+    var(--ella-pink)
+  );
+  color: var(--ella-charcoal);
+}
+
+.hero-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 3rem;
+}
+
+.hero-heading {
+  font-family: "DM Serif Display", serif;
+  font-size: clamp(2.4rem, 4.2vw, 3.2rem);
+  line-height: 1.15;
+}
+
+.hero-subtitle {
+  margin-top: 0.8rem;
+  font-size: 1.05rem;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background-color: var(--ella-cream);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+/* ----------------------------------
+   BUTTONS
+   ---------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem 1.6rem;
+  border-radius: 999px;
+  border: none;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.btn-primary {
+  background-color: var(--ella-rose);
+  color: var(--ella-white);
+}
+
+.btn-primary:hover {
+  background-color: #b7294b;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: var(--ella-charcoal);
+  color: var(--ella-cream);
+}
+
+.btn-secondary:hover {
+  background-color: #292d2f;
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  border: 1px solid var(--ella-charcoal);
+  color: var(--ella-charcoal);
+  box-shadow: none;
+}
+
+.btn-ghost:hover {
+  background-color: var(--ella-charcoal);
+  color: var(--ella-cream);
+}
+
+/* ----------------------------------
+   CARDS / SECTIONS
+   ---------------------------------- */
+
+.section {
+  padding: 3.5rem 0;
+}
+
+.section--light {
+  background-color: var(--ella-cream);
+}
+
+.section--blush {
+  background-color: var(--ella-blush);
+}
+
+.section--charcoal {
+  background-color: var(--ella-charcoal);
+  color: var(--ella-cream);
+}
+
+.section-heading {
+  text-align: center;
+  margin-bottom: 2.2rem;
+}
+
+.section-heading .label {
+  color: var(--ella-rose);
+}
+
+.section-heading h2 {
+  margin-top: 0.4rem;
+}
+
+/* Generic card */
+.card {
+  background-color: var(--ella-white);
+  border-radius: 18px;
+  padding: 1.8rem;
+  box-shadow: var(--shadow-soft);
+}
+
+.card--dark {
+  background-color: var(--ella-charcoal);
+  color: var(--ella-cream);
+}
+
+/* 3-column grid */
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.8rem;
+}
+
+/* ----------------------------------
+   UTILITIES
+   ---------------------------------- */
+
+.text-center { text-align: center; }
+.text-right  { text-align: right; }
+
+.mt-0  { margin-top: 0; }
+.mt-1  { margin-top: 0.5rem; }
+.mt-2  { margin-top: 1rem; }
+.mt-3  { margin-top: 1.5rem; }
+
+.mb-0  { margin-bottom: 0; }
+.mb-1  { margin-bottom: 0.5rem; }
+.mb-2  { margin-bottom: 1rem; }
+.mb-3  { margin-bottom: 1.5rem; }
+
+.py-1  { padding-block: 0.75rem; }
+.py-2  { padding-block: 1.5rem; }
+.py-3  { padding-block: 2.5rem; }
+
+.bg-blush    { background-color: var(--ella-blush); }
+.bg-pink     { background-color: var(--ella-pink); }
+.bg-sage     { background-color: var(--ella-sage); }
+.bg-charcoal { background-color: var(--ella-charcoal); }
+.bg-cream    { background-color: var(--ella-cream); }
+
+.text-blush    { color: var(--ella-blush); }
+.text-rose     { color: var(--ella-rose); }
+.text-sage     { color: var(--ella-sage); }
+.text-charcoal { color: var(--ella-charcoal); }
+.text-cream    { color: var(--ella-cream); }
+
+/* ----------------------------------
+   RESPONSIVE
+   ---------------------------------- */
+
+@media (max-width: 900px) {
+  .hero-inner {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .hero-inner > *:last-child {
+    justify-self: center;
+  }
+
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-links {
+    display: none; /* you can swap this for a mobile menu later */
+  }
+}
