@@ -79,6 +79,18 @@ app.get('/', (req, res) => {
   res.render('landing');
 });
 
+// Donation page route
+app.get('/donate', (req, res) => {
+  res.render('donate', { query: req.query });
+});
+
+// Donation form submission route
+app.post('/donate', (req, res) => {
+  // TODO: Process donation payment
+  // For now, redirect back with success message
+  res.redirect('/donate?success=true');
+});
+
 // Login page route
 app.get('/login', (req, res) => {
   // If already logged in, redirect to dashboard
@@ -158,7 +170,38 @@ app.post('/login', async (req, res) => {
       });
     }
 
-    // Find user by email
+    // Hardcoded demo accounts
+    const demoAccounts = {
+      'manager@ellarises.org': {
+        password: 'password123',
+        role: 'manager',
+        id: 'demo-manager'
+      },
+      'user@ellarises.org': {
+        password: 'password123',
+        role: 'user',
+        id: 'demo-user'
+      }
+    };
+
+    // Check if it's a demo account
+    if (demoAccounts[email.toLowerCase()]) {
+      const demoAccount = demoAccounts[email.toLowerCase()];
+      if (password === demoAccount.password) {
+        // Set session for demo account
+        req.session.userId = demoAccount.id;
+        req.session.userEmail = email.toLowerCase();
+        req.session.userRole = demoAccount.role;
+        return res.redirect('/dashboard');
+      } else {
+        return res.render('login', {
+          error: 'Invalid email or password',
+          success: null
+        });
+      }
+    }
+
+    // Find user by email in database
     const user = await db('users').where({ email }).first();
 
     if (!user) {
@@ -195,7 +238,22 @@ app.post('/login', async (req, res) => {
 // Dashboard route (protected)
 app.get('/dashboard', requireAuth, async (req, res) => {
   try {
+    // Handle demo accounts (they don't exist in database)
+    if (req.session.userId === 'demo-manager' || req.session.userId === 'demo-user') {
+      return res.render('dashboard', {
+        user: {
+          email: req.session.userEmail,
+          role: req.session.userRole
+        }
+      });
+    }
+
+    // Handle regular database users
     const user = await db('users').where({ id: req.session.userId }).first();
+    if (!user) {
+      return res.redirect('/login');
+    }
+    
     res.render('dashboard', {
       user: {
         email: req.session.userEmail,

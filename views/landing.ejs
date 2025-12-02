@@ -4,13 +4,142 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ella Rises</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/styles.css">
 </head>
-<body>
-    <div class="container">
-        <h1 class="title">Ella Rises</h1>
-        <a href="/login" class="login-button">Login</a>
-    </div>
+<body class="bg-background">
+    <!-- Header -->
+    <header class="w-full px-6 py-4 md:px-8 md:py-6">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center">
+                <a href="/" class="block">
+                    <img src="/images/logo.png" alt="Ella Rises" class="h-8 md:h-10 w-auto object-contain" style="max-width: 200px;">
+                </a>
+            </div>
+            <div class="flex items-center gap-3 md:gap-4">
+                <a href="/donate" class="px-4 py-2 md:px-6 md:py-2.5 bg-muted text-foreground rounded-md font-medium hover:bg-muted/80 transition-colors">
+                    Donate
+                </a>
+                <a href="/login" class="px-4 py-2 md:px-6 md:py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
+                    Staff Login
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="w-full px-6 py-12 md:py-20 lg:py-24">
+        <div class="container mx-auto max-w-4xl text-center">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-serif text-foreground mb-6 md:mb-8 leading-tight">
+                Empowering Young Women<br>Through STEAM
+            </h1>
+            <p class="text-base md:text-lg text-foreground/80 mb-8 md:mb-10 max-w-2xl mx-auto leading-relaxed">
+                Ella Rises provides mentorship, education, and opportunities for
+                young Latinas to thrive in Science, Technology, Engineering, Arts,
+                and Mathematics.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <a href="/donate" class="px-6 py-3 md:px-8 md:py-3.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors inline-flex items-center gap-2">
+                    Support Our Mission
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                    </svg>
+                </a>
+                <a href="#what-we-offer" class="px-6 py-3 md:px-8 md:py-3.5 bg-muted text-foreground rounded-md font-medium hover:bg-muted/80 transition-colors">
+                    Learn More
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- What We Offer Section -->
+    <section id="what-we-offer" class="w-full px-6 py-12 md:py-16 lg:py-20">
+        <div class="container mx-auto max-w-6xl">
+            <h2 class="text-3xl md:text-4xl font-serif text-foreground text-center mb-12 md:mb-16">
+                What We Offer
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+                <!-- STEAM Programs Card -->
+                <div class="bg-card rounded-lg p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex justify-center mb-4">
+                        <div class="w-16 h-16 rounded-full border-2 border-accent flex items-center justify-center bg-accent/10">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h3 class="text-xl md:text-2xl font-semibold text-card-foreground mb-3 text-center">
+                        STEAM Programs
+                    </h3>
+                    <p class="text-sm md:text-base text-card-foreground/70 text-center leading-relaxed">
+                        Hands-on workshops in robotics, coding, engineering, and creative arts designed to inspire and educate.
+                    </p>
+                </div>
+
+                <!-- Mentorship Card -->
+                <div class="bg-card rounded-lg p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex justify-center mb-4">
+                        <div class="w-16 h-16 rounded-full border-2 border-secondary flex items-center justify-center bg-secondary/10">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-secondary" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h3 class="text-xl md:text-2xl font-semibold text-card-foreground mb-3 text-center">
+                        Mentorship
+                    </h3>
+                    <p class="text-sm md:text-base text-card-foreground/70 text-center leading-relaxed">
+                        One-on-one guidance from successful women in STEAM fields, providing support and career insights.
+                    </p>
+                </div>
+
+                <!-- Leadership Card -->
+                <div class="bg-card rounded-lg p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex justify-center mb-4">
+                        <div class="w-16 h-16 rounded-full border-2 border-muted-foreground flex items-center justify-center bg-muted">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-muted-foreground" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h3 class="text-xl md:text-2xl font-semibold text-card-foreground mb-3 text-center">
+                        Leadership
+                    </h3>
+                    <p class="text-sm md:text-base text-card-foreground/70 text-center leading-relaxed">
+                        Building confidence and leadership skills to help young women become changemakers in their communities.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Join Us Section -->
+    <section class="w-full px-6 py-12 md:py-16 lg:py-20">
+        <div class="container mx-auto max-w-4xl text-center">
+            <h2 class="text-3xl md:text-4xl font-serif text-foreground mb-6 md:mb-8">
+                Join Us in Making a Difference
+            </h2>
+            <p class="text-base md:text-lg text-foreground/80 mb-8 md:mb-10 max-w-2xl mx-auto leading-relaxed">
+                Your support helps us provide life-changing opportunities to young women in our community. Every contribution makes an impact.
+            </p>
+            <a href="/donate" class="inline-flex items-center gap-2 px-6 py-3 md:px-8 md:py-3.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
+                Donate Today
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="w-full px-6 py-8 md:py-10 border-t border-border">
+        <div class="container mx-auto max-w-6xl text-center">
+            <p class="text-sm text-muted-foreground mb-2">
+                © 2024 Ella Rises. All rights reserved.
+            </p>
+            <p class="text-sm text-muted-foreground">
+                Empowering young women through education and opportunity.
+            </p>
+        </div>
+    </footer>
 </body>
 </html>
-

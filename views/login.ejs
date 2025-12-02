@@ -3,62 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login / Sign Up - Ella Rises</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <title>Staff Login - Ella Rises</title>
+    <link rel="stylesheet" href="/css/styles.css">
 </head>
-<body>
-    <div class="container auth-container-wrapper">
-        <div class="auth-container">
-            <!-- Error/Success Messages -->
-            <% if (typeof error !== 'undefined' && error) { %>
-                <div class="message error-message"><%= error %></div>
-            <% } %>
-            <% if (typeof success !== 'undefined' && success) { %>
-                <div class="message success-message"><%= success %></div>
-            <% } %>
+<body class="bg-background min-h-screen flex flex-col">
+    <!-- Back to Home Link -->
+    <div class="w-full px-6 py-4">
+        <div class="container mx-auto">
+            <a href="/" class="inline-flex items-center gap-2 text-foreground/80 hover:text-foreground transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Home
+            </a>
+        </div>
+    </div>
 
-            <!-- Login Form -->
-            <div class="login-card">
-                <h1 class="login-title">Login</h1>
-                <form action="/login" method="POST" class="auth-form">
-                    <div class="form-group">
-                        <label for="login-email">Email</label>
-                        <input type="email" id="login-email" name="email" required>
+    <!-- Login Card -->
+    <div class="flex-1 flex items-center justify-center px-6 py-12">
+        <div class="w-full max-w-md">
+            <div class="bg-card rounded-lg p-8 md:p-10 shadow-sm">
+                <!-- Title -->
+                <h1 class="text-3xl md:text-4xl font-serif text-card-foreground mb-2">
+                    Ella Rises CRM
+                </h1>
+                <p class="text-base text-card-foreground/70 mb-8">
+                    Staff Login Portal
+                </p>
+
+                <!-- Error Message -->
+                <% if (typeof error !== 'undefined' && error) { %>
+                <div class="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+                    <p class="text-sm text-destructive"><%= error %></p>
+                </div>
+                <% } %>
+
+                <!-- Login Form -->
+                <form action="/login" method="POST" class="space-y-6">
+                    <!-- Email Field -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-card-foreground mb-2">
+                            Email
+                        </label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            required
+                            placeholder="your.email@ellarises.org"
+                            class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                        />
                     </div>
-                    <div class="form-group">
-                        <label for="login-password">Password</label>
-                        <input type="password" id="login-password" name="password" required>
+
+                    <!-- Password Field -->
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-card-foreground mb-2">
+                            Password
+                        </label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            required
+                            placeholder="Enter your password"
+                            class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                        />
                     </div>
-                    <button type="submit" class="submit-button">Login</button>
+
+                    <!-- Login Button -->
+                    <button 
+                        type="submit"
+                        class="w-full px-6 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    >
+                        Login
+                    </button>
                 </form>
-            </div>
 
-            <!-- Sign Up Form -->
-            <div class="login-card signup-card">
-                <h1 class="login-title">Sign Up</h1>
-                <form action="/signup" method="POST" class="auth-form">
-                    <div class="form-group">
-                        <label for="signup-email">Email</label>
-                        <input type="email" id="signup-email" name="email" required>
+                <!-- Demo Accounts Section -->
+                <div class="mt-8 p-4 bg-muted rounded-md">
+                    <h3 class="text-sm font-semibold text-card-foreground mb-3">
+                        Demo Accounts:
+                    </h3>
+                    <div class="space-y-2 text-sm text-card-foreground/80">
+                        <p>
+                            <span class="font-medium">Manager:</span> manager@ellarises.org / password123
+                        </p>
+                        <p>
+                            <span class="font-medium">User:</span> user@ellarises.org / password123
+                        </p>
                     </div>
-                    <div class="form-group">
-                        <label for="signup-password">Password</label>
-                        <input type="password" id="signup-password" name="password" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="user-role">Role</label>
-                        <select id="user-role" name="user_role" class="form-select" required>
-                            <option value="">Select a role</option>
-                            <option value="manager">Manager</option>
-                            <option value="user">User</option>
-                            <option value="donor">Donor</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="submit-button">Create Account</button>
-                </form>
+                </div>
             </div>
-
-            <a href="/" class="back-link">← Back to Home</a>
         </div>
     </div>
 </body>

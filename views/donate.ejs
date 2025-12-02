@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Make a Donation - Ella Rises</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-background">
+    <!-- Header -->
+    <header class="w-full px-6 py-4 md:px-8 md:py-6">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center">
+                <a href="/">
+                    <img src="/images/logo.png" alt="Ella Rises" class="h-8 md:h-10">
+                </a>
+            </div>
+            <div class="flex items-center gap-3 md:gap-4">
+                <a href="/donate" class="px-4 py-2 md:px-6 md:py-2.5 bg-muted text-foreground rounded-md font-medium hover:bg-muted/80 transition-colors">
+                    Donate
+                </a>
+                <a href="/login" class="px-4 py-2 md:px-6 md:py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
+                    Staff Login
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="w-full px-6 py-12 md:py-16 lg:py-20">
+        <div class="container mx-auto max-w-2xl">
+            <!-- Success Message -->
+            <% if (typeof query !== 'undefined' && query.success === 'true') { %>
+            <div class="mb-6 p-4 bg-secondary/20 border border-secondary rounded-md">
+                <p class="text-sm text-card-foreground text-center">
+                    Thank you for your donation! Your support makes a difference.
+                </p>
+            </div>
+            <% } %>
+
+            <!-- Header Section with Heart Icon -->
+            <div class="text-center mb-8 md:mb-12">
+                <div class="flex justify-center mb-4">
+                    <div class="w-16 h-16 rounded-full border-2 border-accent flex items-center justify-center bg-accent/10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-4">
+                    Make a Donation
+                </h1>
+                <p class="text-base md:text-lg text-foreground/80 max-w-xl mx-auto leading-relaxed">
+                    Your generosity helps us continue empowering young women through education and leadership programs.
+                </p>
+            </div>
+
+            <!-- Donation Form Card -->
+            <div class="bg-card rounded-lg p-6 md:p-8 shadow-sm">
+                <h2 class="text-xl md:text-2xl font-semibold text-card-foreground mb-2">
+                    Donation Details
+                </h2>
+                <p class="text-sm text-card-foreground/70 mb-6">
+                    Fill out the form below to complete your donation.
+                </p>
+
+                <form action="/donate" method="POST" class="space-y-6">
+                    <!-- Full Name -->
+                    <div>
+                        <label for="fullName" class="block text-sm font-medium text-card-foreground mb-2">
+                            Full Name <span class="text-destructive">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="fullName" 
+                            name="fullName" 
+                            required
+                            placeholder="Your full name"
+                            class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                        />
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-card-foreground mb-2">
+                            Email <span class="text-muted-foreground text-xs">(Optional)</span>
+                        </label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            placeholder="your@email.com"
+                            class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                        />
+                    </div>
+
+                    <!-- Donation Amount -->
+                    <div>
+                        <label class="block text-sm font-medium text-card-foreground mb-3">
+                            Donation Amount <span class="text-destructive">*</span>
+                        </label>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
+                            <button 
+                                type="button" 
+                                data-amount="25"
+                                class="donation-amount-btn px-4 py-2.5 border border-input rounded-md bg-background text-foreground font-medium hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+                            >
+                                $25
+                            </button>
+                            <button 
+                                type="button" 
+                                data-amount="50"
+                                class="donation-amount-btn px-4 py-2.5 border border-input rounded-md bg-background text-foreground font-medium hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+                            >
+                                $50
+                            </button>
+                            <button 
+                                type="button" 
+                                data-amount="100"
+                                class="donation-amount-btn px-4 py-2.5 border border-input rounded-md bg-background text-foreground font-medium hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+                            >
+                                $100
+                            </button>
+                            <button 
+                                type="button" 
+                                data-amount="250"
+                                class="donation-amount-btn px-4 py-2.5 border border-input rounded-md bg-background text-foreground font-medium hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+                            >
+                                $250
+                            </button>
+                            <button 
+                                type="button" 
+                                data-amount="500"
+                                class="donation-amount-btn px-4 py-2.5 border border-input rounded-md bg-background text-foreground font-medium hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+                            >
+                                $500
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-foreground font-medium">$</span>
+                            <input 
+                                type="number" 
+                                id="donationAmount" 
+                                name="donationAmount" 
+                                required
+                                min="1"
+                                step="0.01"
+                                placeholder="Other amount"
+                                class="w-full pl-8 pr-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div>
+                        <label for="paymentMethod" class="block text-sm font-medium text-card-foreground mb-2">
+                            Payment Method <span class="text-destructive">*</span>
+                        </label>
+                        <div class="relative">
+                            <select 
+                                id="paymentMethod" 
+                                name="paymentMethod" 
+                                required
+                                class="w-full px-4 py-2.5 pr-10 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors appearance-none cursor-pointer"
+                            >
+                            <option value="">Select payment method</option>
+                            <option value="credit">Credit Card</option>
+                            <option value="debit">Debit Card</option>
+                            <option value="paypal">PayPal</option>
+                            <option value="bank">Bank Transfer</option>
+                            </select>
+                            <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                <svg class="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Message -->
+                    <div>
+                        <label for="message" class="block text-sm font-medium text-card-foreground mb-2">
+                            Message <span class="text-muted-foreground text-xs">(Optional)</span>
+                        </label>
+                        <textarea 
+                            id="message" 
+                            name="message" 
+                            rows="4"
+                            placeholder="Leave a message of support..."
+                            class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors resize-y"
+                        ></textarea>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button 
+                        type="submit"
+                        class="w-full px-6 py-3 bg-accent text-accent-foreground rounded-md font-medium hover:bg-accent/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    >
+                        Complete Donation
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full px-6 py-8 md:py-10 border-t border-border mt-12">
+        <div class="container mx-auto max-w-6xl text-center">
+            <p class="text-sm text-muted-foreground mb-2">
+                © 2024 Ella Rises. All rights reserved.
+            </p>
+            <p class="text-sm text-muted-foreground">
+                Empowering young women through education and opportunity.
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Handle donation amount button clicks
+        document.querySelectorAll('.donation-amount-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active state from all buttons
+                document.querySelectorAll('.donation-amount-btn').forEach(b => {
+                    b.classList.remove('bg-accent', 'text-accent-foreground', 'border-accent');
+                    b.classList.add('bg-background', 'text-foreground', 'border-input');
+                });
+                
+                // Add active state to clicked button
+                this.classList.remove('bg-background', 'text-foreground', 'border-input');
+                this.classList.add('bg-accent', 'text-accent-foreground', 'border-accent');
+                
+                // Set the amount in the input field
+                const amount = this.getAttribute('data-amount');
+                document.getElementById('donationAmount').value = amount;
+            });
+        });
+
+        // Update button styles when custom amount is entered
+        document.getElementById('donationAmount').addEventListener('input', function() {
+            const customAmount = this.value;
+            const presetAmounts = ['25', '50', '100', '250', '500'];
+            
+            if (!presetAmounts.includes(customAmount)) {
+                // Remove active state from all buttons if custom amount doesn't match
+                document.querySelectorAll('.donation-amount-btn').forEach(b => {
+                    b.classList.remove('bg-accent', 'text-accent-foreground', 'border-accent');
+                    b.classList.add('bg-background', 'text-foreground', 'border-input');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+
