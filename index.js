@@ -772,8 +772,15 @@ app.post('/profile', async (req, res) => {
         });
     }
 
-    if (isFromConversion) {
-      // From conversion - user is already logged in, just redirect to profile page
+    // Check if user account is inactive (admin-created user completing profile)
+    const dbUser = await db('users')
+      .where('userid', userId)
+      .first();
+    
+    const isAccountInactive = dbUser && !dbUser.accountactive;
+
+    if (isFromConversion || (req.session.userId && !isAccountInactive)) {
+      // From conversion or already active account - user is already logged in, just redirect to profile page
       // Clear temp session variables if they exist
       delete req.session.tempUserId;
       delete req.session.tempUserEmail;
@@ -781,7 +788,7 @@ app.post('/profile', async (req, res) => {
       delete req.session.tempUserLastName;
       return res.redirect('/profile?tab=profile&success=true');
     } else {
-      // From signup - activate account and set session
+      // From signup or admin-created account - activate account and set session
       // Update users table: set accountactive = true
       await db('users')
         .where('userid', userId)
@@ -1040,6 +1047,27 @@ app.post('/change-password', requireAuth, async (req, res) => {
     
     // Clear password change requirement from session
     delete req.session.passwordChangeRequired;
+    
+    // Check if user is a participant (roleid = 2) and needs to complete profile
+    const dbUser = await db('users')
+      .where('userid', userId)
+      .first();
+    
+    if (dbUser && (dbUser.roleid === 2 || dbUser.roleid === '2')) {
+      // Check if profile exists
+      const profile = await db('profile')
+        .where('userid', userId)
+        .first();
+      
+      if (!profile) {
+        // Participant without profile - redirect to profile completion
+        req.session.tempUserId = userId;
+        req.session.tempUserEmail = dbUser.useremail;
+        req.session.tempUserFirstName = dbUser.userfirstname || '';
+        req.session.tempUserLastName = dbUser.userlastname || '';
+        return res.redirect('/profile?requireProfile=true');
+      }
+    }
     
     // Redirect to dashboard
     res.redirect('/dashboard');
@@ -1433,6 +1461,22 @@ app.post('/login', async (req, res) => {
     req.session.userFirstName = user.userfirstname || '';
     req.session.userLastName = user.userlastname || '';
 
+    // Check if user is a participant (roleid = 2) and needs to complete profile
+    if (user.roleid === 2 || user.roleid === '2') {
+      const profile = await db('profile')
+        .where('userid', user.userid)
+        .first();
+      
+      if (!profile) {
+        // Participant without profile - redirect to profile completion
+        req.session.tempUserId = user.userid;
+        req.session.tempUserEmail = user.useremail;
+        req.session.tempUserFirstName = user.userfirstname || '';
+        req.session.tempUserLastName = user.userlastname || '';
+        return res.redirect('/profile?requireProfile=true');
+      }
+    }
+
     res.redirect('/dashboard');
   } catch (error) {
     console.error('Login error:', error);
@@ -1476,19 +1520,271 @@ app.get('/dashboard', requireAuth, async (req, res) => {
   }
 });
 
-// Participants route (protected)
-app.get('/participants', requireAuth, async (req, res) => {
+// Participants route (protected, manager only)
+app.get('/participants', requireAuth, restrictDonor, async (req, res) => {
   try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.redirect('/dashboard');
+    }
+
+    // Query all participants (users with roleid = 2) with LEFT JOIN to profile table
+    const participantsData = await db('users as u')
+      .leftJoin('profile as p', 'u.userid', 'p.userid')
+      .where('u.roleid', 2)
+      .select(
+        'u.userid',
+        'u.useremail',
+        'u.userfirstname',
+        'u.userlastname',
+        'u.accountactive',
+        'p.profiledob',
+        'p.profilephone',
+        'p.profilecity',
+        'p.profilestate',
+        'p.profilezip',
+        'p.profileschooloremployer',
+        'p.profilefieldofinterest'
+      )
+      .orderBy('u.userlastname', 'asc')
+      .orderBy('u.userfirstname', 'asc');
+
+    // Map participants data
+    const participants = participantsData.map(p => ({
+      userid: p.userid,
+      email: p.useremail,
+      firstName: p.userfirstname || '',
+      lastName: p.userlastname || '',
+      fullName: `${p.userfirstname || ''} ${p.userlastname || ''}`.trim() || 'No Name',
+      accountActive: p.accountactive,
+      profileDOB: p.profiledob,
+      profilePhone: p.profilephone,
+      profileCity: p.profilecity,
+      profileState: p.profilestate,
+      profileZip: p.profilezip,
+      profileSchoolOrEmployer: p.profileschooloremployer,
+      profileFieldOfInterest: p.profilefieldofinterest
+    }));
+
     const user = {
       email: req.session.userEmail,
       role: req.session.userRole,
       firstName: req.session.userFirstName || '',
       lastName: req.session.userLastName || ''
     };
-    res.render('participants', { user });
+
+    res.render('participants', { user, participants, query: req.query });
   } catch (error) {
     console.error('Participants error:', error);
     res.redirect('/login');
+  }
+});
+
+// Admin Edit Participant route - GET (protected, manager only)
+app.get('/participants/edit/:userid', requireAuth, restrictDonor, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.redirect('/dashboard');
+    }
+
+    const userId = parseInt(req.params.userid);
+    if (isNaN(userId)) {
+      return res.redirect('/participants?error=invalid_user_id');
+    }
+
+    // Fetch participant user data
+    const userData = await db('users')
+      .where('userid', userId)
+      .first();
+
+    if (!userData) {
+      return res.redirect('/participants?error=participant_not_found');
+    }
+
+    // Verify user is a participant (roleid = 2)
+    if (userData.roleid !== 2) {
+      return res.redirect('/participants?error=not_participant');
+    }
+
+    // Fetch profile data
+    const profileData = await db('profile')
+      .where('userid', userId)
+      .first();
+
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
+    };
+
+    res.render('admin-edit-participant', { user, participant: userData, profileData, query: req.query });
+  } catch (error) {
+    console.error('Edit participant page error:', error);
+    res.redirect('/participants?error=page_error');
+  }
+});
+
+// Admin Update Participant route - POST (protected, manager only)
+app.post('/participants/edit/:userid', requireAuth, restrictDonor, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.status(403).send('Forbidden');
+    }
+
+    const userId = parseInt(req.params.userid);
+    if (isNaN(userId)) {
+      return res.redirect('/participants?error=invalid_user_id');
+    }
+
+    // Verify user exists and is a participant
+    const userData = await db('users')
+      .where('userid', userId)
+      .first();
+
+    if (!userData) {
+      return res.redirect('/participants?error=participant_not_found');
+    }
+
+    if (userData.roleid !== 2) {
+      return res.redirect('/participants?error=not_participant');
+    }
+
+    const {
+      profiledob,
+      dob_month,
+      dob_day,
+      dob_year,
+      profilephone,
+      profilecity,
+      profilestate,
+      profilezip,
+      profileschooloremployer,
+      profilefieldofinterest
+    } = req.body;
+
+    // Combine date fields into YYYY-MM-DD format
+    let dateOfBirth = null;
+    if (dob_month && dob_day && dob_year) {
+      const year = parseInt(dob_year);
+      const month = parseInt(dob_month);
+      const day = parseInt(dob_day);
+      
+      if (year < 1900 || year > new Date().getFullYear() || month < 1 || month > 12 || day < 1 || day > 31) {
+        return res.redirect(`/participants/edit/${userId}?error=invalid_date`);
+      }
+      
+      const dateObj = new Date(Date.UTC(year, month - 1, day));
+      if (dateObj.getUTCFullYear() !== year || 
+          dateObj.getUTCMonth() + 1 !== month || 
+          dateObj.getUTCDate() !== day) {
+        return res.redirect(`/participants/edit/${userId}?error=invalid_date`);
+      }
+      
+      dateOfBirth = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    } else if (profiledob) {
+      dateOfBirth = profiledob;
+    }
+
+    // Validate required fields
+    if (!dateOfBirth || !profilephone || !profilecity || !profilestate || !profilezip || 
+        !profileschooloremployer || !profilefieldofinterest) {
+      return res.redirect(`/participants/edit/${userId}?error=missing_fields`);
+    }
+
+    // Clean phone number
+    const cleanPhone = profilephone.replace(/\D/g, '');
+
+    // Check if profile exists
+    const existingProfile = await db('profile')
+      .where('userid', userId)
+      .first();
+
+    if (existingProfile) {
+      // Update existing profile
+      await db('profile')
+        .where('userid', userId)
+        .update({
+          profiledob: dateOfBirth,
+          profilephone: cleanPhone,
+          profilecity: profilecity.trim(),
+          profilestate: profilestate.trim(),
+          profilezip: profilezip.trim(),
+          profileschooloremployer: profileschooloremployer.trim(),
+          profilefieldofinterest: profilefieldofinterest.trim()
+        });
+    } else {
+      // Insert new profile
+      await db('profile')
+        .insert({
+          userid: userId,
+          profiledob: dateOfBirth,
+          profilephone: cleanPhone,
+          profilecity: profilecity.trim(),
+          profilestate: profilestate.trim(),
+          profilezip: profilezip.trim(),
+          profileschooloremployer: profileschooloremployer.trim(),
+          profilefieldofinterest: profilefieldofinterest.trim()
+        });
+    }
+
+    res.redirect('/participants?success=participant_updated');
+  } catch (error) {
+    console.error('Update participant error:', error);
+    res.redirect('/participants?error=update_failed');
+  }
+});
+
+// Admin Delete Participant route - POST (protected, manager only)
+app.post('/participants/delete', requireAuth, restrictDonor, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.status(403).send('Forbidden');
+    }
+
+    const { userid } = req.body;
+    const userId = parseInt(userid);
+
+    if (!userid || isNaN(userId)) {
+      return res.status(400).send('Invalid request');
+    }
+
+    // Fetch user to verify they exist and are a participant
+    const userData = await db('users')
+      .where('userid', userId)
+      .first();
+
+    if (!userData) {
+      return res.redirect('/participants?error=participant_not_found');
+    }
+
+    // Don't allow deleting demo accounts
+    if (userData.useremail === 'manager@ellarises.org' || userData.useremail === 'user@ellarises.org') {
+      return res.redirect('/participants?error=demo_accounts_cannot_be_deleted');
+    }
+
+    // Don't allow deleting yourself
+    if (userId === req.session.userId) {
+      return res.redirect('/participants?error=cannot_delete_yourself');
+    }
+
+    // Verify user is a participant (roleid = 2)
+    if (userData.roleid !== 2) {
+      return res.redirect('/participants?error=not_participant');
+    }
+
+    // Cascade delete: Delete from Users table - database handles cascade deletion of Profile, Registration, etc.
+    await db('users')
+      .where('userid', userId)
+      .del();
+
+    res.redirect('/participants?success=participant_deleted');
+  } catch (error) {
+    console.error('Delete participant error:', error);
+    res.redirect('/participants?error=delete_failed');
   }
 });
 
@@ -1499,6 +1795,19 @@ app.get('/profile', requireAuth, async (req, res) => {
     
     if (!userId) {
       return res.redirect('/login');
+    }
+
+    // Check if user is in signup/temp session (for profile completion during signup)
+    if (req.session.tempUserId) {
+      // Render profile completion form
+      return res.render('profile', { 
+        error: null,
+        user: {
+          email: req.session.tempUserEmail,
+          firstName: req.session.tempUserFirstName,
+          lastName: req.session.tempUserLastName
+        }
+      });
     }
 
     // Get user data from users table
@@ -1522,9 +1831,27 @@ app.get('/profile', requireAuth, async (req, res) => {
         .first();
     }
 
+    // Check if profile is required and missing
+    const requireProfile = req.query.requireProfile === 'true';
+    if (requireProfile && isParticipant && !profileData) {
+      // Redirect to profile completion form
+      req.session.tempUserId = userId;
+      req.session.tempUserEmail = dbUser.useremail;
+      req.session.tempUserFirstName = dbUser.userfirstname || '';
+      req.session.tempUserLastName = dbUser.userlastname || '';
+      return res.render('profile', { 
+        error: null,
+        user: {
+          email: dbUser.useremail,
+          firstName: dbUser.userfirstname || '',
+          lastName: dbUser.userlastname || ''
+        },
+        requireProfile: true
+      });
+    }
+
     // Determine active tab (default to 'profile' for participants, 'account' for donors)
     const activeTab = req.query.tab || (isParticipant ? 'profile' : 'account');
-    const requireProfile = req.query.requireProfile === 'true';
 
     const user = {
       email: req.session.userEmail,
@@ -2976,6 +3303,7 @@ app.get('/milestones', requireAuth, restrictDonor, async (req, res) => {
     // Get query parameters for filtering
     const filters = {
       participantSearch: req.query.participantSearch || '',
+      milestoneSearch: req.query.milestoneSearch || '',
       milestoneType: req.query.milestoneType || '',
       success: req.query.success || '',
       error: req.query.error || ''
@@ -3009,6 +3337,12 @@ app.get('/milestones', requireAuth, restrictDonor, async (req, res) => {
     // For non-managers, only show their own milestones
     if (user.role !== 'manager') {
       milestonesQuery = milestonesQuery.where('um.userid', req.session.userId);
+      
+      // Apply participant filters (search by milestone type name)
+      if (filters.milestoneSearch) {
+        const searchTerm = `%${filters.milestoneSearch}%`;
+        milestonesQuery = milestonesQuery.whereILike('mt.milestonetitle', searchTerm);
+      }
     } else {
       // Apply filters (managers only)
       if (filters.participantSearch) {
@@ -3021,6 +3355,7 @@ app.get('/milestones', requireAuth, restrictDonor, async (req, res) => {
       }
     }
 
+    // Apply milestone type filter (for both managers and participants)
     if (filters.milestoneType) {
       milestonesQuery = milestonesQuery.where('um.milestoneid', filters.milestoneType);
     }
@@ -3329,6 +3664,114 @@ app.get('/users', requireAuth, async (req, res) => {
   }
 });
 
+// Add User route - GET (protected, manager only)
+app.get('/users/add', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.redirect('/dashboard');
+    }
+
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
+    };
+
+    res.render('add-user', { user, query: req.query });
+  } catch (error) {
+    console.error('Add user page error:', error);
+    res.redirect('/users?error=page_error');
+  }
+});
+
+// Add User route - POST (protected, manager only)
+app.post('/users/add', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.status(403).send('Forbidden');
+    }
+
+    const { useremail, userfirstname, userlastname, roleid, password, confirmPassword } = req.body;
+
+    // Validate required fields
+    if (!useremail || !userfirstname || !userlastname || !roleid || !password || !confirmPassword) {
+      return res.redirect('/users/add?error=missing_fields');
+    }
+
+    // Validate password match
+    if (password !== confirmPassword) {
+      return res.redirect('/users/add?error=password_mismatch');
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return res.redirect('/users/add?error=password_too_short');
+    }
+
+    // Check if email already exists
+    const existingUser = await db('users')
+      .where('useremail', useremail.toLowerCase())
+      .first();
+
+    if (existingUser) {
+      return res.redirect('/users/add?error=email_exists');
+    }
+
+    // Hash password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Create new user with accountactive = false (Pending status)
+    // This will require them to change password on first login
+    try {
+      const [newUser] = await db('users')
+        .insert({
+          useremail: useremail.toLowerCase(),
+          userfirstname: userfirstname.trim(),
+          userlastname: userlastname.trim(),
+          userpassword: hashedPassword,
+          roleid: parseInt(roleid),
+          accountactive: false, // Set to Pending - will be activated after first login/password change
+          totaldonations: null
+        })
+        .returning(['userid']);
+
+      res.redirect('/users?success=user_created');
+    } catch (insertError) {
+      // Handle sequence sync issues
+      if (insertError.code === '23505') { // Duplicate key error
+        console.error('Sequence out of sync. Attempting to fix...');
+        const maxResult = await db('users').max('userid as maxid').first();
+        const maxId = maxResult?.maxid || 0;
+        await db.raw(`SELECT setval('users_userid_seq', ?)`, [maxId + 1]);
+        
+        // Retry the insert
+        const [newUser] = await db('users')
+          .insert({
+            useremail: useremail.toLowerCase(),
+            userfirstname: userfirstname.trim(),
+            userlastname: userlastname.trim(),
+            userpassword: hashedPassword,
+            roleid: parseInt(roleid),
+            accountactive: false,
+            totaldonations: null
+          })
+          .returning(['userid']);
+        
+        res.redirect('/users?success=user_created');
+      } else {
+        throw insertError;
+      }
+    }
+  } catch (error) {
+    console.error('Add user error:', error);
+    res.redirect('/users/add?error=create_failed');
+  }
+});
+
 // Edit user page route (protected, manager only)
 app.get('/users/edit/:userid', requireAuth, async (req, res) => {
   try {
@@ -3445,24 +3888,37 @@ app.post('/users/delete', requireAuth, async (req, res) => {
       return res.status(403).send('Forbidden');
     }
 
-    const { email } = req.body;
+    const { userid } = req.body;
+    const userId = parseInt(userid);
 
-    if (!email) {
+    if (!userid || isNaN(userId)) {
       return res.status(400).send('Invalid request');
     }
 
+    // Fetch user to verify they exist
+    const userData = await db('users')
+      .where('userid', userId)
+      .first();
+
+    if (!userData) {
+      return res.redirect('/users?error=user_not_found');
+    }
+
     // Don't allow deleting demo accounts
-    if (email === 'manager@ellarises.org' || email === 'user@ellarises.org') {
+    if (userData.useremail === 'manager@ellarises.org' || userData.useremail === 'user@ellarises.org') {
       return res.redirect('/users?error=demo_accounts_cannot_be_deleted');
     }
 
     // Don't allow deleting yourself
-    if (email === req.session.userEmail) {
+    if (userId === req.session.userId) {
       return res.redirect('/users?error=cannot_delete_yourself');
     }
 
-    // Delete user from database
-    await db('users').where({ email }).del();
+    // Cascade delete: Delete from Users table - database handles cascade deletion
+    // Donations table has ON DELETE SET NULL, so donations remain but are anonymized
+    await db('users')
+      .where('userid', userId)
+      .del();
 
     res.redirect('/users?success=user_deleted');
   } catch (error) {
