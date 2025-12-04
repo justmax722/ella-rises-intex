@@ -19,9 +19,9 @@
                     <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">Donations</h1>
                     <p class="text-base text-card-foreground/70">Track and manage donations</p>
                 </div>
-                <a href="/donate?loggedIn=true" class="px-4 py-2 md:px-6 md:py-2.5 bg-accent text-accent-foreground rounded-md font-medium hover:bg-accent/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                <button type="button" id="toggleDonationFormBtn" class="px-4 py-2 md:px-6 md:py-2.5 bg-accent text-accent-foreground rounded-md font-medium hover:bg-accent/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
                     Make a Donation
-                </a>
+                </button>
             </div>
 
             <!-- Success Message -->
@@ -32,6 +32,243 @@
                 </p>
             </div>
             <% } %>
+
+            <!-- Embedded Donation Form -->
+            <div id="donationFormContainer" class="mb-8 hidden">
+                <div class="bg-card rounded-lg p-6 md:p-8 shadow-sm border border-border max-w-2xl mx-auto">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-serif font-bold text-card-foreground">Make a Donation</h2>
+                        <button type="button" id="closeDonationFormBtn" class="text-muted-foreground hover:text-foreground transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <form id="embeddedDonationForm" action="/donate" method="POST" class="space-y-6">
+
+                        <!-- Donation Amount -->
+                        <div>
+                            <label class="block text-sm font-medium text-card-foreground mb-3">
+                                Donation Amount <span class="text-destructive">*</span>
+                            </label>
+                            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
+                                <button type="button" data-amount="25" class="donation-amount-btn-embedded px-4 py-2.5 border border-input rounded-md bg-background text-foreground font-medium hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring">
+                                    $25
+                                </button>
+                                <button type="button" data-amount="50" class="donation-amount-btn-embedded px-4 py-2.5 border border-input rounded-md bg-background text-foreground font-medium hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring">
+                                    $50
+                                </button>
+                                <button type="button" data-amount="100" class="donation-amount-btn-embedded px-4 py-2.5 border border-input rounded-md bg-background text-foreground font-medium hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring">
+                                    $100
+                                </button>
+                                <button type="button" data-amount="250" class="donation-amount-btn-embedded px-4 py-2.5 border border-input rounded-md bg-background text-foreground font-medium hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring">
+                                    $250
+                                </button>
+                                <button type="button" data-amount="500" class="donation-amount-btn-embedded px-4 py-2.5 border border-input rounded-md bg-background text-foreground font-medium hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring">
+                                    $500
+                                </button>
+                            </div>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-foreground font-medium">$</span>
+                                <input 
+                                    type="number" 
+                                    id="embeddedDonationAmount" 
+                                    name="donationAmount" 
+                                    required
+                                    min="1"
+                                    step="0.01"
+                                    placeholder="Other amount"
+                                    class="w-full pl-8 pr-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Payment Method -->
+                        <div>
+                            <label for="embeddedPaymentMethod" class="block text-sm font-medium text-card-foreground mb-2">
+                                Payment Method <span class="text-destructive">*</span>
+                            </label>
+                            <div class="relative">
+                                <select 
+                                    id="embeddedPaymentMethod" 
+                                    name="paymentMethod" 
+                                    required
+                                    class="w-full px-4 py-2.5 pr-10 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors appearance-none cursor-pointer"
+                                >
+                                    <option value="">Select payment method</option>
+                                    <option value="credit">Credit Card</option>
+                                    <option value="debit">Debit Card</option>
+                                    <option value="paypal">PayPal</option>
+                                    <option value="bank">Bank Transfer</option>
+                                </select>
+                                <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    <svg class="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Details Section (shown based on payment method) -->
+                        <div id="embeddedPaymentDetails" class="hidden space-y-4 p-4 border border-input rounded-md bg-muted/30 relative">
+                            <!-- Credit/Debit Card Fields -->
+                            <div id="embeddedCardFields" class="hidden space-y-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="text-sm font-semibold text-card-foreground" id="embeddedCardTitle">Credit Card Information</h3>
+                                    <button 
+                                        type="button"
+                                        onclick="fillEmbeddedProxyData('card')"
+                                        class="text-xs px-2 py-1 bg-muted text-foreground rounded-md font-medium hover:bg-muted/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+                                    >
+                                        Fill with Proxy Data
+                                    </button>
+                                </div>
+                                <div>
+                                    <label for="embeddedCardNumber" class="block text-sm font-medium text-card-foreground mb-2">
+                                        Card Number <span class="text-destructive">*</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="embeddedCardNumber" 
+                                        name="creditCardNumber" 
+                                        placeholder="1234 5678 9012 3456"
+                                        maxlength="19"
+                                        class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                    />
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="embeddedExpiry" class="block text-sm font-medium text-card-foreground mb-2">
+                                            Expiry Date <span class="text-destructive">*</span>
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            id="embeddedExpiry" 
+                                            name="creditExpiry" 
+                                            placeholder="MM/YY"
+                                            maxlength="5"
+                                            class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label for="embeddedCVV" class="block text-sm font-medium text-card-foreground mb-2">
+                                            CVV <span class="text-destructive">*</span>
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            id="embeddedCVV" 
+                                            name="creditCVV" 
+                                            placeholder="123"
+                                            maxlength="4"
+                                            class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="embeddedCardName" class="block text-sm font-medium text-card-foreground mb-2">
+                                        Cardholder Name <span class="text-destructive">*</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="embeddedCardName" 
+                                        name="creditName" 
+                                        placeholder="John Doe"
+                                        class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                    />
+                                </div>
+                            </div>
+
+                            <!-- PayPal Field -->
+                            <div id="embeddedPaypalField" class="hidden">
+                                <p class="text-sm text-card-foreground/70">You will be redirected to PayPal to complete your payment.</p>
+                            </div>
+
+                            <!-- Bank Transfer Fields -->
+                            <div id="embeddedBankFields" class="hidden space-y-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="text-sm font-semibold text-card-foreground">Bank Transfer Information</h3>
+                                    <button 
+                                        type="button"
+                                        onclick="fillEmbeddedProxyData('bank')"
+                                        class="text-xs px-2 py-1 bg-muted text-foreground rounded-md font-medium hover:bg-muted/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+                                    >
+                                        Fill with Proxy Data
+                                    </button>
+                                </div>
+                                <div>
+                                    <label for="embeddedAccountNumber" class="block text-sm font-medium text-card-foreground mb-2">
+                                        Account Number <span class="text-destructive">*</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="embeddedAccountNumber" 
+                                        name="bankAccountNumber" 
+                                        placeholder="1234567890"
+                                        class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label for="embeddedRoutingNumber" class="block text-sm font-medium text-card-foreground mb-2">
+                                        Routing Number <span class="text-destructive">*</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="embeddedRoutingNumber" 
+                                        name="bankRoutingNumber" 
+                                        placeholder="123456789"
+                                        maxlength="9"
+                                        class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label for="embeddedBankName" class="block text-sm font-medium text-card-foreground mb-2">
+                                        Bank Name <span class="text-destructive">*</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        id="embeddedBankName" 
+                                        name="bankName" 
+                                        placeholder="Bank Name"
+                                        class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Message -->
+                        <div>
+                            <label for="embeddedMessage" class="block text-sm font-medium text-card-foreground mb-2">
+                                Message <span class="text-muted-foreground text-xs">(Optional)</span>
+                            </label>
+                            <textarea 
+                                id="embeddedMessage" 
+                                name="message" 
+                                rows="4"
+                                placeholder="Leave a message of support..."
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors resize-y"
+                            ></textarea>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="flex gap-4">
+                            <button 
+                                type="submit"
+                                class="flex-1 px-6 py-3 bg-accent text-accent-foreground rounded-md font-medium hover:bg-accent/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                            >
+                                Complete Donation
+                            </button>
+                            <button 
+                                type="button"
+                                id="cancelDonationFormBtn"
+                                class="px-6 py-3 bg-muted text-foreground rounded-md font-medium hover:bg-muted/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
             <!-- Summary Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -489,6 +726,167 @@
             }
         }
         <% } %>
+
+        // Embedded Donation Form Functionality
+        const toggleDonationFormBtn = document.getElementById('toggleDonationFormBtn');
+        const closeDonationFormBtn = document.getElementById('closeDonationFormBtn');
+        const cancelDonationFormBtn = document.getElementById('cancelDonationFormBtn');
+        const donationFormContainer = document.getElementById('donationFormContainer');
+        const embeddedDonationForm = document.getElementById('embeddedDonationForm');
+
+        function showDonationForm() {
+            donationFormContainer.classList.remove('hidden');
+            // Scroll to form
+            donationFormContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function hideDonationForm() {
+            donationFormContainer.classList.add('hidden');
+            // Reset form
+            embeddedDonationForm.reset();
+            // Reset payment sections
+            document.getElementById('embeddedPaymentDetails').classList.add('hidden');
+            document.getElementById('embeddedCardFields').classList.add('hidden');
+            document.getElementById('embeddedPaypalField').classList.add('hidden');
+            document.getElementById('embeddedBankFields').classList.add('hidden');
+            // Reset amount buttons
+            document.querySelectorAll('.donation-amount-btn-embedded').forEach(btn => {
+                btn.classList.remove('bg-accent', 'text-accent-foreground', 'border-accent');
+                btn.classList.add('bg-background', 'text-foreground', 'border-input');
+            });
+        }
+
+        if (toggleDonationFormBtn) {
+            toggleDonationFormBtn.addEventListener('click', showDonationForm);
+        }
+
+        if (closeDonationFormBtn) {
+            closeDonationFormBtn.addEventListener('click', hideDonationForm);
+        }
+
+        if (cancelDonationFormBtn) {
+            cancelDonationFormBtn.addEventListener('click', hideDonationForm);
+        }
+
+        // Handle donation amount button clicks
+        document.querySelectorAll('.donation-amount-btn-embedded').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active state from all buttons
+                document.querySelectorAll('.donation-amount-btn-embedded').forEach(b => {
+                    b.classList.remove('bg-accent', 'text-accent-foreground', 'border-accent');
+                    b.classList.add('bg-background', 'text-foreground', 'border-input');
+                });
+                
+                // Add active state to clicked button
+                this.classList.remove('bg-background', 'text-foreground', 'border-input');
+                this.classList.add('bg-accent', 'text-accent-foreground', 'border-accent');
+                
+                // Set the amount in the input field
+                const amount = this.getAttribute('data-amount');
+                document.getElementById('embeddedDonationAmount').value = amount;
+            });
+        });
+
+        // Update button styles when custom amount is entered
+        const embeddedDonationAmount = document.getElementById('embeddedDonationAmount');
+        if (embeddedDonationAmount) {
+            embeddedDonationAmount.addEventListener('input', function() {
+                const customAmount = this.value;
+                const presetAmounts = ['25', '50', '100', '250', '500'];
+                
+                if (!presetAmounts.includes(customAmount)) {
+                    // Remove active state from all buttons if custom amount doesn't match
+                    document.querySelectorAll('.donation-amount-btn-embedded').forEach(b => {
+                        b.classList.remove('bg-accent', 'text-accent-foreground', 'border-accent');
+                        b.classList.add('bg-background', 'text-foreground', 'border-input');
+                    });
+                }
+            });
+        }
+
+        // Handle payment method selection
+        const embeddedPaymentMethod = document.getElementById('embeddedPaymentMethod');
+        if (embeddedPaymentMethod) {
+            embeddedPaymentMethod.addEventListener('change', function() {
+                const selectedMethod = this.value;
+                const paymentDetails = document.getElementById('embeddedPaymentDetails');
+                const cardFields = document.getElementById('embeddedCardFields');
+                const paypalField = document.getElementById('embeddedPaypalField');
+                const bankFields = document.getElementById('embeddedBankFields');
+                
+                // Hide all sections first
+                paymentDetails.classList.add('hidden');
+                cardFields.classList.add('hidden');
+                paypalField.classList.add('hidden');
+                bankFields.classList.add('hidden');
+                
+                // Remove required from all fields
+                [cardFields, bankFields].forEach(section => {
+                    section.querySelectorAll('input').forEach(input => {
+                        input.removeAttribute('required');
+                    });
+                });
+                
+                // Show selected payment section
+                if (selectedMethod === 'credit' || selectedMethod === 'debit') {
+                    paymentDetails.classList.remove('hidden');
+                    cardFields.classList.remove('hidden');
+                    // Update title and field names based on method
+                    const cardTitle = document.getElementById('embeddedCardTitle');
+                    if (selectedMethod === 'credit') {
+                        if (cardTitle) cardTitle.textContent = 'Credit Card Information';
+                        document.getElementById('embeddedCardNumber').name = 'creditCardNumber';
+                        document.getElementById('embeddedExpiry').name = 'creditExpiry';
+                        document.getElementById('embeddedCVV').name = 'creditCVV';
+                        document.getElementById('embeddedCardName').name = 'creditName';
+                    } else {
+                        if (cardTitle) cardTitle.textContent = 'Debit Card Information';
+                        document.getElementById('embeddedCardNumber').name = 'debitCardNumber';
+                        document.getElementById('embeddedExpiry').name = 'debitExpiry';
+                        document.getElementById('embeddedCVV').name = 'debitCVV';
+                        document.getElementById('embeddedCardName').name = 'debitName';
+                    }
+                    // Add required to card fields
+                    cardFields.querySelectorAll('input').forEach(input => {
+                        input.setAttribute('required', 'required');
+                    });
+                } else if (selectedMethod === 'paypal') {
+                    paymentDetails.classList.remove('hidden');
+                    paypalField.classList.remove('hidden');
+                } else if (selectedMethod === 'bank') {
+                    paymentDetails.classList.remove('hidden');
+                    bankFields.classList.remove('hidden');
+                    // Add required to bank fields
+                    bankFields.querySelectorAll('input').forEach(input => {
+                        input.setAttribute('required', 'required');
+                    });
+                }
+            });
+        }
+
+        // Handle form submission - remove required from hidden fields
+        if (embeddedDonationForm) {
+            embeddedDonationForm.addEventListener('submit', function(e) {
+                // Remove required from all hidden payment sections
+                document.getElementById('embeddedPaymentDetails').querySelectorAll('.hidden input').forEach(input => {
+                    input.removeAttribute('required');
+                });
+            });
+        }
+
+        // Fill proxy data function for embedded form
+        function fillEmbeddedProxyData(method) {
+            if (method === 'card') {
+                document.getElementById('embeddedCardNumber').value = '4111 1111 1111 1111';
+                document.getElementById('embeddedExpiry').value = '12/25';
+                document.getElementById('embeddedCVV').value = '123';
+                document.getElementById('embeddedCardName').value = 'John Doe';
+            } else if (method === 'bank') {
+                document.getElementById('embeddedAccountNumber').value = '1234567890';
+                document.getElementById('embeddedRoutingNumber').value = '123456789';
+                document.getElementById('embeddedBankName').value = 'Test Bank';
+            }
+        }
     </script>
 </body>
 </html>
