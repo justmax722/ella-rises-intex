@@ -2292,7 +2292,7 @@ app.get('/events', requireAuth, restrictDonor, async (req, res) => {
         'e.eventdefaultcapacity',
         'et.eventtype'
       )
-      .orderBy('s.eventdatetimestart', 'desc');
+      .orderBy('s.eventdatetimestart', 'asc');
 
     const now = new Date();
 
@@ -2375,15 +2375,17 @@ app.get('/events', requireAuth, restrictDonor, async (req, res) => {
     }
 
     // Separate sessions into current (upcoming) and past
+    // Events move to past 3 hours after event end time
     allSessions.forEach(session => {
       const endDate = new Date(session.eventdatetimeend);
+      const threeHoursAfterEnd = new Date(endDate.getTime() + 3 * 60 * 60 * 1000);
 
       // For participant past events, only show sessions they registered for
-      if (!isManager && endDate < now) {
+      if (!isManager && threeHoursAfterEnd < now) {
         if (registrationsBySessionId[session.sessionid]) {
           pastSessions.push(session);
         }
-      } else if (endDate < now) {
+      } else if (threeHoursAfterEnd < now) {
         pastSessions.push(session);
       } else {
         currentSessions.push(session);
@@ -2788,6 +2790,234 @@ app.get('/events/:sessionId', requireAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('Event details error:', error);
+    res.redirect('/events');
+  }
+});
+
+// Delete Event Session Route - POST (manager only)
+app.post('/events/:sessionId/delete', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.status(403).send('Forbidden');
+    }
+
+    const sessionId = parseInt(req.params.sessionId);
+    if (isNaN(sessionId)) {
+      return res.redirect('/events');
+    }
+
+    // Verify session exists
+    const session = await db('session')
+      .where('sessionid', sessionId)
+      .first();
+
+    if (!session) {
+      return res.redirect('/events?error=session_not_found');
+    }
+
+    // Cascade delete: First delete all registrations for this session
+    await db('registration')
+      .where('sessionid', sessionId)
+      .del();
+
+    // Then delete the session itself
+    await db('session')
+      .where('sessionid', sessionId)
+      .del();
+
+    res.redirect('/events?success=session_deleted');
+  } catch (error) {
+    console.error('Delete event session error:', error);
+    res.redirect('/events?error=delete_failed');
+  }
+});
+
+// Edit Event Session Route - GET (manager only)
+app.get('/events/:sessionId/edit', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.redirect('/events');
+    }
+
+    const sessionId = parseInt(req.params.sessionId);
+    if (isNaN(sessionId)) {
+      return res.redirect('/events');
+    }
+
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
+    };
+
+    // Fetch session with JOINs to event and eventtype tables
+    const session = await db('session as s')
+      .join('event as e', 's.eventid', 'e.eventid')
+      .join('eventtype as et', 'e.eventtypeid', 'et.eventtypeid')
+      .where('s.sessionid', sessionId)
+      .select(
+        's.sessionid',
+        's.eventid',
+        's.eventdatetimestart',
+        's.eventlocation',
+        's.eventdatetimeend',
+        's.eventcapacity',
+        's.eventregistrationdeadline',
+        'e.eventname',
+        'e.eventdescription',
+        'e.eventrecurrencepattern',
+        'e.eventdefaultcapacity',
+        'et.eventtype'
+      )
+      .first();
+
+    if (!session) {
+      return res.redirect('/events');
+    }
+
+    res.render('event-edit', { 
+      user, 
+      session,
+      query: req.query
+    });
+  } catch (error) {
+    console.error('Edit event GET error:', error);
+    res.redirect('/events');
+  }
+});
+
+// Edit Event Session Route - POST (manager only)
+app.post('/events/:sessionId/edit', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.redirect('/events');
+    }
+
+    const sessionId = parseInt(req.params.sessionId);
+    if (isNaN(sessionId)) {
+      return res.redirect('/events');
+    }
+
+    const { eventdatetimestart, eventlocation, eventdatetimeend, eventcapacity, eventregistrationdeadline } = req.body;
+
+    // Validate required fields
+    if (!eventdatetimestart || !eventlocation || !eventdatetimeend) {
+      return res.redirect(`/events/${sessionId}/edit?error=missing_fields`);
+    }
+
+    // Verify session exists
+    const existingSession = await db('session')
+      .where('sessionid', sessionId)
+      .first();
+
+    if (!existingSession) {
+      return res.redirect('/events?error=session_not_found');
+    }
+
+    // Parse dates
+    let startDateTime, endDateTime, regDeadline = null;
+    try {
+      startDateTime = new Date(eventdatetimestart);
+      endDateTime = new Date(eventdatetimeend);
+      if (eventregistrationdeadline && eventregistrationdeadline.trim() !== '') {
+        regDeadline = new Date(eventregistrationdeadline);
+      }
+    } catch (error) {
+      return res.redirect(`/events/${sessionId}/edit?error=invalid_date`);
+    }
+
+    // Validate dates
+    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+      return res.redirect(`/events/${sessionId}/edit?error=invalid_date`);
+    }
+
+    if (regDeadline && isNaN(regDeadline.getTime())) {
+      return res.redirect(`/events/${sessionId}/edit?error=invalid_date`);
+    }
+
+    // Parse capacity - if empty, set to null (will use event default)
+    let finalCapacity = null;
+    if (eventcapacity && eventcapacity.trim() !== '') {
+      finalCapacity = parseInt(eventcapacity);
+      if (isNaN(finalCapacity)) {
+        finalCapacity = null;
+      }
+    }
+
+    // Update session record
+    await db('session')
+      .where('sessionid', sessionId)
+      .update({
+        eventdatetimestart: startDateTime,
+        eventlocation: eventlocation.trim(),
+        eventdatetimeend: endDateTime,
+        eventcapacity: finalCapacity,
+        eventregistrationdeadline: regDeadline
+      });
+
+    res.redirect(`/events/${sessionId}?success=true`);
+  } catch (error) {
+    console.error('Edit event POST error:', error);
+    res.redirect(`/events/${sessionId}/edit?error=update_failed`);
+  }
+});
+
+// Take Attendance Route - GET (manager only)
+app.get('/events/:sessionId/attendance', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.redirect('/events');
+    }
+
+    const sessionId = parseInt(req.params.sessionId);
+    if (isNaN(sessionId)) {
+      return res.redirect('/events');
+    }
+
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
+    };
+
+    // Fetch session with JOINs to event and eventtype tables
+    const session = await db('session as s')
+      .join('event as e', 's.eventid', 'e.eventid')
+      .join('eventtype as et', 'e.eventtypeid', 'et.eventtypeid')
+      .where('s.sessionid', sessionId)
+      .select(
+        's.sessionid',
+        's.eventid',
+        's.eventdatetimestart',
+        's.eventlocation',
+        's.eventdatetimeend',
+        's.eventcapacity',
+        's.eventregistrationdeadline',
+        'e.eventname',
+        'e.eventdescription',
+        'e.eventrecurrencepattern',
+        'e.eventdefaultcapacity',
+        'et.eventtype'
+      )
+      .first();
+
+    if (!session) {
+      return res.redirect('/events');
+    }
+
+    res.render('event-attendance', { 
+      user, 
+      session,
+      query: req.query
+    });
+  } catch (error) {
+    console.error('Take attendance GET error:', error);
     res.redirect('/events');
   }
 });
