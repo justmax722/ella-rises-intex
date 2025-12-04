@@ -14,10 +14,24 @@
     <main class="flex-1 p-6 md:p-8">
         <div class="max-w-7xl mx-auto">
             <!-- Page Header -->
-            <div class="mb-8">
-                <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">Donations</h1>
-                <p class="text-base text-card-foreground/70">Track and manage donations</p>
+            <div class="mb-8 flex items-start justify-between">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">Donations</h1>
+                    <p class="text-base text-card-foreground/70">Track and manage donations</p>
+                </div>
+                <a href="/donate?loggedIn=true" class="px-4 py-2 md:px-6 md:py-2.5 bg-accent text-accent-foreground rounded-md font-medium hover:bg-accent/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                    Make a Donation
+                </a>
             </div>
+
+            <!-- Success Message -->
+            <% if (typeof query !== 'undefined' && query.donationSuccess === 'true') { %>
+            <div id="successMessage" class="mb-6 p-4 bg-secondary/20 border border-secondary rounded-md">
+                <p class="text-sm text-card-foreground text-center">
+                    Donation submitted successfully! Thank you for your support.
+                </p>
+            </div>
+            <% } %>
 
             <!-- Summary Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -61,9 +75,66 @@
 
             <!-- Donation History -->
             <div class="bg-card rounded-lg shadow-sm overflow-hidden">
-                <div class="p-6 border-b border-border">
+                <div class="p-6 border-b border-border flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-card-foreground">Donation History</h3>
+                    <% if (user.role === 'manager') { %>
+                    <a href="/donations?view=<%= viewPersonal ? 'all' : 'personal' %>" class="px-4 py-2 bg-muted text-foreground rounded-md font-medium hover:bg-muted/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring">
+                        <%= viewPersonal ? 'View all Donations' : 'View Personal Donation History' %>
+                    </a>
+                    <% } %>
                 </div>
+
+                <% if (user.role === 'manager') { %>
+                <!-- Search and Filter Controls -->
+                <div class="p-6 border-b border-border bg-muted/30">
+                    <div class="flex flex-wrap items-end gap-4">
+                        <!-- Search -->
+                        <div class="flex-1 min-w-[200px]">
+                            <label for="searchInput" class="block text-sm font-medium text-card-foreground mb-2">
+                                Search
+                            </label>
+                            <input 
+                                type="text" 
+                                id="searchInput" 
+                                placeholder="Search by name, email, or amount..."
+                                class="w-full px-4 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                            />
+                        </div>
+                        <!-- Date Filter From -->
+                        <div class="w-40">
+                            <label for="dateFrom" class="block text-sm font-medium text-card-foreground mb-2">
+                                Date From
+                            </label>
+                            <input 
+                                type="date" 
+                                id="dateFrom" 
+                                class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                            />
+                        </div>
+                        <!-- Date Filter To -->
+                        <div class="w-40">
+                            <label for="dateTo" class="block text-sm font-medium text-card-foreground mb-2">
+                                Date To
+                            </label>
+                            <input 
+                                type="date" 
+                                id="dateTo" 
+                                class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                            />
+                        </div>
+                        <!-- Clear Filters Button -->
+                        <div>
+                            <button 
+                                type="button" 
+                                id="clearFilters" 
+                                class="px-4 py-2 bg-muted text-foreground rounded-md font-medium hover:bg-muted/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring whitespace-nowrap"
+                            >
+                                Clear Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead class="bg-muted/50 border-b border-border">
@@ -74,9 +145,6 @@
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Date</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Payment Method</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Receipt</th>
-                                <% if (user.role === 'manager') { %>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Actions</th>
-                                <% } %>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-border">
@@ -92,7 +160,7 @@
                                             <div class="text-sm text-card-foreground/70"><%= donation.useremail || 'N/A' %></div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-card-foreground">$<%= parseFloat(donation.donationamount).toFixed(2) %></div>
+                                            <div class="text-sm font-medium text-card-foreground">$<%= parseFloat(donation.donationamount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-card-foreground/70"><%= new Date(donation.donationdate).toLocaleDateString('en-US') %></div>
@@ -103,17 +171,11 @@
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary text-primary-foreground">Sent</span>
                                         </td>
-                                        <% if (user.role === 'manager') { %>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <button class="text-accent hover:text-accent/80 mr-3">Edit</button>
-                                            <button class="text-destructive hover:text-destructive/80">Delete</button>
-                                        </td>
-                                        <% } %>
                                     </tr>
                                 <% }); %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="7" class="px-6 py-4 text-center text-sm text-card-foreground/70">
+                                    <td colspan="6" class="px-6 py-4 text-center text-sm text-card-foreground/70">
                                         No donations found.
                                     </td>
                                 </tr>
@@ -124,5 +186,114 @@
             </div>
         </div>
     </main>
+
+    <script>
+        // Auto-hide success message after 5 seconds
+        const successMessage = document.getElementById('successMessage');
+        if (successMessage) {
+            setTimeout(() => {
+                successMessage.style.transition = 'opacity 0.5s';
+                successMessage.style.opacity = '0';
+                setTimeout(() => {
+                    successMessage.remove();
+                }, 500);
+            }, 5000);
+        }
+
+        <% if (user.role === 'manager') { %>
+        // Search and filter functionality for managers
+        const searchInput = document.getElementById('searchInput');
+        const dateFrom = document.getElementById('dateFrom');
+        const dateTo = document.getElementById('dateTo');
+        const clearFilters = document.getElementById('clearFilters');
+        const tableBody = document.querySelector('tbody');
+        const allRows = Array.from(tableBody.querySelectorAll('tr'));
+        const tableRows = allRows.filter(row => !row.querySelector('td[colspan]'));
+        const noDonationsRow = allRows.find(row => row.querySelector('td[colspan]'));
+
+        function filterDonations() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const fromDate = dateFrom.value ? new Date(dateFrom.value) : null;
+            const toDate = dateTo.value ? new Date(dateTo.value) : null;
+            
+            // Set toDate to end of day
+            if (toDate) {
+                toDate.setHours(23, 59, 59, 999);
+            }
+
+            let visibleCount = 0;
+
+            tableRows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const name = (cells[0]?.textContent || '').toLowerCase();
+                const email = (cells[1]?.textContent || '').toLowerCase();
+                const amount = (cells[2]?.textContent || '').toLowerCase();
+                const dateText = cells[3]?.textContent || '';
+                const dateValue = dateText ? new Date(dateText) : null;
+
+                // Search filter
+                let matchesSearch = true;
+                if (searchTerm) {
+                    matchesSearch = name.includes(searchTerm) || 
+                                   email.includes(searchTerm) || 
+                                   amount.includes(searchTerm);
+                }
+
+                // Date filter
+                let matchesDate = true;
+                if (fromDate && dateValue) {
+                    matchesDate = matchesDate && dateValue >= fromDate;
+                }
+                if (toDate && dateValue) {
+                    matchesDate = matchesDate && dateValue <= toDate;
+                }
+
+                // Show/hide row based on filters
+                if (matchesSearch && matchesDate) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Show/hide "No donations found" message
+            if (noDonationsRow) {
+                if (visibleCount === 0 && tableRows.length > 0) {
+                    noDonationsRow.style.display = '';
+                } else {
+                    noDonationsRow.style.display = 'none';
+                }
+            }
+        }
+
+        // Debounce search input
+        let searchTimeout;
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(filterDonations, 300);
+            });
+        }
+
+        // Date filter change handlers
+        if (dateFrom) {
+            dateFrom.addEventListener('change', filterDonations);
+        }
+        if (dateTo) {
+            dateTo.addEventListener('change', filterDonations);
+        }
+
+        // Clear filters
+        if (clearFilters) {
+            clearFilters.addEventListener('click', function() {
+                searchInput.value = '';
+                dateFrom.value = '';
+                dateTo.value = '';
+                filterDonations();
+            });
+        }
+        <% } %>
+    </script>
 </body>
 </html>
