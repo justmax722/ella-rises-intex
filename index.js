@@ -1853,6 +1853,9 @@ app.get('/events', requireAuth, restrictDonor, async (req, res) => {
       lastName: req.session.userLastName || ''
     };
 
+    const userId = req.session.userId;
+    const isManager = req.session.userRole === 'manager';
+
     // Query all sessions with JOINs to event and eventtype tables
     const allSessions = await db('session as s')
       .join('event as e', 's.eventid', 'e.eventid')
@@ -1873,19 +1876,139 @@ app.get('/events', requireAuth, restrictDonor, async (req, res) => {
       )
       .orderBy('s.eventdatetimestart', 'desc');
 
-    // Separate sessions into current (upcoming) and past
     const now = new Date();
-    const currentSessions = [];
-    const pastSessions = [];
 
+    // Pre-compute active registration counts per session (exclude cancelled)
+    const sessionIds = allSessions.map(s => s.sessionid);
+    let registrationCountsBySessionId = {};
+    if (sessionIds.length > 0) {
+      const registrationCounts = await db('registration')
+        .select('sessionid')
+        .count('* as count')
+        .whereIn('sessionid', sessionIds)
+        .andWhere(function () {
+          this.whereNull('registrationstatus')
+            .orWhereNot('registrationstatus', 'cancelled');
+        })
+        .groupBy('sessionid');
+
+      registrationCountsBySessionId = registrationCounts.reduce((acc, row) => {
+        acc[row.sessionid] = parseInt(row.count, 10) || 0;
+        return acc;
+      }, {});
+    }
+
+    // Build distinct event types and recurrence patterns for filters (admin view)
+    const eventTypesSet = new Set();
+    const recurrenceSet = new Set();
     allSessions.forEach(session => {
-      const endDate = new Date(session.eventdatetimeend);
-      if (endDate >= now) {
-        currentSessions.push(session);
-      } else {
-        pastSessions.push(session);
+      if (session.eventtype) {
+        eventTypesSet.add(session.eventtype);
+      }
+      if (session.eventrecurrencepattern) {
+        recurrenceSet.add(session.eventrecurrencepattern);
       }
     });
+    const eventTypes = Array.from(eventTypesSet).sort();
+    const recurrencePatterns = Array.from(recurrenceSet).sort();
+
+    let currentSessions = [];
+    let pastSessions = [];
+
+    // Participant view needs registration data
+    let registrationsBySessionId = {};
+
+    if (!isManager) {
+      // Get registrations for this participant, joined with session to determine end times
+      const registrations = await db('registration as r')
+        .join('session as s', 'r.sessionid', 's.sessionid')
+        .where('r.userid', userId)
+        .select(
+          'r.sessionid',
+          'r.registrationstatus',
+          'r.registrationcreatedat',
+          's.eventdatetimeend'
+        );
+
+      // Default no-show after event end if status is still null
+      for (const reg of registrations) {
+        const endDate = new Date(reg.eventdatetimeend);
+        if (!reg.registrationstatus && endDate < now) {
+          try {
+            await db('registration')
+              .where('userid', userId)
+              .andWhere('sessionid', reg.sessionid)
+              .andWhereNull('registrationstatus')
+              .update({ registrationstatus: 'no-show' });
+            reg.registrationstatus = 'no-show';
+          } catch (updateError) {
+            console.error('Failed to default registrationstatus to no-show', updateError);
+          }
+        }
+      }
+
+      registrationsBySessionId = registrations.reduce((acc, reg) => {
+        acc[reg.sessionid] = {
+          registrationstatus: reg.registrationstatus,
+          registrationcreatedat: reg.registrationcreatedat
+        };
+        return acc;
+      }, {});
+    }
+
+    // Separate sessions into current (upcoming) and past
+    allSessions.forEach(session => {
+      const endDate = new Date(session.eventdatetimeend);
+
+      // For participant past events, only show sessions they registered for
+      if (!isManager && endDate < now) {
+        if (registrationsBySessionId[session.sessionid]) {
+          pastSessions.push(session);
+        }
+      } else if (endDate < now) {
+        pastSessions.push(session);
+      } else {
+        currentSessions.push(session);
+      }
+    });
+
+    // Attach registration, deadline, and capacity state to sessions for participant view
+    if (!isManager) {
+      const deadlinePassed = (deadline) => {
+        if (!deadline) return false;
+        const d = new Date(deadline);
+        return d < now;
+      };
+
+      const decorate = (list) =>
+        list.map(session => {
+          const reg = registrationsBySessionId[session.sessionid];
+          const activeRegistration = reg || null;
+
+          const capacityRaw = session.eventcapacity || session.eventdefaultcapacity;
+          const capacity =
+            typeof capacityRaw === 'number'
+              ? capacityRaw
+              : capacityRaw
+              ? parseInt(capacityRaw, 10)
+              : null;
+
+          const currentRegCount = registrationCountsBySessionId[session.sessionid] || 0;
+          const isFull = capacity !== null && !Number.isNaN(capacity) && currentRegCount >= capacity;
+
+          return {
+            ...session,
+            isRegistered: !!activeRegistration,
+            registrationStatus: activeRegistration ? activeRegistration.registrationstatus : null,
+            registrationDeadlinePassed: deadlinePassed(session.eventregistrationdeadline),
+            currentRegistrationCount: currentRegCount,
+            isFull
+          };
+        });
+
+      currentSessions = decorate(currentSessions);
+      pastSessions = decorate(pastSessions);
+    }
 
     // Get search query parameter
     const searchQuery = req.query.search || '';
@@ -1894,7 +2017,9 @@ app.get('/events', requireAuth, restrictDonor, async (req, res) => {
       user,
       currentSessions,
       pastSessions,
-      searchQuery
+      searchQuery,
+      eventTypes,
+      recurrencePatterns
     });
   } catch (error) {
     console.error('Events error:', error);
@@ -2134,12 +2259,14 @@ app.post('/events/create', requireAuth, async (req, res) => {
   }
 });
 
-// Event Details Route - GET (manager only)
+// Event Details Route - GET (manager and participant)
 app.get('/events/:sessionId', requireAuth, async (req, res) => {
   try {
-    // Check if user is manager
-    if (req.session.userRole !== 'manager') {
-      return res.redirect('/events');
+    const userRole = req.session.userRole;
+
+    // Donors should not access event details
+    if (userRole === 'donor') {
+      return res.redirect('/dashboard');
     }
 
     const sessionId = parseInt(req.params.sessionId);
@@ -2149,7 +2276,7 @@ app.get('/events/:sessionId', requireAuth, async (req, res) => {
 
     const user = {
       email: req.session.userEmail,
-      role: req.session.userRole,
+      role: userRole,
       firstName: req.session.userFirstName || '',
       lastName: req.session.userLastName || ''
     };
@@ -2180,17 +2307,199 @@ app.get('/events/:sessionId', requireAuth, async (req, res) => {
     }
 
     // Determine capacity (use session capacity if available, otherwise default)
-    const capacity = session.eventcapacity || session.eventdefaultcapacity || 'N/A';
+    const capacityValue = session.eventcapacity || session.eventdefaultcapacity || null;
+    const capacity =
+      typeof capacityValue === 'number'
+        ? capacityValue
+        : capacityValue
+        ? parseInt(capacityValue, 10)
+        : 'N/A';
+
+    // Participant registration state
+    let isRegistered = false;
+    let registrationStatus = null;
+    let registrationDeadlinePassed = false;
+    let currentRegistrationCount = 0;
+    let isFull = false;
+
+    const now = new Date();
+    if (session.eventregistrationdeadline) {
+      const deadline = new Date(session.eventregistrationdeadline);
+      registrationDeadlinePassed = deadline < now;
+    }
+
+    // Compute active registration count for this session (exclude cancelled)
+    const registrationCountRow = await db('registration')
+      .where('sessionid', sessionId)
+      .andWhere(function () {
+        this.whereNull('registrationstatus')
+          .orWhereNot('registrationstatus', 'cancelled');
+      })
+      .count('* as count')
+      .first();
+
+    currentRegistrationCount = registrationCountRow ? parseInt(registrationCountRow.count, 10) || 0 : 0;
+
+    if (typeof capacity === 'number' && !Number.isNaN(capacity)) {
+      isFull = currentRegistrationCount >= capacity;
+    }
+
+    if (userRole === 'user') {
+      const userId = req.session.userId;
+      const reg = await db('registration')
+        .where('userid', userId)
+        .andWhere('sessionid', sessionId)
+        .first();
+
+      if (reg) {
+        isRegistered = true;
+        registrationStatus = reg.registrationstatus;
+      }
+    }
 
     res.render('event-details', { 
       user, 
       session,
       capacity,
-      query: req.query
+      query: req.query,
+      isRegistered,
+      registrationStatus,
+      registrationDeadlinePassed,
+      currentRegistrationCount,
+      isFull
     });
   } catch (error) {
     console.error('Event details error:', error);
     res.redirect('/events');
+  }
+});
+
+// Participant Event Registration Routes
+app.post('/events/:sessionId/register', requireAuth, restrictDonor, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const sessionId = parseInt(req.params.sessionId);
+    const returnTab = req.body.returnTab || 'upcoming';
+
+    if (isNaN(sessionId)) {
+      return res.redirect('/events');
+    }
+
+    // Validate session and registration deadline, and enforce capacity
+    const session = await db('session as s')
+      .join('event as e', 's.eventid', 'e.eventid')
+      .where('s.sessionid', sessionId)
+      .select(
+        's.sessionid',
+        's.eventcapacity',
+        's.eventregistrationdeadline',
+        'e.eventdefaultcapacity',
+        'e.eventname'
+      )
+      .first();
+
+    if (!session) {
+      return res.redirect('/events?error=session_not_found');
+    }
+
+    const now = new Date();
+    if (session.eventregistrationdeadline) {
+      const deadline = new Date(session.eventregistrationdeadline);
+      if (deadline < now) {
+        return res.redirect(`/events?tab=${encodeURIComponent(returnTab)}&error=registration_deadline_passed`);
+      }
+    }
+
+    const capacityRaw = session.eventcapacity || session.eventdefaultcapacity;
+    const capacity =
+      typeof capacityRaw === 'number'
+        ? capacityRaw
+        : capacityRaw
+        ? parseInt(capacityRaw, 10)
+        : null;
+
+    if (capacity !== null && !Number.isNaN(capacity)) {
+      const registrationCountRow = await db('registration')
+        .where('sessionid', sessionId)
+        .andWhere(function () {
+          this.whereNull('registrationstatus')
+            .orWhereNot('registrationstatus', 'cancelled');
+        })
+        .count('* as count')
+        .first();
+
+      const currentCount = registrationCountRow ? parseInt(registrationCountRow.count, 10) || 0 : 0;
+
+      if (currentCount >= capacity) {
+        return res.redirect(`/events?tab=${encodeURIComponent(returnTab)}&error=no_seats_available`);
+      }
+    }
+
+    // Upsert registration
+    const existing = await db('registration')
+      .where('userid', userId)
+      .andWhere('sessionid', sessionId)
+      .first();
+
+    const baseData = {
+      registrationstatus: null,
+      registrationattendedflag: null,
+      registrationcheckintime: null,
+      registrationcreatedat: now,
+      surveynpsbucket: null,
+      surveycomments: null,
+      overallsurveryscore: null,
+      surveysubmissiondate: null
+    };
+
+    if (existing) {
+      await db('registration')
+        .where('userid', userId)
+        .andWhere('sessionid', sessionId)
+        .update(baseData);
+    } else {
+      await db('registration').insert({
+        userid: userId,
+        sessionid: sessionId,
+        ...baseData
+      });
+    }
+
+    return res.redirect(`/events?tab=${encodeURIComponent(returnTab)}&success=registered`);
+  } catch (error) {
+    console.error('Event registration error:', error);
+    return res.redirect('/events?error=registration_failed');
+  }
+});
+
+app.post('/events/:sessionId/cancel-registration', requireAuth, restrictDonor, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const sessionId = parseInt(req.params.sessionId);
+    const returnTab = req.body.returnTab || 'upcoming';
+
+    if (isNaN(sessionId)) {
+      return res.redirect('/events');
+    }
+
+    const existing = await db('registration')
+      .where('userid', userId)
+      .andWhere('sessionid', sessionId)
+      .first();
+
+    if (!existing) {
+      return res.redirect(`/events?tab=${encodeURIComponent(returnTab)}&error=not_registered`);
+    }
+
+    await db('registration')
+      .where('userid', userId)
+      .andWhere('sessionid', sessionId)
+      .update({ registrationstatus: 'cancelled' });
+
+    return res.redirect(`/events?tab=${encodeURIComponent(returnTab)}&success=cancelled`);
+  } catch (error) {
+    console.error('Event cancel registration error:', error);
+    return res.redirect('/events?error=cancel_failed');
   }
 });
 

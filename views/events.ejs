@@ -27,9 +27,9 @@
             </div>
 
             <!-- Action Bar -->
-            <div class="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <!-- Search Bar -->
-                <div class="relative flex-1 max-w-md">
+                <div class="relative flex-1 w-full max-w-xl">
                     <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
@@ -41,6 +41,28 @@
                         class="w-full pl-10 pr-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
                     />
                 </div>
+
+                <% if (user.role !== 'donor') { %>
+                <!-- Filters for Event Type and Recurrence -->
+                <div class="flex flex-wrap gap-3 md:ml-4 md:flex-none">
+                    <select id="eventTypeFilter" class="min-w-[180px] h-10 px-3 py-2 border border-input rounded-md bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent">
+                        <option value="">All Event Types</option>
+                        <% if (Array.isArray(eventTypes)) { %>
+                            <% eventTypes.forEach(function(type) { %>
+                                <option value="<%= type %>"><%= type %></option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                    <select id="recurrenceFilter" class="min-w-[180px] h-10 px-3 py-2 border border-input rounded-md bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent">
+                        <option value="">All Recurrence Patterns</option>
+                        <% if (Array.isArray(recurrencePatterns)) { %>
+                            <% recurrencePatterns.forEach(function(pattern) { %>
+                                <option value="<%= pattern %>"><%= pattern %></option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                </div>
+                <% } %>
             </div>
 
             <!-- Tab Navigation -->
@@ -52,6 +74,17 @@
                     Past Events
                 </button>
             </div>
+
+            <!-- Success Messages -->
+            <% if (typeof query !== 'undefined' && query.success === 'registered') { %>
+            <div id="eventsSuccessMessage" class="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
+                <p class="text-sm text-green-800">You have successfully registered for the event.</p>
+            </div>
+            <% } else if (typeof query !== 'undefined' && query.success === 'cancelled') { %>
+            <div id="eventsSuccessMessage" class="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
+                <p class="text-sm text-green-800">Your registration has been cancelled.</p>
+            </div>
+            <% } %>
 
             <!-- Events List -->
             <div class="space-y-8">
@@ -70,7 +103,9 @@
                             <div class="event-card bg-card rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow" 
                                  data-name="<%= session.eventname.toLowerCase() %>"
                                  data-description="<%= (session.eventdescription || '').toLowerCase() %>"
-                                 data-location="<%= (session.eventlocation || '').toLowerCase() %>">
+                                 data-location="<%= (session.eventlocation || '').toLowerCase() %>"
+                                 data-type="<%= (session.eventtype || '').toLowerCase() %>"
+                                 data-recurrence="<%= (session.eventrecurrencepattern || '').toLowerCase() %>">
                                 <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                                     <div class="flex-1">
                                         <div class="flex items-start gap-3 mb-2">
@@ -112,7 +147,60 @@
                                             <% } %>
                                         </div>
                                     </div>
-                                    <div class="flex gap-2">
+                                    <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                                        <% 
+                                            const isParticipant = user.role === 'user';
+                                            const deadlinePassed = session.registrationDeadlinePassed;
+                                            const isRegistered = !!session.isRegistered;
+                                            const isCancelled = session.registrationStatus === 'cancelled';
+                                            const isFull = !!session.isFull;
+
+                                            const canRegister = isParticipant && !deadlinePassed && !isFull && (!isRegistered || isCancelled);
+                                            const canCancel = isParticipant && !deadlinePassed && isRegistered && !isCancelled;
+                                        %>
+
+                                        <% if (isParticipant) { %>
+                                            <% if (deadlinePassed) { %>
+                                                <button 
+                                                    type="button"
+                                                    class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 cursor-not-allowed bg-muted text-muted-foreground"
+                                                    aria-disabled="true"
+                                                >
+                                                    Registration Has Passed
+                                                </button>
+                                            <% } else if (canCancel) { %>
+                                                <button 
+                                                    type="button"
+                                                    class="register-btn inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                                    data-session-id="<%= session.sessionid %>"
+                                                    data-session-name="<%= session.eventname %>"
+                                                    data-action="cancel"
+                                                    data-return-tab="upcoming"
+                                                >
+                                                    Cancel Registration
+                                                </button>
+                                            <% } else if (canRegister) { %>
+                                                <button 
+                                                    type="button"
+                                                    class="register-btn inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                                                    data-session-id="<%= session.sessionid %>"
+                                                    data-session-name="<%= session.eventname %>"
+                                                    data-action="register"
+                                                    data-return-tab="upcoming"
+                                                >
+                                                    Register
+                                                </button>
+                                            <% } else if (isFull) { %>
+                                                <button 
+                                                    type="button"
+                                                    class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 cursor-not-allowed bg-muted text-muted-foreground"
+                                                    aria-disabled="true"
+                                                >
+                                                    No Seats Available
+                                                </button>
+                                            <% } %>
+                                        <% } %>
+
                                         <a href="/events/<%= session.sessionid %>?from=upcoming" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
                                             View Details
                                         </a>
@@ -142,7 +230,9 @@
                             <div class="event-card bg-card rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow" 
                                  data-name="<%= session.eventname.toLowerCase() %>"
                                  data-description="<%= (session.eventdescription || '').toLowerCase() %>"
-                                 data-location="<%= (session.eventlocation || '').toLowerCase() %>">
+                                 data-location="<%= (session.eventlocation || '').toLowerCase() %>"
+                                 data-type="<%= (session.eventtype || '').toLowerCase() %>"
+                                 data-recurrence="<%= (session.eventrecurrencepattern || '').toLowerCase() %>">
                                 <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                                     <div class="flex-1">
                                         <div class="flex items-start gap-3 mb-2">
@@ -236,9 +326,14 @@
         upcomingTab.addEventListener('click', () => switchTab('upcoming'));
         pastTab.addEventListener('click', () => switchTab('past'));
 
-        // Search functionality
+        // Search & filter functionality
         function filterEvents() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const typeFilter = document.getElementById('eventTypeFilter');
+            const recurrenceFilter = document.getElementById('recurrenceFilter');
+            const selectedType = typeFilter ? typeFilter.value.toLowerCase() : '';
+            const selectedRecurrence = recurrenceFilter ? recurrenceFilter.value.toLowerCase() : '';
+
             const activeContainer = upcomingEvents.classList.contains('hidden') ? pastEvents : upcomingEvents;
             const cards = activeContainer.querySelectorAll('.event-card');
             
@@ -246,11 +341,18 @@
                 const name = card.getAttribute('data-name') || '';
                 const description = card.getAttribute('data-description') || '';
                 const location = card.getAttribute('data-location') || '';
+                const type = card.getAttribute('data-type') || '';
+                const recurrence = card.getAttribute('data-recurrence') || '';
                 
-                if (!searchTerm || 
+                const matchesSearch = !searchTerm || 
                     name.includes(searchTerm) || 
                     description.includes(searchTerm) || 
-                    location.includes(searchTerm)) {
+                    location.includes(searchTerm);
+
+                const matchesType = !selectedType || type === selectedType;
+                const matchesRecurrence = !selectedRecurrence || recurrence === selectedRecurrence;
+
+                if (matchesSearch && matchesType && matchesRecurrence) {
                     card.style.display = '';
                 } else {
                     card.style.display = 'none';
@@ -259,6 +361,10 @@
         }
 
         document.getElementById('searchInput').addEventListener('input', filterEvents);
+        const typeFilterEl = document.getElementById('eventTypeFilter');
+        const recurrenceFilterEl = document.getElementById('recurrenceFilter');
+        if (typeFilterEl) typeFilterEl.addEventListener('change', filterEvents);
+        if (recurrenceFilterEl) recurrenceFilterEl.addEventListener('change', filterEvents);
 
         // Initialize tab based on URL parameter
         document.addEventListener('DOMContentLoaded', () => {
@@ -270,6 +376,174 @@
                 switchTab('upcoming');
             }
             filterEvents();
+        });
+
+        // Auto-hide events success message
+        const eventsSuccessMessage = document.getElementById('eventsSuccessMessage');
+        if (eventsSuccessMessage) {
+            setTimeout(() => {
+                eventsSuccessMessage.style.transition = 'opacity 0.5s';
+                eventsSuccessMessage.style.opacity = '0';
+                setTimeout(() => {
+                    eventsSuccessMessage.remove();
+                }, 500);
+            }, 5000);
+        }
+
+        // Registration / Cancellation modal (reuse profile style)
+        const registerButtons = document.querySelectorAll('.register-btn');
+
+        // Create modal lazily to avoid duplicating markup
+        let modalElement = null;
+        let modalTitleEl = null;
+        let modalBodyEl = null;
+        let modalCancelBtn = null;
+        let modalConfirmBtn = null;
+        let modalForm = null;
+
+        function ensureModal() {
+            if (modalElement) return;
+
+            modalElement = document.createElement('div');
+            modalElement.id = 'eventsRegisterModal';
+            modalElement.className = 'fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm';
+            modalElement.innerHTML = `
+                <div class="bg-card rounded-lg border border-border shadow-lg max-w-md w-full mx-4">
+                    <div class="p-6">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-check-2 text-primary">
+                                    <path d="M8 2v4"></path>
+                                    <path d="M16 2v4"></path>
+                                    <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                                    <path d="M3 10h18"></path>
+                                    <path d="m9 16 2 2 4-4"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <h3 id="eventsModalTitle" class="text-lg font-semibold text-card-foreground"></h3>
+                                <p id="eventsModalSubtitle" class="text-sm text-muted-foreground mt-1"></p>
+                            </div>
+                        </div>
+                        <div class="mb-6">
+                            <p id="eventsModalBody" class="text-sm text-card-foreground"></p>
+                        </div>
+                        <div class="flex gap-3 justify-end">
+                            <button id="eventsModalCancelBtn" type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                                Cancel
+                            </button>
+                            <form id="eventsModalForm" method="POST">
+                                <input type="hidden" name="returnTab" id="eventsReturnTabInput" value="upcoming" />
+                                <button id="eventsModalConfirmBtn" type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                                    Confirm
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modalElement);
+
+            modalTitleEl = document.getElementById('eventsModalTitle');
+            modalBodyEl = document.getElementById('eventsModalBody');
+            modalCancelBtn = document.getElementById('eventsModalCancelBtn');
+            modalConfirmBtn = document.getElementById('eventsModalConfirmBtn');
+            modalForm = document.getElementById('eventsModalForm');
+
+            const modalSubtitleEl = document.getElementById('eventsModalSubtitle');
+
+            // Close handlers
+            modalCancelBtn.addEventListener('click', () => {
+                modalElement.classList.add('hidden');
+            });
+            modalElement.addEventListener('click', (e) => {
+                if (e.target === modalElement) {
+                    modalElement.classList.add('hidden');
+                }
+            });
+
+            // Store subtitle element for later use
+            modalElement._subtitleEl = modalSubtitleEl;
+        }
+
+        function handleRegisterButtonClick(btn) {
+            btn.addEventListener('click', () => {
+                ensureModal();
+                const sessionId = btn.getAttribute('data-session-id');
+                const sessionName = btn.getAttribute('data-session-name') || 'this event';
+                const action = btn.getAttribute('data-action');
+                const returnTab = btn.getAttribute('data-return-tab') || 'upcoming';
+
+                const subtitleEl = modalElement._subtitleEl;
+
+                if (action === 'cancel') {
+                    modalTitleEl.textContent = 'Cancel Registration';
+                    if (subtitleEl) subtitleEl.textContent = 'Confirm cancellation';
+                    modalBodyEl.textContent = `Are you sure you want to cancel your registration for "${sessionName}"?`;
+                    modalForm.action = `/events/${encodeURIComponent(sessionId)}/cancel-registration`;
+                    modalConfirmBtn.textContent = 'Confirm Cancellation';
+                    modalConfirmBtn.classList.remove('bg-primary', 'text-primary-foreground', 'hover:bg-primary/90');
+                    modalConfirmBtn.classList.add('border', 'border-destructive', 'text-destructive', 'hover:bg-destructive', 'hover:text-destructive-foreground');
+                } else {
+                    modalTitleEl.textContent = 'Register for Event';
+                    if (subtitleEl) subtitleEl.textContent = 'Confirm your registration';
+                    modalBodyEl.textContent = `Do you want to register for "${sessionName}"?`;
+                    modalForm.action = `/events/${encodeURIComponent(sessionId)}/register`;
+                    modalConfirmBtn.textContent = 'Confirm Registration';
+                    modalConfirmBtn.classList.remove('border', 'border-destructive', 'text-destructive', 'hover:bg-destructive', 'hover:text-destructive-foreground');
+                    modalConfirmBtn.classList.add('bg-primary', 'text-primary-foreground', 'hover:bg-primary/90');
+                }
+
+                const returnInput = document.getElementById('eventsReturnTabInput');
+                if (returnInput) {
+                    returnInput.value = returnTab;
+                }
+
+                modalElement.classList.remove('hidden');
+                modalElement.classList.add('flex');
+            });
+        }
+
+        registerButtons.forEach(handleRegisterButtonClick);
+
+        // Allow other pages (like event-details) to trigger this modal
+        window.addEventListener('events-register-click', (e) => {
+            const detail = e.detail || {};
+            ensureModal();
+
+            const sessionId = detail.sessionId;
+            const sessionName = detail.sessionName || 'this event';
+            const action = detail.action || 'register';
+            const returnTab = detail.returnTab || 'upcoming';
+
+            const subtitleEl = modalElement._subtitleEl;
+
+            if (action === 'cancel') {
+                modalTitleEl.textContent = 'Cancel Registration';
+                if (subtitleEl) subtitleEl.textContent = 'Confirm cancellation';
+                modalBodyEl.textContent = `Are you sure you want to cancel your registration for "${sessionName}"?`;
+                modalForm.action = `/events/${encodeURIComponent(sessionId)}/cancel-registration`;
+                modalConfirmBtn.textContent = 'Confirm Cancellation';
+                modalConfirmBtn.classList.remove('bg-primary', 'text-primary-foreground', 'hover:bg-primary/90');
+                modalConfirmBtn.classList.add('border', 'border-destructive', 'text-destructive', 'hover:bg-destructive', 'hover:text-destructive-foreground');
+            } else {
+                modalTitleEl.textContent = 'Register for Event';
+                if (subtitleEl) subtitleEl.textContent = 'Confirm your registration';
+                modalBodyEl.textContent = `Do you want to register for "${sessionName}"?`;
+                modalForm.action = `/events/${encodeURIComponent(sessionId)}/register`;
+                modalConfirmBtn.textContent = 'Confirm Registration';
+                modalConfirmBtn.classList.remove('border', 'border-destructive', 'text-destructive', 'hover:bg-destructive', 'hover:text-destructive-foreground');
+                modalConfirmBtn.classList.add('bg-primary', 'text-primary-foreground', 'hover:bg-primary/90');
+            }
+
+            const returnInput = document.getElementById('eventsReturnTabInput');
+            if (returnInput) {
+                returnInput.value = returnTab;
+            }
+
+            modalElement.classList.remove('hidden');
+            modalElement.classList.add('flex');
         });
     </script>
 </body>
