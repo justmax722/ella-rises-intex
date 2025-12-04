@@ -13,6 +13,7 @@
     <!-- Navigation Menu -->
     <nav class="flex-1 p-4 space-y-2 overflow-y-auto mt-16 lg:mt-0">
         <ul class="space-y-2">
+            <% if (user.role !== 'donor') { %>
             <li>
                 <a href="/home" class="flex items-center gap-3 px-3 py-2.5 rounded-lg <%= currentPage === 'home' ? 'bg-accent text-accent-foreground font-medium' : 'text-muted-foreground hover:bg-muted hover:text-foreground' %> transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-home h-5 w-5">
@@ -22,6 +23,7 @@
                     <span>Home</span>
                 </a>
             </li>
+            <% } %>
             <% if (user.role === 'manager') { %>
             <li>
                 <a href="/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg <%= currentPage === 'dashboard' ? 'bg-accent text-accent-foreground font-medium' : 'text-muted-foreground hover:bg-muted hover:text-foreground' %> transition-colors">
