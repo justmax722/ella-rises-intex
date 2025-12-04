@@ -63,6 +63,13 @@
                 </div>
                 <% } %>
 
+                <!-- Signup Message (when redirected from login) -->
+                <% if (typeof signupMessage !== 'undefined' && signupMessage) { %>
+                <div class="mb-6 p-4 bg-blue-100 border-2 border-blue-400 rounded-md shadow-sm">
+                    <p class="text-sm font-medium text-blue-900"><%= signupMessage %></p>
+                </div>
+                <% } %>
+
                 <!-- Login Form -->
                 <form id="loginForm" action="/login" method="POST" class="space-y-4 <%= typeof showSignUp !== 'undefined' && showSignUp ? 'hidden' : '' %>">
                     <div class="space-y-2">
@@ -73,7 +80,7 @@
                             name="email" 
                             required
                             placeholder="your.email@ellarises.org"
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                         />
                     </div>
 
@@ -84,7 +91,7 @@
                             id="password" 
                             name="password" 
                             required
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                         />
                     </div>
 
@@ -107,28 +114,31 @@
 
                 <!-- Sign Up Form -->
                 <form id="signupForm" action="/signup" method="POST" class="space-y-4 <%= typeof showSignUp === 'undefined' || !showSignUp ? 'hidden' : '' %>">
-                    <div class="space-y-2">
-                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="first_name">First Name</label>
-                        <input 
-                            type="text" 
-                            id="first_name" 
-                            name="first_name" 
-                            required
-                            placeholder="Jane"
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                        />
-                    </div>
+                    <!-- First Name and Last Name side by side -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="first_name">First Name</label>
+                            <input 
+                                type="text" 
+                                id="first_name" 
+                                name="first_name" 
+                                required
+                                placeholder="Jane"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                        </div>
 
-                    <div class="space-y-2">
-                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="last_name">Last Name</label>
-                        <input 
-                            type="text" 
-                            id="last_name" 
-                            name="last_name" 
-                            required
-                            placeholder="Doe"
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                        />
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="last_name">Last Name</label>
+                            <input 
+                                type="text" 
+                                id="last_name" 
+                                name="last_name" 
+                                required
+                                placeholder="Doe"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                        </div>
                     </div>
 
                     <div class="space-y-2">
@@ -139,7 +149,8 @@
                             name="email" 
                             required
                             placeholder="your.email@ellarises.org"
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            value="<%= typeof signupEmail !== 'undefined' && signupEmail ? signupEmail : '' %>"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                         />
                     </div>
 
@@ -150,7 +161,8 @@
                             id="signup_password" 
                             name="password" 
                             required
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            value="<%= typeof signupPassword !== 'undefined' && signupPassword ? signupPassword : '' %>"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                         />
                     </div>
 
@@ -161,8 +173,9 @@
                             id="confirm_password" 
                             name="confirm_password" 
                             required
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                         />
+                        <div id="passwordError" class="hidden text-sm text-destructive mt-1"></div>
                     </div>
 
                     <button 
@@ -177,6 +190,18 @@
     </div>
 
     <script>
+        // Check URL parameters and server-provided values on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const signupParam = urlParams.get('signup');
+            
+            // If signup=true in URL, show signup form
+            // Email/password are pre-filled from server session (more secure than localStorage)
+            if (signupParam === 'true') {
+                showSignUp();
+            }
+        });
+
         function showLogin() {
             // Hide signup form, show login form
             document.getElementById('signupForm').classList.add('hidden');
@@ -201,19 +226,48 @@
             document.getElementById('loginTab').classList.add('text-muted-foreground', 'hover:text-foreground');
         }
 
-        // Validate password match on signup form submit
+        // Client-side password validation - shows inline error without wiping form
         const signupForm = document.getElementById('signupForm');
         if (signupForm) {
             signupForm.addEventListener('submit', function(e) {
                 const password = document.getElementById('signup_password').value;
                 const confirmPassword = document.getElementById('confirm_password').value;
+                const passwordError = document.getElementById('passwordError');
+                const confirmPasswordInput = document.getElementById('confirm_password');
+                
+                // Clear previous errors
+                passwordError.classList.add('hidden');
+                confirmPasswordInput.classList.remove('border-destructive');
                 
                 if (password !== confirmPassword) {
                     e.preventDefault();
-                    alert('Passwords do not match. Please try again.');
+                    
+                    // Show inline error message
+                    passwordError.textContent = 'Passwords do not match. Please try again.';
+                    passwordError.classList.remove('hidden');
+                    
+                    // Highlight the confirm password field
+                    confirmPasswordInput.classList.add('border-destructive');
+                    confirmPasswordInput.focus();
+                    
                     return false;
                 }
             });
+            
+            // Clear error when user starts typing in confirm password field
+            const confirmPasswordInput = document.getElementById('confirm_password');
+            if (confirmPasswordInput) {
+                confirmPasswordInput.addEventListener('input', function() {
+                    const password = document.getElementById('signup_password').value;
+                    const confirmPassword = this.value;
+                    const passwordError = document.getElementById('passwordError');
+                    
+                    if (password === confirmPassword) {
+                        passwordError.classList.add('hidden');
+                        this.classList.remove('border-destructive');
+                    }
+                });
+            }
         }
     </script>
 </body>
