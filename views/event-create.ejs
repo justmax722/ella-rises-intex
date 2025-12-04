@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Event - Ella Rises CRM</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-background min-h-screen flex">
+    <!-- Sidebar Navigation -->
+    <%- include('partials/sidebar', { user: user, currentPage: 'events' }) %>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-6 overflow-auto">
+        <div class="space-y-6">
+            <!-- Page Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-serif font-bold text-primary">Create Event</h1>
+                    <p class="text-muted-foreground mt-1">Create a new event session</p>
+                </div>
+                <a href="/events" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                    Cancel
+                </a>
+            </div>
+
+            <!-- Error Message -->
+            <% if (typeof query !== 'undefined' && query.error) { %>
+            <div class="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+                <p class="text-sm text-destructive">
+                    <% if (query.error === 'missing_fields') { %>
+                        Please fill in all required fields.
+                    <% } else if (query.error === 'invalid_date') { %>
+                        Invalid date format. Please check your dates.
+                    <% } else { %>
+                        An error occurred. Please try again.
+                    <% } %>
+                </p>
+            </div>
+            <% } %>
+
+            <!-- Create Form -->
+            <div class="rounded-lg border bg-card text-card-foreground shadow-sm">
+                <div class="p-6">
+                    <form action="/events/create" method="POST" class="space-y-4">
+                        <!-- Event Selection -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="eventid">Event *</label>
+                            <select 
+                                id="eventid" 
+                                name="eventid" 
+                                required
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            >
+                                <option value="">Select an event...</option>
+                                <% if (typeof events !== 'undefined' && events.length > 0) { %>
+                                    <% events.forEach(event => { %>
+                                        <option 
+                                            value="<%= event.eventid %>" 
+                                            data-default-capacity="<%= event.eventdefaultcapacity || '' %>"
+                                            <%= (typeof selectedEventId !== 'undefined' && selectedEventId && String(selectedEventId) === String(event.eventid)) ? 'selected' : '' %>
+                                        ><%= event.eventname %></option>
+                                    <% }); %>
+                                <% } %>
+                                <option value="__create_new_event">+ Create a New Event</option>
+                            </select>
+                        </div>
+
+                        <!-- Event DateTime Start -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="eventdatetimestart">Event Start Date & Time *</label>
+                            <input 
+                                type="datetime-local" 
+                                id="eventdatetimestart" 
+                                name="eventdatetimestart" 
+                                required
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                        </div>
+
+                        <!-- Event DateTime End -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="eventdatetimeend">Event End Date & Time *</label>
+                            <input 
+                                type="datetime-local" 
+                                id="eventdatetimeend" 
+                                name="eventdatetimeend" 
+                                required
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                        </div>
+
+                        <!-- Event Location -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="eventlocation">Event Location *</label>
+                            <input 
+                                type="text" 
+                                id="eventlocation" 
+                                name="eventlocation" 
+                                required
+                                placeholder="Enter event location"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                        </div>
+
+                        <!-- Event Capacity -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="eventcapacity">Event Capacity</label>
+                            <input 
+                                type="number" 
+                                id="eventcapacity" 
+                                name="eventcapacity" 
+                                min="1"
+                                placeholder="Leave empty to use event default capacity"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                            <p class="text-xs text-muted-foreground">Leave empty to use the event's default capacity</p>
+                        </div>
+
+                        <!-- Event Registration Deadline -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="eventregistrationdeadline">Registration Deadline</label>
+                            <input 
+                                type="datetime-local" 
+                                id="eventregistrationdeadline" 
+                                name="eventregistrationdeadline" 
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                            <p class="text-xs text-muted-foreground">Optional - leave empty if no deadline</p>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="flex gap-4 pt-4">
+                            <button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                                Create Event
+                            </button>
+                            <a href="/events" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
+
+<script>
+    (function() {
+        const eventSelect = document.getElementById('eventid');
+        const capacityInput = document.getElementById('eventcapacity');
+
+        if (!eventSelect || !capacityInput) return;
+
+        function handleEventChange() {
+            const selectedOption = eventSelect.options[eventSelect.selectedIndex];
+            if (!selectedOption) return;
+
+            if (selectedOption.value === '__create_new_event') {
+                // Redirect to new event definition page
+                const returnTo = encodeURIComponent('/events/create');
+                window.location.href = `/events/new?returnTo=${returnTo}`;
+                return;
+            }
+
+            const defaultCapacity = selectedOption.getAttribute('data-default-capacity');
+            if (defaultCapacity && !isNaN(parseInt(defaultCapacity))) {
+                capacityInput.value = defaultCapacity;
+            }
+        }
+
+        eventSelect.addEventListener('change', handleEventChange);
+
+        // Apply default capacity on initial load if an event is pre-selected
+        document.addEventListener('DOMContentLoaded', handleEventChange);
+    })();
+</script>

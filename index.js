@@ -1852,10 +1852,345 @@ app.get('/events', requireAuth, restrictDonor, async (req, res) => {
       firstName: req.session.userFirstName || '',
       lastName: req.session.userLastName || ''
     };
-    res.render('events', { user });
+
+    // Query all sessions with JOINs to event and eventtype tables
+    const allSessions = await db('session as s')
+      .join('event as e', 's.eventid', 'e.eventid')
+      .join('eventtype as et', 'e.eventtypeid', 'et.eventtypeid')
+      .select(
+        's.sessionid',
+        's.eventid',
+        's.eventdatetimestart',
+        's.eventlocation',
+        's.eventdatetimeend',
+        's.eventcapacity',
+        's.eventregistrationdeadline',
+        'e.eventname',
+        'e.eventdescription',
+        'e.eventrecurrencepattern',
+        'e.eventdefaultcapacity',
+        'et.eventtype'
+      )
+      .orderBy('s.eventdatetimestart', 'desc');
+
+    // Separate sessions into current (upcoming) and past
+    const now = new Date();
+    const currentSessions = [];
+    const pastSessions = [];
+
+    allSessions.forEach(session => {
+      const endDate = new Date(session.eventdatetimeend);
+      if (endDate >= now) {
+        currentSessions.push(session);
+      } else {
+        pastSessions.push(session);
+      }
+    });
+
+    // Get search query parameter
+    const searchQuery = req.query.search || '';
+
+    res.render('events', { 
+      user,
+      currentSessions,
+      pastSessions,
+      searchQuery
+    });
   } catch (error) {
     console.error('Events error:', error);
     res.redirect('/login');
+  }
+});
+
+// Create Event Route - GET (manager only)
+app.get('/events/create', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.redirect('/events');
+    }
+
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
+    };
+
+    // Fetch all events for dropdown
+    const events = await db('event')
+      .select('eventid', 'eventname', 'eventdescription', 'eventdefaultcapacity')
+      .orderBy('eventname');
+
+    const selectedEventId = req.query.selectedEventId || null;
+
+    res.render('event-create', { user, events, query: req.query, selectedEventId });
+  } catch (error) {
+    console.error('Create event error:', error);
+    res.redirect('/events');
+  }
+});
+
+// New Event Definition Routes (manager only)
+app.get('/events/new', requireAuth, async (req, res) => {
+  try {
+    if (req.session.userRole !== 'manager') {
+      return res.redirect('/events');
+    }
+
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
+    };
+
+    // Fetch existing event types (categories)
+    const eventTypes = await db('eventtype')
+      .select('eventtypeid', 'eventtype')
+      .orderBy('eventtype');
+
+    const returnTo = req.query.returnTo || '/events/create';
+
+    res.render('event-new', { user, eventTypes, query: req.query, returnTo });
+  } catch (error) {
+    console.error('New event GET error:', error);
+    res.redirect('/events/create?error=new_event_failed');
+  }
+});
+
+app.post('/events/new', requireAuth, async (req, res) => {
+  try {
+    if (req.session.userRole !== 'manager') {
+      return res.redirect('/events');
+    }
+
+    let { eventtypeid, neweventtype, eventname, eventdescription, eventrecurrencepattern, eventdefaultcapacity, returnTo } = req.body;
+
+    if (!eventname) {
+      return res.redirect('/events/new?error=missing_name');
+    }
+
+    // Handle creating a new event type if needed
+    let finalEventTypeId = eventtypeid && eventtypeid !== '__new_type' ? parseInt(eventtypeid) : null;
+
+    if (!finalEventTypeId) {
+      if (!neweventtype || !neweventtype.trim()) {
+        return res.redirect('/events/new?error=missing_event_type');
+      }
+
+      // Ensure eventtypeid sequence is in sync
+      try {
+        await db.raw(`SELECT setval(
+          pg_get_serial_sequence('eventtype', 'eventtypeid'),
+          GREATEST(COALESCE((SELECT MAX("eventtypeid") + 1 FROM "eventtype"), 1), 1),
+          false
+        )`);
+      } catch (seqError) {
+        console.error('Warning: failed to sync eventtypeid sequence', seqError);
+      }
+
+      const insertedType = await db('eventtype')
+        .insert({ eventtype: neweventtype.trim() })
+        .returning('eventtypeid');
+
+      finalEventTypeId = insertedType && insertedType[0].eventtypeid
+        ? insertedType[0].eventtypeid
+        : insertedType[0];
+    }
+
+    // Parse default capacity
+    let defaultCapacity = null;
+    if (eventdefaultcapacity && eventdefaultcapacity.trim() !== '') {
+      defaultCapacity = parseInt(eventdefaultcapacity);
+    }
+
+    // Ensure eventid sequence is in sync
+    try {
+      await db.raw(`SELECT setval(
+        pg_get_serial_sequence('event', 'eventid'),
+        GREATEST(COALESCE((SELECT MAX("eventid") + 1 FROM "event"), 1), 1),
+        false
+      )`);
+    } catch (seqError) {
+      console.error('Warning: failed to sync eventid sequence', seqError);
+    }
+
+    // Insert new event definition
+    const insertedEvent = await db('event')
+      .insert({
+        eventtypeid: finalEventTypeId,
+        eventname: eventname.trim(),
+        eventdescription: eventdescription || null,
+        eventrecurrencepattern: eventrecurrencepattern || null,
+        eventdefaultcapacity: defaultCapacity
+      })
+      .returning('eventid');
+
+    const newEventId = insertedEvent && insertedEvent[0].eventid
+      ? insertedEvent[0].eventid
+      : insertedEvent[0];
+
+    const target = returnTo || '/events/create';
+    const separator = target.includes('?') ? '&' : '?';
+    res.redirect(`${target}${separator}selectedEventId=${newEventId}`);
+  } catch (error) {
+    console.error('New event POST error:', error);
+    res.redirect('/events/new?error=create_failed');
+  }
+});
+
+// Create Event Route - POST (manager only)
+app.post('/events/create', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.redirect('/events');
+    }
+
+    const { eventid, eventdatetimestart, eventlocation, eventdatetimeend, eventcapacity, eventregistrationdeadline } = req.body;
+
+    // Validate required fields
+    if (!eventid || !eventdatetimestart || !eventlocation || !eventdatetimeend) {
+      return res.redirect('/events/create?error=missing_fields');
+    }
+
+    // Parse dates
+    let startDateTime, endDateTime, regDeadline = null;
+    try {
+      startDateTime = new Date(eventdatetimestart);
+      endDateTime = new Date(eventdatetimeend);
+      if (eventregistrationdeadline) {
+        regDeadline = new Date(eventregistrationdeadline);
+      }
+    } catch (error) {
+      return res.redirect('/events/create?error=invalid_date');
+    }
+
+    // Validate dates
+    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+      return res.redirect('/events/create?error=invalid_date');
+    }
+
+    if (regDeadline && isNaN(regDeadline.getTime())) {
+      return res.redirect('/events/create?error=invalid_date');
+    }
+
+    // If EventCapacity is empty, fetch EventDefaultCapacity from Event table
+    let finalCapacity = null;
+    if (eventcapacity && eventcapacity.trim() !== '') {
+      finalCapacity = parseInt(eventcapacity);
+    } else {
+      const event = await db('event')
+        .where('eventid', eventid)
+        .first();
+      if (event && event.eventdefaultcapacity) {
+        finalCapacity = event.eventdefaultcapacity;
+      }
+    }
+
+    // Ensure sessionid sequence is in sync to avoid duplicate key errors
+    try {
+      await db.raw(`SELECT setval(
+        pg_get_serial_sequence('session', 'sessionid'),
+        GREATEST(COALESCE((SELECT MAX("sessionid") + 1 FROM "session"), 1), 1),
+        false
+      )`);
+    } catch (seqError) {
+      console.error('Warning: failed to sync sessionid sequence', seqError);
+    }
+
+    // Insert new session record
+    const inserted = await db('session')
+      .insert({
+        eventid: parseInt(eventid),
+        eventdatetimestart: startDateTime,
+        eventlocation: eventlocation.trim(),
+        eventdatetimeend: endDateTime,
+        eventcapacity: finalCapacity,
+        eventregistrationdeadline: regDeadline
+      })
+      .returning('sessionid');
+
+    // Redirect to event details page
+    if (inserted && inserted.length > 0 && inserted[0].sessionid) {
+      res.redirect(`/events/${inserted[0].sessionid}?success=true`);
+    } else {
+      // Fallback: query the last inserted session
+      const newSession = await db('session')
+        .where('eventid', parseInt(eventid))
+        .where('eventdatetimestart', startDateTime)
+        .orderBy('sessionid', 'desc')
+        .first();
+      if (newSession) {
+        res.redirect(`/events/${newSession.sessionid}?success=true`);
+      } else {
+        res.redirect('/events?error=create_failed');
+      }
+    }
+  } catch (error) {
+    console.error('Create event POST error:', error);
+    res.redirect('/events/create?error=create_failed');
+  }
+});
+
+// Event Details Route - GET (manager only)
+app.get('/events/:sessionId', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.redirect('/events');
+    }
+
+    const sessionId = parseInt(req.params.sessionId);
+    if (isNaN(sessionId)) {
+      return res.redirect('/events');
+    }
+
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
+    };
+
+    // Fetch session with JOINs to event and eventtype tables
+    const session = await db('session as s')
+      .join('event as e', 's.eventid', 'e.eventid')
+      .join('eventtype as et', 'e.eventtypeid', 'et.eventtypeid')
+      .where('s.sessionid', sessionId)
+      .select(
+        's.sessionid',
+        's.eventid',
+        's.eventdatetimestart',
+        's.eventlocation',
+        's.eventdatetimeend',
+        's.eventcapacity',
+        's.eventregistrationdeadline',
+        'e.eventname',
+        'e.eventdescription',
+        'e.eventrecurrencepattern',
+        'e.eventdefaultcapacity',
+        'et.eventtype'
+      )
+      .first();
+
+    if (!session) {
+      return res.redirect('/events');
+    }
+
+    // Determine capacity (use session capacity if available, otherwise default)
+    const capacity = session.eventcapacity || session.eventdefaultcapacity || 'N/A';
+
+    res.render('event-details', { 
+      user, 
+      session,
+      capacity,
+      query: req.query
+    });
+  } catch (error) {
+    console.error('Event details error:', error);
+    res.redirect('/events');
   }
 });
 
