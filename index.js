@@ -18,11 +18,19 @@ const db = knex(knexConfig);
     console.log('✓ Database connection successful');
   } catch (error) {
     console.error('✗ Database connection failed:', error.message);
+    const host = process.env.RDS_HOSTNAME || process.env.DB_HOST || 'localhost';
+    const isRDS = !!(
+      process.env.RDS_HOSTNAME || 
+      process.env.RDS_DB_NAME || 
+      process.env.AWS_EXECUTION_ENV ||
+      host.includes('.rds.amazonaws.com') ||
+      host.includes('.rds.')
+    );
     console.error('Connection details:', {
-      host: process.env.RDS_HOSTNAME || process.env.DB_HOST || 'localhost',
+      host: host,
       database: process.env.RDS_DB_NAME || process.env.DB_NAME || 'ella_rises',
       user: process.env.RDS_USERNAME || process.env.DB_USER || 'postgres',
-      sslEnabled: !!(process.env.RDS_HOSTNAME || process.env.RDS_DB_NAME || process.env.AWS_EXECUTION_ENV)
+      sslEnabled: isRDS
     });
     console.error('Please check your database configuration and ensure RDS security groups allow connections.');
   }
@@ -75,19 +83,313 @@ const restrictDonor = (req, res, next) => {
 
 // Landing page route
 app.get('/', (req, res) => {
-  res.render('landing');
+  res.render('landing', { isLoggedIn: !!req.session.userId });
 });
 
 // Donation page route
-app.get('/donate', (req, res) => {
-  res.render('donate', { query: req.query });
+app.get('/donate', async (req, res) => {
+  try {
+    // Check if user is logged in
+    if (req.session.userId) {
+      // Fetch user email from database
+      const dbUser = await db('users')
+        .where('userid', req.session.userId)
+        .first();
+      
+      if (dbUser) {
+        return res.render('donate', {
+          query: req.query,
+          loggedIn: true,
+          userEmail: dbUser.useremail,
+          userId: req.session.userId
+        });
+      }
+    }
+    
+    // Not logged in - keep existing behavior
+    res.render('donate', { query: req.query });
+  } catch (error) {
+    console.error('Donate page error:', error);
+    res.render('donate', { query: req.query });
+  }
 });
 
 // Donation form submission route
-app.post('/donate', (req, res) => {
-  // TODO: Process donation payment
-  // For now, redirect back with success message
-  res.redirect('/donate?success=true');
+app.post('/donate', async (req, res) => {
+  try {
+    const { donationAmount, paymentMethod, creditEmail, debitEmail, paypalEmail, bankEmail, message, loggedInUserId } = req.body;
+
+    // Validate required fields
+    if (!donationAmount || !paymentMethod) {
+      return res.redirect('/donate?error=missing_fields');
+    }
+
+    const donationAmountNum = parseFloat(donationAmount);
+    if (isNaN(donationAmountNum) || donationAmountNum <= 0) {
+      return res.redirect('/donate?error=invalid_amount');
+    }
+
+    // Check if user is logged in (via session or loggedInUserId from form)
+    const sessionUserId = req.session.userId;
+    const formUserId = loggedInUserId ? parseInt(loggedInUserId) : null;
+    const isLoggedIn = !!(sessionUserId || formUserId);
+
+    if (isLoggedIn) {
+      // Logged-in user flow - use session userId or form userId
+      const userId = sessionUserId || formUserId;
+      
+      // Get user from database
+      const dbUser = await db('users')
+        .where('userid', userId)
+        .first();
+
+      if (!dbUser) {
+        return res.redirect('/donate?error=user_not_found');
+      }
+
+      // Get next donation number for this user
+      const maxDonation = await db('donation')
+        .where('userid', userId)
+        .max('donationno as maxno')
+        .first();
+
+      const nextDonationNo = (maxDonation?.maxno || 0) + 1;
+
+      // Insert donation
+      await db('donation').insert({
+        userid: userId,
+        donationno: nextDonationNo,
+        donationamount: donationAmountNum,
+        donationdate: new Date()
+      });
+
+      // Update total donations
+      await db('users')
+        .where('userid', userId)
+        .increment('totaldonations', donationAmountNum);
+
+      // Redirect back to donations page with success message
+      return res.redirect('/donations?donationSuccess=true');
+    }
+
+    // Guest flow - existing logic
+    // Extract email based on payment method
+    let email = null;
+    if (paymentMethod === 'credit' && creditEmail) {
+      email = creditEmail.toLowerCase().trim();
+    } else if (paymentMethod === 'debit' && debitEmail) {
+      email = debitEmail.toLowerCase().trim();
+    } else if (paymentMethod === 'paypal' && paypalEmail) {
+      email = paypalEmail.toLowerCase().trim();
+    } else if (paymentMethod === 'bank' && bankEmail) {
+      email = bankEmail.toLowerCase().trim();
+    }
+
+    if (!email) {
+      return res.redirect('/donate?error=email_required');
+    }
+
+    // Look up user by email
+    const existingUser = await db('users')
+      .where('useremail', email)
+      .first();
+
+    let userId;
+    let isNewShadowUser = false;
+
+    if (existingUser) {
+      // User exists
+      userId = existingUser.userid;
+
+      if (existingUser.accountactive) {
+        // User is active - just record donation
+        // Get next donation number for this user
+        const maxDonation = await db('donation')
+          .where('userid', userId)
+          .max('donationno as maxno')
+          .first();
+
+        const nextDonationNo = (maxDonation?.maxno || 0) + 1;
+
+        // Insert donation
+        await db('donation').insert({
+          userid: userId,
+          donationno: nextDonationNo,
+          donationamount: donationAmountNum,
+          donationdate: new Date()
+        });
+
+        // Update total donations
+        await db('users')
+          .where('userid', userId)
+          .increment('totaldonations', donationAmountNum);
+
+        // Redirect to success (active user flow)
+        return res.redirect(`/donate/success?userId=${userId}&amount=${donationAmountNum}&active=true`);
+      } else {
+        // Shadow account exists - record donation and redirect to claim
+        const maxDonation = await db('donation')
+          .where('userid', userId)
+          .max('donationno as maxno')
+          .first();
+
+        const nextDonationNo = (maxDonation?.maxno || 0) + 1;
+
+        await db('donation').insert({
+          userid: userId,
+          donationno: nextDonationNo,
+          donationamount: donationAmountNum,
+          donationdate: new Date()
+        });
+
+        await db('users')
+          .where('userid', userId)
+          .increment('totaldonations', donationAmountNum);
+
+        return res.redirect(`/donate/success?userId=${userId}&amount=${donationAmountNum}`);
+      }
+    } else {
+      // User doesn't exist - create shadow user
+      // Get RoleID 3 for donor
+      const donorRole = await db('roletype')
+        .where('roleid', 3)
+        .first();
+
+      if (!donorRole) {
+        return res.redirect('/donate?error=role_not_found');
+      }
+
+      // Create shadow user (accountactive = false, userpassword = NULL)
+      // Use empty strings for first/last name since database has NOT NULL constraints
+      const [newUser] = await db('users')
+        .insert({
+          useremail: email,
+          userfirstname: '',
+          userlastname: '',
+          userpassword: null,
+          roleid: 3,
+          accountactive: false,
+          totaldonations: donationAmountNum
+        })
+        .returning('userid');
+
+      userId = newUser.userid;
+      isNewShadowUser = true;
+
+      // Insert donation (donationno = 1 for first donation)
+      await db('donation').insert({
+        userid: userId,
+        donationno: 1,
+        donationamount: donationAmountNum,
+        donationdate: new Date()
+      });
+
+      // Redirect to success page for account claiming
+      return res.redirect(`/donate/success?userId=${userId}&amount=${donationAmountNum}`);
+    }
+  } catch (error) {
+    console.error('Donation submission error:', error);
+    res.redirect('/donate?error=submission_failed');
+  }
+});
+
+// Donation success page route
+app.get('/donate/success', async (req, res) => {
+  try {
+    const userId = parseInt(req.query.userId);
+    const amount = parseFloat(req.query.amount);
+    const isActive = req.query.active === 'true';
+
+    if (isNaN(userId) || isNaN(amount)) {
+      return res.redirect('/donate?error=invalid_parameters');
+    }
+
+    // Fetch user data
+    const user = await db('users')
+      .where('userid', userId)
+      .first();
+
+    if (!user) {
+      return res.redirect('/donate?error=user_not_found');
+    }
+
+    res.render('donate-success', {
+      userId: userId,
+      amount: amount,
+      email: user.useremail,
+      isActive: isActive,
+      query: req.query
+    });
+  } catch (error) {
+    console.error('Donation success page error:', error);
+    res.redirect('/donate?error=page_error');
+  }
+});
+
+// Claim account route (activate shadow account with password)
+app.post('/donate/claim', async (req, res) => {
+  try {
+    const { userId, firstName, lastName, password, confirmPassword } = req.body;
+
+    const userIdNum = parseInt(userId);
+    if (isNaN(userIdNum)) {
+      return res.redirect('/donate?error=invalid_user_id');
+    }
+
+    // Validate name fields
+    if (!firstName || !lastName) {
+      return res.redirect(`/donate/success?userId=${userIdNum}&error=missing_name`);
+    }
+
+    // Validate password
+    if (!password || !confirmPassword) {
+      return res.redirect(`/donate/success?userId=${userIdNum}&error=missing_password`);
+    }
+
+    if (password !== confirmPassword) {
+      return res.redirect(`/donate/success?userId=${userIdNum}&error=password_mismatch`);
+    }
+
+    if (password.length < 6) {
+      return res.redirect(`/donate/success?userId=${userIdNum}&error=password_too_short`);
+    }
+
+    // Check if user exists and is a shadow account
+    const user = await db('users')
+      .where('userid', userIdNum)
+      .where('accountactive', false)
+      .first();
+
+    if (!user) {
+      return res.redirect('/donate?error=account_already_active');
+    }
+
+    // Hash password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Activate account and update name
+    await db('users')
+      .where('userid', userIdNum)
+      .where('accountactive', false)
+      .update({
+        userfirstname: firstName.trim(),
+        userlastname: lastName.trim(),
+        userpassword: hashedPassword,
+        accountactive: true
+      });
+
+    // Set session (auto-login)
+    req.session.userId = userIdNum;
+    req.session.userEmail = user.useremail;
+    req.session.userRole = 'donor';
+
+    // Redirect to dashboard
+    res.redirect('/dashboard');
+  } catch (error) {
+    console.error('Claim account error:', error);
+    res.redirect('/donate?error=claim_failed');
+  }
 });
 
 // Login page route
@@ -170,8 +472,14 @@ app.post('/signup', async (req, res) => {
       });
     }
 
-    // Check if user exists but is inactive and has a profile
+    // Check if user exists but is inactive
     if (existingUser && existingUser.accountactive === false) {
+      // Check if it's a shadow donor account (roleid 3) - redirect to verify-claim
+      if (existingUser.roleid === 3) {
+        return res.redirect(`/verify-claim?email=${encodeURIComponent(email.toLowerCase())}`);
+      }
+      
+      // Otherwise check if it has a profile (pending participant account)
       const existingProfile = await db('profile')
         .where('userid', existingUser.userid)
         .first();
@@ -188,6 +496,19 @@ app.post('/signup', async (req, res) => {
     // Hash password before storing
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Get roleid for "user" role (assuming it's roleid 2 based on login code)
+    const userRole = await db('roletype')
+      .where('roleid', 2)
+      .first();
+
+    if (!userRole) {
+      return res.render('login', {
+        error: 'System error: User role not found',
+        success: null,
+        showSignUp: true
+      });
+    }
 
     let userId;
     
@@ -753,6 +1074,137 @@ app.post('/set-password', async (req, res) => {
   }
 });
 
+// Verify claim page route (for shadow account verification)
+app.get('/verify-claim', async (req, res) => {
+  try {
+    const email = req.query.email;
+
+    if (!email) {
+      return res.redirect('/login?error=email_required');
+    }
+
+    // Fetch user data
+    const user = await db('users')
+      .where('useremail', email.toLowerCase())
+      .where('accountactive', false)
+      .first();
+
+    if (!user) {
+      return res.redirect('/login?error=account_not_found');
+    }
+
+    res.render('verify-claim', {
+      email: user.useremail,
+      query: req.query
+    });
+  } catch (error) {
+    console.error('Verify claim page error:', error);
+    res.redirect('/login?error=page_error');
+  }
+});
+
+// Verify claim submission route
+app.post('/verify-claim', async (req, res) => {
+  try {
+    const { email, firstName, lastName, donationDate, lastDonationAmount, password, confirmPassword } = req.body;
+
+    if (!email || !firstName || !lastName || !donationDate || !lastDonationAmount || !password || !confirmPassword) {
+      return res.redirect(`/verify-claim?email=${encodeURIComponent(email)}&error=missing_fields`);
+    }
+
+    // Validate name fields
+    if (!firstName.trim() || !lastName.trim()) {
+      return res.redirect(`/verify-claim?email=${encodeURIComponent(email)}&error=missing_name`);
+    }
+
+    // Validate password
+    if (password !== confirmPassword) {
+      return res.redirect(`/verify-claim?email=${encodeURIComponent(email)}&error=password_mismatch`);
+    }
+
+    if (password.length < 6) {
+      return res.redirect(`/verify-claim?email=${encodeURIComponent(email)}&error=password_too_short`);
+    }
+
+    // Fetch user and donation data
+    const user = await db('users')
+      .where('useremail', email.toLowerCase())
+      .where('accountactive', false)
+      .first();
+
+    if (!user) {
+      return res.redirect('/login?error=account_not_found');
+    }
+
+    // Get last donation
+    const lastDonation = await db('donation')
+      .where('userid', user.userid)
+      .orderBy('donationdate', 'desc')
+      .orderBy('donationno', 'desc')
+      .first();
+
+    if (!lastDonation) {
+      return res.redirect(`/verify-claim?email=${encodeURIComponent(email)}&error=no_donations`);
+    }
+
+    // Verify donation date (compare dates, ignoring time)
+    // Handle both string dates from database and Date objects
+    const inputDate = new Date(donationDate);
+    const dbDate = lastDonation.donationdate;
+    const donationDateObj = dbDate instanceof Date ? dbDate : new Date(dbDate);
+    
+    // Normalize to UTC dates for comparison (avoid timezone issues)
+    const inputYear = inputDate.getUTCFullYear();
+    const inputMonth = inputDate.getUTCMonth();
+    const inputDay = inputDate.getUTCDate();
+    
+    const dbYear = donationDateObj.getUTCFullYear();
+    const dbMonth = donationDateObj.getUTCMonth();
+    const dbDay = donationDateObj.getUTCDate();
+    
+    // Compare year, month, and day only
+    const dateMatch = inputYear === dbYear &&
+      inputMonth === dbMonth &&
+      inputDay === dbDay;
+
+    // Verify donation amount (allow small rounding differences, e.g., 0.01)
+    const donationAmountNum = parseFloat(lastDonationAmount);
+    const lastDonationAmountNum = parseFloat(lastDonation.donationamount);
+    const amountMatch = !isNaN(donationAmountNum) && 
+      !isNaN(lastDonationAmountNum) &&
+      Math.abs(donationAmountNum - lastDonationAmountNum) < 0.01;
+
+    if (!dateMatch || !amountMatch) {
+      return res.redirect(`/verify-claim?email=${encodeURIComponent(email)}&error=verification_failed`);
+    }
+
+    // Verification passed - hash password and activate account
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    await db('users')
+      .where('userid', user.userid)
+      .where('accountactive', false)
+      .update({
+        userfirstname: firstName.trim(),
+        userlastname: lastName.trim(),
+        userpassword: hashedPassword,
+        accountactive: true
+      });
+
+    // Set session (auto-login)
+    req.session.userId = user.userid;
+    req.session.userEmail = user.useremail;
+    req.session.userRole = 'donor';
+
+    // Redirect to dashboard
+    res.redirect('/dashboard');
+  } catch (error) {
+    console.error('Verify claim error:', error);
+    res.redirect('/login?error=verification_failed');
+  }
+});
+
 // Login route (POST)
 app.post('/login', async (req, res) => {
   try {
@@ -814,6 +1266,11 @@ app.post('/login', async (req, res) => {
       return res.redirect('/login?signup=true');
     }
 
+    // Check if it's a shadow donor account (inactive, no password, roleid 3) - redirect directly to verify-claim
+    if (!user.accountactive && !user.userpassword && user.roleid === 3) {
+      return res.redirect(`/verify-claim?email=${encodeURIComponent(email.toLowerCase())}&error=unclaimed_account`);
+    }
+
     // Check password first - note: if passwords are stored plain text, use direct comparison
     // If they're hashed, use bcrypt.compare
     // Column names are lowercase: userpassword
@@ -834,6 +1291,11 @@ app.post('/login', async (req, res) => {
     if (!passwordMatch) {
       // Check if account is inactive
       if (!user.accountactive) {
+        // Check if it's a shadow donor account (roleid 3) - redirect to verify-claim
+        if (user.roleid === 3) {
+          return res.redirect(`/verify-claim?email=${encodeURIComponent(email.toLowerCase())}&error=unclaimed_account`);
+        }
+        
         // No password set or wrong password - check if user has a profile (pending account)
         const profile = await db('profile')
           .where('userid', user.userid)
@@ -1134,13 +1596,116 @@ app.get('/milestones', requireAuth, restrictDonor, async (req, res) => {
 // Donations route (protected)
 app.get('/donations', requireAuth, async (req, res) => {
   try {
+    const userId = req.session.userId;
+    
+    if (!userId) {
+      return res.redirect('/login');
+    }
+
+    // Get user info
+    const dbUser = await db('users')
+      .where('userid', userId)
+      .first();
+
+    if (!dbUser) {
+      return res.redirect('/login');
+    }
+
+    const userRole = req.session.userRole;
+    const isManager = userRole === 'manager';
+    const viewPersonal = req.query.view === 'personal';
+
+    // For managers: show all donations by default, or personal if view=personal
+    // For others: always show personal donations
+    let donationsQuery = db('donation')
+      .leftJoin('users', 'donation.userid', 'users.userid')
+      .select(
+        'donation.*',
+        'users.userfirstname',
+        'users.userlastname',
+        'users.useremail'
+      );
+
+    if (isManager && !viewPersonal) {
+      // Manager viewing all donations - no user filter
+    } else {
+      // Personal view (for managers with view=personal, or for non-managers)
+      donationsQuery = donationsQuery.where('donation.userid', userId);
+    }
+
+    // Get all donations
+    let donations = await donationsQuery
+      .orderBy('donation.donationdate', 'desc')
+      .orderBy('donation.donationno', 'desc');
+
+    // Get current month start and end
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    // Calculate stats based on view
+    let totalDonations = 0;
+    let thisMonthDonations = 0;
+    let thisMonthCount = 0;
+    let averageDonation = 0;
+
+    if (isManager && !viewPersonal) {
+      // Manager viewing all donations - calculate from all donations
+      totalDonations = donations.reduce((sum, d) => sum + parseFloat(d.donationamount || 0), 0);
+      
+      const thisMonthDonationsList = donations.filter(d => {
+        const donationDate = new Date(d.donationdate);
+        return donationDate.getMonth() === currentMonth && donationDate.getFullYear() === currentYear;
+      });
+      
+      thisMonthDonations = thisMonthDonationsList.reduce((sum, d) => sum + parseFloat(d.donationamount || 0), 0);
+      thisMonthCount = thisMonthDonationsList.length;
+      
+      averageDonation = donations.length > 0 ? totalDonations / donations.length : 0;
+    } else {
+      // Personal view - calculate from personal donations array
+      totalDonations = donations.reduce((sum, d) => sum + parseFloat(d.donationamount || 0), 0);
+      
+      const thisMonthDonationsList = donations.filter(d => {
+        const donationDate = new Date(d.donationdate);
+        return donationDate.getMonth() === currentMonth && donationDate.getFullYear() === currentYear;
+      });
+      
+      thisMonthDonations = thisMonthDonationsList.reduce((sum, d) => sum + parseFloat(d.donationamount || 0), 0);
+      thisMonthCount = thisMonthDonationsList.length;
+      
+      averageDonation = donations.length > 0
+        ? donations.reduce((sum, d) => sum + parseFloat(d.donationamount || 0), 0) / donations.length
+        : 0;
+    }
+
     const user = {
       email: req.session.userEmail,
       role: req.session.userRole,
       firstName: req.session.userFirstName || '',
       lastName: req.session.userLastName || ''
     };
-    res.render('donations', { user });
+
+    // Format numbers with commas
+    const formatCurrency = (num) => {
+      return parseFloat(num).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    };
+
+    res.render('donations', {
+      user,
+      donations,
+      query: req.query,
+      viewPersonal: viewPersonal,
+      stats: {
+        totalDonations: formatCurrency(totalDonations),
+        thisMonthDonations: formatCurrency(thisMonthDonations),
+        thisMonthCount: thisMonthCount.toLocaleString('en-US'),
+        averageDonation: formatCurrency(averageDonation)
+      }
+    });
   } catch (error) {
     console.error('Donations error:', error);
     res.redirect('/login');
@@ -1155,79 +1720,147 @@ app.get('/users', requireAuth, async (req, res) => {
       return res.redirect('/dashboard');
     }
     
+    // Query all users from database
+    const usersData = await db('users')
+      .select('userid', 'useremail', 'userfirstname', 'userlastname', 'roleid', 'accountactive', 'totaldonations')
+      .orderBy('userid', 'asc');
+    
+    // Map users data with role names and status
+    const users = usersData.map(user => {
+      let roleName = 'user';
+      if (user.roleid === 1) roleName = 'manager';
+      else if (user.roleid === 2) roleName = 'user';
+      else if (user.roleid === 3) roleName = 'donor';
+      
+      return {
+        userid: user.userid,
+        email: user.useremail,
+        firstName: user.userfirstname || '',
+        lastName: user.userlastname || '',
+        fullName: `${user.userfirstname || ''} ${user.userlastname || ''}`.trim() || 'No Name',
+        role: roleName,
+        roleid: user.roleid,
+        status: user.accountactive ? 'active' : 'inactive',
+        accountactive: user.accountactive,
+        totaldonations: user.totaldonations
+      };
+    });
+    
     const user = {
       email: req.session.userEmail,
       role: req.session.userRole,
       firstName: req.session.userFirstName || '',
       lastName: req.session.userLastName || ''
     };
-    res.render('users', { user, query: req.query });
+    res.render('users', { user, users, query: req.query });
   } catch (error) {
     console.error('Users error:', error);
     res.redirect('/login');
   }
 });
 
-// Update user role route (protected, manager only)
-app.post('/users/update', requireAuth, async (req, res) => {
+// Edit user page route (protected, manager only)
+app.get('/users/edit/:userid', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.redirect('/dashboard');
+    }
+
+    const userId = parseInt(req.params.userid);
+    if (isNaN(userId)) {
+      return res.redirect('/users?error=invalid_user_id');
+    }
+
+    // Fetch user from database
+    const userData = await db('users')
+      .where('userid', userId)
+      .first();
+
+    if (!userData) {
+      return res.redirect('/users?error=user_not_found');
+    }
+
+    // Map roleid to role name
+    let roleName = 'user';
+    if (userData.roleid === 1) roleName = 'manager';
+    else if (userData.roleid === 2) roleName = 'user';
+    else if (userData.roleid === 3) roleName = 'donor';
+
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole
+    };
+
+    const editUser = {
+      userid: userData.userid,
+      email: userData.useremail,
+      firstName: userData.userfirstname || '',
+      lastName: userData.userlastname || '',
+      role: roleName,
+      roleid: userData.roleid,
+      accountactive: userData.accountactive
+    };
+
+    res.render('edit-user', { user, editUser, query: req.query });
+  } catch (error) {
+    console.error('Edit user page error:', error);
+    res.redirect('/users?error=page_error');
+  }
+});
+
+// Update user route (protected, manager only)
+app.post('/users/update/:userid', requireAuth, async (req, res) => {
   try {
     // Check if user is manager
     if (req.session.userRole !== 'manager') {
       return res.status(403).send('Forbidden');
     }
 
-    const { email, role, password } = req.body;
-
-    if (!email || !role || !['manager', 'user', 'donor'].includes(role)) {
-      return res.status(400).send('Invalid request');
+    const userId = parseInt(req.params.userid);
+    if (isNaN(userId)) {
+      return res.redirect('/users?error=invalid_user_id');
     }
 
-    // Don't allow updating demo accounts
-    if (email === 'manager@ellarises.org' || email === 'user@ellarises.org') {
-      return res.redirect('/users?error=demo_accounts_cannot_be_modified');
+    const { useremail, userfirstname, userlastname, roleid, accountactive, password } = req.body;
+
+    // Validate required fields
+    if (!useremail || !userfirstname || !userlastname || !roleid) {
+      return res.redirect(`/users/edit/${userId}?error=missing_fields`);
     }
 
-    // Map role string to roleid
-    let roleid;
-    if (role === 'manager') {
-      roleid = 1;
-    } else if (role === 'user') {
-      roleid = 2;
-    } else if (role === 'donor') {
-      roleid = 3;
-    } else {
-      return res.status(400).send('Invalid role');
+    // Check if user exists
+    const existingUser = await db('users').where('userid', userId).first();
+    if (!existingUser) {
+      return res.redirect('/users?error=user_not_found');
     }
 
-    // Build update object
+    // Prepare update object
+    // Handle checkbox: if checked, value is 'on', if unchecked, it's undefined
+    // Note: totaldonations is not included as it's financial data that cannot be changed
     const updateData = {
-      roleid: roleid
+      useremail: useremail.toLowerCase(),
+      userfirstname: userfirstname,
+      userlastname: userlastname,
+      roleid: parseInt(roleid),
+      accountactive: !!(accountactive === 'on' || accountactive === true || accountactive === 'true')
     };
 
-    // If password is provided, hash it and set password (but keep account inactive)
-    // User will be forced to change password on first login
+    // Only update password if provided
     if (password && password.trim() !== '') {
       if (password.length < 6) {
-        return res.redirect('/users?error=password_too_short');
+        return res.redirect(`/users/edit/${userId}?error=password_too_short`);
       }
-      
       const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
-      updateData.userpassword = hashedPassword;
-      // Keep account inactive - user must change password to activate
-      updateData.accountactive = false;
+      updateData.userpassword = await bcrypt.hash(password, saltRounds);
     }
 
-    // Update user in database (using lowercase column names)
+    // Update user in database
     await db('users')
-      .where('useremail', email.toLowerCase())
+      .where('userid', userId)
       .update(updateData);
 
-    if (password && password.trim() !== '') {
-      res.redirect('/users?success=user_updated_with_password');
-    } else {
-      res.redirect('/users?success=role_updated');
-    }
+    res.redirect('/users?success=user_updated');
   } catch (error) {
     console.error('Update user error:', error);
     res.redirect('/users?error=update_failed');

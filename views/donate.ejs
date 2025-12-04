@@ -19,9 +19,15 @@
                 <a href="/donate" class="px-4 py-2 md:px-6 md:py-2.5 bg-muted text-foreground rounded-md font-medium hover:bg-muted/80 transition-colors">
                     Donate
                 </a>
+                <% if (typeof loggedIn !== 'undefined' && loggedIn === true) { %>
+                <a href="/dashboard" class="px-4 py-2 md:px-6 md:py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
+                    Dashboard
+                </a>
+                <% } else { %>
                 <a href="/login" class="px-4 py-2 md:px-6 md:py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
                     Login
                 </a>
+                <% } %>
             </div>
         </div>
     </header>
@@ -29,70 +35,58 @@
     <!-- Main Content -->
     <main class="w-full px-6 py-12 md:py-16 lg:py-20">
         <div class="container mx-auto max-w-2xl">
-            <!-- Success Message -->
-            <% if (typeof query !== 'undefined' && query.success === 'true') { %>
-            <div class="mb-6 p-4 bg-secondary/20 border border-secondary rounded-md">
-                <p class="text-sm text-card-foreground text-center">
-                    Thank you for your donation! Your support makes a difference.
-                </p>
-            </div>
-            <% } %>
 
-            <!-- Header Section with Heart Icon -->
-            <div class="text-center mb-8 md:mb-12">
-                <div class="flex justify-center mb-4">
-                    <div class="w-16 h-16 rounded-full border-2 border-accent flex items-center justify-center bg-accent/10">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                </div>
-                <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-4">
-                    Make a Donation
-                </h1>
-                <p class="text-base md:text-lg text-foreground/80 max-w-xl mx-auto leading-relaxed">
-                    Your generosity helps us continue empowering young women through education and leadership programs.
-                </p>
+
+            <!-- Back to Home Button -->
+            <div class="mb-6">
+                <a href="/" class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+                        <path d="m12 19-7-7 7-7"></path>
+                        <path d="M19 12H5"></path>
+                    </svg>
+                    <span>Back to Home</span>
+                </a>
             </div>
 
             <!-- Donation Form Card -->
             <div class="bg-card rounded-lg p-6 md:p-8 shadow-sm">
-                <h2 class="text-xl md:text-2xl font-semibold text-card-foreground mb-2">
-                    Donation Details
-                </h2>
-                <p class="text-sm text-card-foreground/70 mb-6">
-                    Fill out the form below to complete your donation.
-                </p>
+                <!-- Title Section (moved inside card like login page) -->
+                <div class="flex flex-col space-y-1.5 mb-6 text-center">
+                    <div class="flex justify-center mb-4">
+                        <div class="w-16 h-16 rounded-full border-2 border-accent flex items-center justify-center bg-accent/10">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h1 class="text-3xl md:text-4xl font-serif font-bold text-card-foreground">
+                        Make a Donation
+                    </h1>
+                    <p class="text-sm text-card-foreground/70">
+                        Your generosity helps us continue empowering young women through education and leadership programs.
+                    </p>
+                </div>
+
+                <!-- Success Message -->
+                <% if (typeof query !== 'undefined' && query.success === 'true') { %>
+                <div class="mb-6 p-4 bg-secondary/20 border border-secondary rounded-md">
+                    <p class="text-sm text-card-foreground text-center">
+                        Thank you for your donation! Your support makes a difference.
+                    </p>
+                </div>
+                <% } %>
 
                 <form action="/donate" method="POST" class="space-y-6">
-                    <!-- Full Name -->
-                    <div>
-                        <label for="fullName" class="block text-sm font-medium text-card-foreground mb-2">
-                            Full Name <span class="text-destructive">*</span>
-                        </label>
-                        <input 
-                            type="text" 
-                            id="fullName" 
-                            name="fullName" 
-                            required
-                            placeholder="Your full name"
-                            class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
-                        />
+                    <!-- Logged-in user message -->
+                    <% if (typeof loggedIn !== 'undefined' && loggedIn === true) { %>
+                    <div class="mb-4 p-4 bg-secondary/20 border border-secondary rounded-md">
+                        <p class="text-sm text-card-foreground text-center">
+                            Donating as: <strong><%= userEmail %></strong>
+                        </p>
                     </div>
-
-                    <!-- Email -->
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-card-foreground mb-2">
-                            Email <span class="text-muted-foreground text-xs">(Optional)</span>
-                        </label>
-                        <input 
-                            type="email" 
-                            id="email" 
-                            name="email" 
-                            placeholder="your@email.com"
-                            class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
-                        />
-                    </div>
+                    <!-- Hidden input for logged-in user email -->
+                    <input type="hidden" name="loggedInUserId" value="<%= userId %>">
+                    <% } %>
 
                     <!-- Donation Amount -->
                     <div>
@@ -177,6 +171,274 @@
                         </div>
                     </div>
 
+                    <!-- Credit Card Payment Section -->
+                    <div id="creditSection" class="payment-section hidden space-y-4 p-4 border border-input rounded-md bg-muted/30 relative">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-semibold text-card-foreground">Credit Card Information</h3>
+                            <button 
+                                type="button"
+                                onclick="fillProxyData('credit')"
+                                class="text-xs px-2 py-1 bg-muted text-foreground rounded-md font-medium hover:bg-muted/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+                            >
+                                Fill with Proxy Data
+                            </button>
+                        </div>
+
+                        <div>
+                            <label for="creditCardNumber" class="block text-sm font-medium text-card-foreground mb-2">
+                                Card Number <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="creditCardNumber" 
+                                name="creditCardNumber" 
+                                placeholder="1234 5678 9012 3456"
+                                maxlength="19"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="creditExpiry" class="block text-sm font-medium text-card-foreground mb-2">
+                                    Expiry Date <span class="text-destructive">*</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="creditExpiry" 
+                                    name="creditExpiry" 
+                                    placeholder="MM/YY"
+                                    maxlength="5"
+                                    class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                />
+                            </div>
+                            <div>
+                                <label for="creditCVV" class="block text-sm font-medium text-card-foreground mb-2">
+                                    CVV <span class="text-destructive">*</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="creditCVV" 
+                                    name="creditCVV" 
+                                    placeholder="123"
+                                    maxlength="4"
+                                    class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="creditName" class="block text-sm font-medium text-card-foreground mb-2">
+                                Cardholder Name <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="creditName" 
+                                name="creditName" 
+                                placeholder="John Doe"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+
+                        <% if (typeof loggedIn === 'undefined' || loggedIn !== true) { %>
+                        <div>
+                            <label for="creditEmail" class="block text-sm font-medium text-card-foreground mb-2">
+                                Email <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="email" 
+                                id="creditEmail" 
+                                name="creditEmail" 
+                                placeholder="your@email.com"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Debit Card Payment Section -->
+                    <div id="debitSection" class="payment-section hidden space-y-4 p-4 border border-input rounded-md bg-muted/30 relative">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-semibold text-card-foreground">Debit Card Information</h3>
+                            <button 
+                                type="button"
+                                onclick="fillProxyData('debit')"
+                                class="text-xs px-2 py-1 bg-muted text-foreground rounded-md font-medium hover:bg-muted/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+                            >
+                                Fill with Proxy Data
+                            </button>
+                        </div>
+
+                        <div>
+                            <label for="debitCardNumber" class="block text-sm font-medium text-card-foreground mb-2">
+                                Card Number <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="debitCardNumber" 
+                                name="debitCardNumber" 
+                                placeholder="1234 5678 9012 3456"
+                                maxlength="19"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="debitExpiry" class="block text-sm font-medium text-card-foreground mb-2">
+                                    Expiry Date <span class="text-destructive">*</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="debitExpiry" 
+                                    name="debitExpiry" 
+                                    placeholder="MM/YY"
+                                    maxlength="5"
+                                    class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                />
+                            </div>
+                            <div>
+                                <label for="debitCVV" class="block text-sm font-medium text-card-foreground mb-2">
+                                    CVV <span class="text-destructive">*</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="debitCVV" 
+                                    name="debitCVV" 
+                                    placeholder="123"
+                                    maxlength="4"
+                                    class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="debitName" class="block text-sm font-medium text-card-foreground mb-2">
+                                Cardholder Name <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="debitName" 
+                                name="debitName" 
+                                placeholder="John Doe"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+
+                        <% if (typeof loggedIn === 'undefined' || loggedIn !== true) { %>
+                        <div>
+                            <label for="debitEmail" class="block text-sm font-medium text-card-foreground mb-2">
+                                Email <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="email" 
+                                id="debitEmail" 
+                                name="debitEmail" 
+                                placeholder="your@email.com"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+                        <% } %>
+                    </div>
+
+                    <!-- PayPal Payment Section -->
+                    <div id="paypalSection" class="payment-section hidden space-y-4 p-4 border border-input rounded-md bg-muted/30 relative">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-semibold text-card-foreground">PayPal Information</h3>
+                            <button 
+                                type="button"
+                                onclick="fillProxyData('paypal')"
+                                class="text-xs px-2 py-1 bg-muted text-foreground rounded-md font-medium hover:bg-muted/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+                            >
+                                Fill with Proxy Data
+                            </button>
+                        </div>
+                        
+                        <% if (typeof loggedIn === 'undefined' || loggedIn !== true) { %>
+                        <div>
+                            <label for="paypalEmail" class="block text-sm font-medium text-card-foreground mb-2">
+                                PayPal Email <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="email" 
+                                id="paypalEmail" 
+                                name="paypalEmail" 
+                                placeholder="your@email.com"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Bank Transfer Payment Section -->
+                    <div id="bankSection" class="payment-section hidden space-y-4 p-4 border border-input rounded-md bg-muted/30 relative">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-semibold text-card-foreground">Bank Transfer Information</h3>
+                            <button 
+                                type="button"
+                                onclick="fillProxyData('bank')"
+                                class="text-xs px-2 py-1 bg-muted text-foreground rounded-md font-medium hover:bg-muted/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+                            >
+                                Fill with Proxy Data
+                            </button>
+                        </div>
+
+                        <div>
+                            <label for="bankAccountNumber" class="block text-sm font-medium text-card-foreground mb-2">
+                                Account Number <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="bankAccountNumber" 
+                                name="bankAccountNumber" 
+                                placeholder="1234567890"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+
+                        <div>
+                            <label for="bankRoutingNumber" class="block text-sm font-medium text-card-foreground mb-2">
+                                Routing Number <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="bankRoutingNumber" 
+                                name="bankRoutingNumber" 
+                                placeholder="123456789"
+                                maxlength="9"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+
+                        <div>
+                            <label for="bankName" class="block text-sm font-medium text-card-foreground mb-2">
+                                Bank Name <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="bankName" 
+                                name="bankName" 
+                                placeholder="Bank Name"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+
+                        <% if (typeof loggedIn === 'undefined' || loggedIn !== true) { %>
+                        <div>
+                            <label for="bankEmail" class="block text-sm font-medium text-card-foreground mb-2">
+                                Email <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="email" 
+                                id="bankEmail" 
+                                name="bankEmail" 
+                                placeholder="your@email.com"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+                        <% } %>
+                    </div>
+
                     <!-- Message -->
                     <div>
                         <label for="message" class="block text-sm font-medium text-card-foreground mb-2">
@@ -248,6 +510,103 @@
                 });
             }
         });
+
+        // Check if user is logged in (email fields are hidden)
+        <% if (typeof loggedIn !== 'undefined' && loggedIn === true) { %>
+        const isLoggedIn = true;
+        <% } else { %>
+        const isLoggedIn = false;
+        <% } %>
+
+        // Handle payment method selection
+        document.getElementById('paymentMethod').addEventListener('change', function() {
+            const selectedMethod = this.value;
+            
+            // Remove required from all payment section fields and hide all sections
+            document.querySelectorAll('.payment-section').forEach(section => {
+                section.classList.add('hidden');
+                section.querySelectorAll('input').forEach(input => {
+                    input.removeAttribute('required');
+                });
+            });
+            
+            // Show selected payment section and add required to its fields (skip email if logged in)
+            if (selectedMethod === 'credit') {
+                const section = document.getElementById('creditSection');
+                section.classList.remove('hidden');
+                section.querySelectorAll('input').forEach(input => {
+                    // Skip email fields if logged in
+                    if (isLoggedIn && (input.id === 'creditEmail' || input.name === 'creditEmail')) {
+                        return;
+                    }
+                    input.setAttribute('required', 'required');
+                });
+            } else if (selectedMethod === 'debit') {
+                const section = document.getElementById('debitSection');
+                section.classList.remove('hidden');
+                section.querySelectorAll('input').forEach(input => {
+                    // Skip email fields if logged in
+                    if (isLoggedIn && (input.id === 'debitEmail' || input.name === 'debitEmail')) {
+                        return;
+                    }
+                    input.setAttribute('required', 'required');
+                });
+            } else if (selectedMethod === 'paypal') {
+                const section = document.getElementById('paypalSection');
+                section.classList.remove('hidden');
+                section.querySelectorAll('input').forEach(input => {
+                    // Skip email fields if logged in
+                    if (isLoggedIn && (input.id === 'paypalEmail' || input.name === 'paypalEmail')) {
+                        return;
+                    }
+                    input.setAttribute('required', 'required');
+                });
+            } else if (selectedMethod === 'bank') {
+                const section = document.getElementById('bankSection');
+                section.classList.remove('hidden');
+                section.querySelectorAll('input').forEach(input => {
+                    // Skip email fields if logged in
+                    if (isLoggedIn && (input.id === 'bankEmail' || input.name === 'bankEmail')) {
+                        return;
+                    }
+                    input.setAttribute('required', 'required');
+                });
+            }
+        });
+
+        // Handle form submission - remove required from hidden fields
+        document.querySelector('form').addEventListener('submit', function(e) {
+            // Remove required from all hidden payment sections
+            document.querySelectorAll('.payment-section.hidden').forEach(section => {
+                section.querySelectorAll('input').forEach(input => {
+                    input.removeAttribute('required');
+                });
+            });
+        });
+
+        // Fill proxy data function
+        function fillProxyData(method) {
+            if (method === 'credit') {
+                document.getElementById('creditCardNumber').value = '4111 1111 1111 1111';
+                document.getElementById('creditExpiry').value = '12/25';
+                document.getElementById('creditCVV').value = '123';
+                document.getElementById('creditName').value = 'John Doe';
+                // Don't fill email - user must enter it
+            } else if (method === 'debit') {
+                document.getElementById('debitCardNumber').value = '4111 1111 1111 1111';
+                document.getElementById('debitExpiry').value = '12/25';
+                document.getElementById('debitCVV').value = '123';
+                document.getElementById('debitName').value = 'John Doe';
+                // Don't fill email - user must enter it
+            } else if (method === 'paypal') {
+                // Don't fill email - user must enter it
+            } else if (method === 'bank') {
+                document.getElementById('bankAccountNumber').value = '1234567890';
+                document.getElementById('bankRoutingNumber').value = '123456789';
+                document.getElementById('bankName').value = 'Test Bank';
+                // Don't fill email - user must enter it
+            }
+        }
     </script>
 </body>
 </html>
