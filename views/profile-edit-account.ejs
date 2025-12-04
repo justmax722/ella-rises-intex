@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Account Information - Ella Rises CRM</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-background min-h-screen flex">
+    <!-- Sidebar Navigation -->
+    <%- include('partials/sidebar', { user: user, currentPage: 'profile' }) %>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-6 overflow-auto">
+        <div class="space-y-6">
+            <!-- Page Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-serif font-bold text-primary">Edit Account Information</h1>
+                    <p class="text-muted-foreground mt-1">Update your account details</p>
+                </div>
+                <a href="/profile?tab=account" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                    Cancel
+                </a>
+            </div>
+
+            <!-- Error Message -->
+            <% if (typeof query !== 'undefined' && query.error) { %>
+            <div class="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+                <p class="text-sm text-destructive">
+                    <% if (query.error === 'missing_fields') { %>
+                        Please fill in all fields.
+                    <% } else if (query.error === 'email_taken') { %>
+                        This email is already taken by another user.
+                    <% } else if (query.error === 'password_too_short') { %>
+                        Password must be at least 6 characters long.
+                    <% } else if (query.error === 'password_mismatch') { %>
+                        Passwords do not match.
+                    <% } else if (query.error === 'password_missing') { %>
+                        Please fill in both password fields if you want to change your password.
+                    <% } else { %>
+                        An error occurred. Please try again.
+                    <% } %>
+                </p>
+            </div>
+            <% } %>
+
+            <!-- Edit Form -->
+            <div class="rounded-lg border bg-card text-card-foreground shadow-sm">
+                <div class="p-6">
+                    <form action="/profile/edit?type=account" method="POST" class="space-y-4">
+                        <!-- Email -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="useremail">Email</label>
+                            <input 
+                                type="email" 
+                                id="useremail" 
+                                name="useremail" 
+                                value="<%= dbUser ? (dbUser.useremail || '') : '' %>"
+                                required
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                        </div>
+
+                        <!-- First Name -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="userfirstname">First Name</label>
+                            <input 
+                                type="text" 
+                                id="userfirstname" 
+                                name="userfirstname" 
+                                value="<%= dbUser ? (dbUser.userfirstname || '') : '' %>"
+                                required
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                        </div>
+
+                        <!-- Last Name -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="userlastname">Last Name</label>
+                            <input 
+                                type="text" 
+                                id="userlastname" 
+                                name="userlastname" 
+                                value="<%= dbUser ? (dbUser.userlastname || '') : '' %>"
+                                required
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                        </div>
+
+                        <!-- Password Section -->
+                        <div class="pt-4 border-t border-border">
+                            <h3 class="text-lg font-semibold mb-4">Change Password</h3>
+                            <p class="text-sm text-muted-foreground mb-4">Leave blank to keep your current password.</p>
+                            
+                            <div class="space-y-4">
+                                <!-- New Password -->
+                                <div class="space-y-2">
+                                    <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="newPassword">New Password</label>
+                                    <input 
+                                        type="password" 
+                                        id="newPassword" 
+                                        name="newPassword" 
+                                        placeholder="Enter new password (leave blank to keep current)"
+                                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                    />
+                                </div>
+
+                                <!-- Confirm New Password -->
+                                <div class="space-y-2">
+                                    <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="confirmNewPassword">Confirm New Password</label>
+                                    <input 
+                                        type="password" 
+                                        id="confirmNewPassword" 
+                                        name="confirmNewPassword" 
+                                        placeholder="Confirm new password"
+                                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                    />
+                                    <p id="passwordError" class="text-sm text-destructive hidden"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="flex gap-4 pt-4">
+                            <button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                                Save Changes
+                            </button>
+                            <a href="/profile?tab=account" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Password validation
+        const passwordForm = document.querySelector('form');
+        const newPasswordInput = document.getElementById('newPassword');
+        const confirmPasswordInput = document.getElementById('confirmNewPassword');
+        const passwordError = document.getElementById('passwordError');
+
+        if (passwordForm && newPasswordInput && confirmPasswordInput) {
+            passwordForm.addEventListener('submit', function(e) {
+                const newPassword = newPasswordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+
+                // If password fields are filled, validate them
+                if (newPassword || confirmPassword) {
+                    // Clear previous errors
+                    if (passwordError) {
+                        passwordError.classList.add('hidden');
+                        confirmPasswordInput.classList.remove('border-destructive');
+                    }
+
+                    // Validate password length
+                    if (newPassword.length < 6) {
+                        e.preventDefault();
+                        if (passwordError) {
+                            passwordError.textContent = 'Password must be at least 6 characters long.';
+                            passwordError.classList.remove('hidden');
+                        }
+                        newPasswordInput.focus();
+                        return false;
+                    }
+
+                    // Validate password match
+                    if (newPassword !== confirmPassword) {
+                        e.preventDefault();
+                        if (passwordError) {
+                            passwordError.textContent = 'Passwords do not match. Please try again.';
+                            passwordError.classList.remove('hidden');
+                            confirmPasswordInput.classList.add('border-destructive');
+                        }
+                        confirmPasswordInput.focus();
+                        return false;
+                    }
+                }
+            });
+
+            // Clear error when user starts typing
+            if (confirmPasswordInput && passwordError) {
+                confirmPasswordInput.addEventListener('input', function() {
+                    const newPassword = newPasswordInput.value;
+                    const confirmPassword = this.value;
+                    
+                    if (newPassword === confirmPassword && newPassword.length >= 6) {
+                        passwordError.classList.add('hidden');
+                        this.classList.remove('border-destructive');
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
+
