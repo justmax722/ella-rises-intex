@@ -83,24 +83,96 @@ const restrictDonor = (req, res, next) => {
 
 // Landing page route
 app.get('/', (req, res) => {
-  res.render('landing');
+  res.render('landing', { isLoggedIn: !!req.session.userId });
 });
 
 // Donation page route
-app.get('/donate', (req, res) => {
-  res.render('donate', { query: req.query });
+app.get('/donate', async (req, res) => {
+  try {
+    // Check if user is logged in
+    if (req.session.userId) {
+      // Fetch user email from database
+      const dbUser = await db('users')
+        .where('userid', req.session.userId)
+        .first();
+      
+      if (dbUser) {
+        return res.render('donate', {
+          query: req.query,
+          loggedIn: true,
+          userEmail: dbUser.useremail,
+          userId: req.session.userId
+        });
+      }
+    }
+    
+    // Not logged in - keep existing behavior
+    res.render('donate', { query: req.query });
+  } catch (error) {
+    console.error('Donate page error:', error);
+    res.render('donate', { query: req.query });
+  }
 });
 
 // Donation form submission route
 app.post('/donate', async (req, res) => {
   try {
-    const { donationAmount, paymentMethod, creditEmail, debitEmail, paypalEmail, bankEmail, message } = req.body;
+    const { donationAmount, paymentMethod, creditEmail, debitEmail, paypalEmail, bankEmail, message, loggedInUserId } = req.body;
 
     // Validate required fields
     if (!donationAmount || !paymentMethod) {
       return res.redirect('/donate?error=missing_fields');
     }
 
+    const donationAmountNum = parseFloat(donationAmount);
+    if (isNaN(donationAmountNum) || donationAmountNum <= 0) {
+      return res.redirect('/donate?error=invalid_amount');
+    }
+
+    // Check if user is logged in (via session or loggedInUserId from form)
+    const sessionUserId = req.session.userId;
+    const formUserId = loggedInUserId ? parseInt(loggedInUserId) : null;
+    const isLoggedIn = !!(sessionUserId || formUserId);
+
+    if (isLoggedIn) {
+      // Logged-in user flow - use session userId or form userId
+      const userId = sessionUserId || formUserId;
+      
+      // Get user from database
+      const dbUser = await db('users')
+        .where('userid', userId)
+        .first();
+
+      if (!dbUser) {
+        return res.redirect('/donate?error=user_not_found');
+      }
+
+      // Get next donation number for this user
+      const maxDonation = await db('donation')
+        .where('userid', userId)
+        .max('donationno as maxno')
+        .first();
+
+      const nextDonationNo = (maxDonation?.maxno || 0) + 1;
+
+      // Insert donation
+      await db('donation').insert({
+        userid: userId,
+        donationno: nextDonationNo,
+        donationamount: donationAmountNum,
+        donationdate: new Date()
+      });
+
+      // Update total donations
+      await db('users')
+        .where('userid', userId)
+        .increment('totaldonations', donationAmountNum);
+
+      // Redirect back to donations page with success message
+      return res.redirect('/donations?donationSuccess=true');
+    }
+
+    // Guest flow - existing logic
     // Extract email based on payment method
     let email = null;
     if (paymentMethod === 'credit' && creditEmail) {
@@ -115,11 +187,6 @@ app.post('/donate', async (req, res) => {
 
     if (!email) {
       return res.redirect('/donate?error=email_required');
-    }
-
-    const donationAmountNum = parseFloat(donationAmount);
-    if (isNaN(donationAmountNum) || donationAmountNum <= 0) {
-      return res.redirect('/donate?error=invalid_amount');
     }
 
     // Look up user by email
@@ -1410,59 +1477,100 @@ app.get('/donations', requireAuth, async (req, res) => {
       return res.redirect('/login');
     }
 
-    // Get all donations for this user with user info joined
-    const donations = await db('donation')
+    const userRole = req.session.userRole;
+    const isManager = userRole === 'manager';
+    const viewPersonal = req.query.view === 'personal';
+
+    // For managers: show all donations by default, or personal if view=personal
+    // For others: always show personal donations
+    let donationsQuery = db('donation')
       .leftJoin('users', 'donation.userid', 'users.userid')
-      .where('donation.userid', userId)
       .select(
         'donation.*',
         'users.userfirstname',
         'users.userlastname',
         'users.useremail'
-      )
+      );
+
+    if (isManager && !viewPersonal) {
+      // Manager viewing all donations - no user filter
+    } else {
+      // Personal view (for managers with view=personal, or for non-managers)
+      donationsQuery = donationsQuery.where('donation.userid', userId);
+    }
+
+    // Get all donations
+    let donations = await donationsQuery
       .orderBy('donation.donationdate', 'desc')
       .orderBy('donation.donationno', 'desc');
-
-    // Calculate stats
-    const totalDonations = parseFloat(dbUser.totaldonations) || 0;
 
     // Get current month start and end
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    // Calculate this month's donations
-    const thisMonthDonations = donations
-      .filter(d => {
+    // Calculate stats based on view
+    let totalDonations = 0;
+    let thisMonthDonations = 0;
+    let thisMonthCount = 0;
+    let averageDonation = 0;
+
+    if (isManager && !viewPersonal) {
+      // Manager viewing all donations - calculate from all donations
+      totalDonations = donations.reduce((sum, d) => sum + parseFloat(d.donationamount || 0), 0);
+      
+      const thisMonthDonationsList = donations.filter(d => {
         const donationDate = new Date(d.donationdate);
         return donationDate.getMonth() === currentMonth && donationDate.getFullYear() === currentYear;
-      })
-      .reduce((sum, d) => sum + parseFloat(d.donationamount || 0), 0);
-
-    // Calculate average donation
-    const averageDonation = donations.length > 0
-      ? donations.reduce((sum, d) => sum + parseFloat(d.donationamount || 0), 0) / donations.length
-      : 0;
+      });
+      
+      thisMonthDonations = thisMonthDonationsList.reduce((sum, d) => sum + parseFloat(d.donationamount || 0), 0);
+      thisMonthCount = thisMonthDonationsList.length;
+      
+      averageDonation = donations.length > 0 ? totalDonations / donations.length : 0;
+    } else {
+      // Personal view - calculate from personal donations array
+      totalDonations = donations.reduce((sum, d) => sum + parseFloat(d.donationamount || 0), 0);
+      
+      const thisMonthDonationsList = donations.filter(d => {
+        const donationDate = new Date(d.donationdate);
+        return donationDate.getMonth() === currentMonth && donationDate.getFullYear() === currentYear;
+      });
+      
+      thisMonthDonations = thisMonthDonationsList.reduce((sum, d) => sum + parseFloat(d.donationamount || 0), 0);
+      thisMonthCount = thisMonthDonationsList.length;
+      
+      averageDonation = donations.length > 0
+        ? donations.reduce((sum, d) => sum + parseFloat(d.donationamount || 0), 0) / donations.length
+        : 0;
+    }
 
     const user = {
       email: req.session.userEmail,
-      role: req.session.userRole,
+      role: userRole,
       userId: userId,
       firstName: dbUser.userfirstname || '',
       lastName: dbUser.userlastname || ''
     };
 
+    // Format numbers with commas
+    const formatCurrency = (num) => {
+      return parseFloat(num).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    };
+
     res.render('donations', {
       user,
       donations,
+      query: req.query,
+      viewPersonal: viewPersonal,
       stats: {
-        totalDonations: totalDonations.toFixed(2),
-        thisMonthDonations: thisMonthDonations.toFixed(2),
-        thisMonthCount: donations.filter(d => {
-          const donationDate = new Date(d.donationdate);
-          return donationDate.getMonth() === currentMonth && donationDate.getFullYear() === currentYear;
-        }).length,
-        averageDonation: averageDonation.toFixed(2)
+        totalDonations: formatCurrency(totalDonations),
+        thisMonthDonations: formatCurrency(thisMonthDonations),
+        thisMonthCount: thisMonthCount.toLocaleString('en-US'),
+        averageDonation: formatCurrency(averageDonation)
       }
     });
   } catch (error) {

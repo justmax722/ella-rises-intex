@@ -19,9 +19,15 @@
                 <a href="/donate" class="px-4 py-2 md:px-6 md:py-2.5 bg-muted text-foreground rounded-md font-medium hover:bg-muted/80 transition-colors">
                     Donate
                 </a>
+                <% if (typeof isLoggedIn !== 'undefined' && isLoggedIn === true) { %>
+                <a href="/dashboard" class="px-4 py-2 md:px-6 md:py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
+                    Dashboard
+                </a>
+                <% } else { %>
                 <a href="/login" class="px-4 py-2 md:px-6 md:py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
                     Login
                 </a>
+                <% } %>
             </div>
         </div>
     </header>
