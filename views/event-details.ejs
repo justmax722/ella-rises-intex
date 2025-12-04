@@ -15,6 +15,13 @@
         <div class="space-y-6">
             <!-- Page Header -->
             <div class="space-y-4">
+                <!-- Title Row -->
+                <div>
+                    <h1 class="text-3xl font-serif font-bold text-primary"><%= session.eventname %></h1>
+                    <p class="text-muted-foreground mt-1">Event session details</p>
+                </div>
+
+                <!-- Actions Row -->
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div class="flex items-center gap-4">
                         <!-- Back to Events Link -->
@@ -25,21 +32,69 @@
                             </svg>
                             <span>Back to Events</span>
                         </a>
-                        <div>
-                            <h1 class="text-3xl font-serif font-bold text-primary"><%= session.eventname %></h1>
-                            <p class="text-muted-foreground mt-1">Event session details</p>
-                        </div>
                     </div>
-                    <div class="flex gap-2">
-                        <a href="/events/<%= session.sessionid %>/edit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
-                            Edit
-                        </a>
-                        <a href="/events/<%= session.sessionid %>/attendance" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
-                            Take Attendance
-                        </a>
-                        <a href="/events/<%= session.sessionid %>/delete" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground h-10 px-4 py-2">
-                            Delete
-                        </a>
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <% if (user.role === 'manager') { %>
+                            <a href="/events/<%= session.sessionid %>/edit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                                Edit
+                            </a>
+                            <a href="/events/<%= session.sessionid %>/attendance" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                                Take Attendance
+                            </a>
+                            <a href="/events/<%= session.sessionid %>/delete" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground h-10 px-4 py-2">
+                                Delete
+                            </a>
+                        <% } %>
+
+                        <% if (user.role === 'user') { %>
+                            <% 
+                                const deadlinePassed = registrationDeadlinePassed;
+                                const isCancelled = registrationStatus === 'cancelled';
+                                const full = !!isFull;
+                                const showRegister = !deadlinePassed && !full && (!isRegistered || isCancelled);
+                                const showCancel = !deadlinePassed && isRegistered && !isCancelled;
+                                const returnTab = (typeof query !== 'undefined' && query.from === 'past') ? 'past' : 'upcoming';
+                            %>
+                            <% if (deadlinePassed) { %>
+                                <button 
+                                    type="button"
+                                    class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 cursor-not-allowed bg-muted text-muted-foreground"
+                                    aria-disabled="true"
+                                >
+                                    Registration Has Passed
+                                </button>
+                            <% } else if (showRegister) { %>
+                                <button 
+                                    type="button"
+                                    class="details-register-btn inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                                    data-session-id="<%= session.sessionid %>"
+                                    data-session-name="<%= session.eventname %>"
+                                    data-action="register"
+                                    data-return-tab="<%= returnTab %>"
+                                >
+                                    Register
+                                </button>
+                            <% } else if (showCancel) { %>
+                                <button 
+                                    type="button"
+                                    class="details-register-btn inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                    data-session-id="<%= session.sessionid %>"
+                                    data-session-name="<%= session.eventname %>"
+                                    data-action="cancel"
+                                    data-return-tab="<%= returnTab %>"
+                                >
+                                    Cancel Registration
+                                </button>
+                            <% } else if (full) { %>
+                                <button 
+                                    type="button"
+                                    class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 cursor-not-allowed bg-muted text-muted-foreground"
+                                    aria-disabled="true"
+                                >
+                                    No Seats Available
+                                </button>
+                            <% } %>
+                        <% } %>
                     </div>
                 </div>
 
@@ -151,6 +206,121 @@
                 }, 500);
             }, 5000);
         }
+
+        // Registration / Cancellation modal specifically for the details page
+        document.addEventListener('DOMContentLoaded', () => {
+            const detailButtons = document.querySelectorAll('.details-register-btn');
+            if (!detailButtons.length) return;
+
+            let modalElement = null;
+            let modalTitleEl = null;
+            let modalBodyEl = null;
+            let modalCancelBtn = null;
+            let modalConfirmBtn = null;
+            let modalForm = null;
+
+            function ensureModal() {
+                if (modalElement) return;
+
+                modalElement = document.createElement('div');
+                modalElement.id = 'eventDetailsRegisterModal';
+                modalElement.className = 'fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm';
+                modalElement.innerHTML = `
+                    <div class="bg-card rounded-lg border border-border shadow-lg max-w-md w-full mx-4">
+                        <div class="p-6">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-check-2 text-primary">
+                                        <path d="M8 2v4"></path>
+                                        <path d="M16 2v4"></path>
+                                        <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                                        <path d="M3 10h18"></path>
+                                        <path d="m9 16 2 2 4-4"></path>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 id="eventDetailsModalTitle" class="text-lg font-semibold text-card-foreground"></h3>
+                                    <p id="eventDetailsModalSubtitle" class="text-sm text-muted-foreground mt-1"></p>
+                                </div>
+                            </div>
+                            <div class="mb-6">
+                                <p id="eventDetailsModalBody" class="text-sm text-card-foreground"></p>
+                            </div>
+                            <div class="flex gap-3 justify-end">
+                                <button id="eventDetailsModalCancelBtn" type="button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                                    Cancel
+                                </button>
+                                <form id="eventDetailsModalForm" method="POST">
+                                    <input type="hidden" name="returnTab" id="eventDetailsReturnTabInput" value="upcoming" />
+                                    <button id="eventDetailsModalConfirmBtn" type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                                        Confirm
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(modalElement);
+
+                modalTitleEl = document.getElementById('eventDetailsModalTitle');
+                modalBodyEl = document.getElementById('eventDetailsModalBody');
+                modalCancelBtn = document.getElementById('eventDetailsModalCancelBtn');
+                modalConfirmBtn = document.getElementById('eventDetailsModalConfirmBtn');
+                modalForm = document.getElementById('eventDetailsModalForm');
+
+                const modalSubtitleEl = document.getElementById('eventDetailsModalSubtitle');
+                modalElement._subtitleEl = modalSubtitleEl;
+
+                modalCancelBtn.addEventListener('click', () => {
+                    modalElement.classList.add('hidden');
+                });
+                modalElement.addEventListener('click', (e) => {
+                    if (e.target === modalElement) {
+                        modalElement.classList.add('hidden');
+                    }
+                });
+            }
+
+            detailButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    ensureModal();
+
+                    const sessionId = btn.getAttribute('data-session-id');
+                    const sessionName = btn.getAttribute('data-session-name') || 'this event';
+                    const action = btn.getAttribute('data-action');
+                    const returnTab = btn.getAttribute('data-return-tab') || 'upcoming';
+
+                    const subtitleEl = modalElement._subtitleEl;
+
+                    if (action === 'cancel') {
+                        modalTitleEl.textContent = 'Cancel Registration';
+                        if (subtitleEl) subtitleEl.textContent = 'Confirm cancellation';
+                        modalBodyEl.textContent = `Are you sure you want to cancel your registration for "${sessionName}"?`;
+                        modalForm.action = `/events/${encodeURIComponent(sessionId)}/cancel-registration`;
+                        modalConfirmBtn.textContent = 'Confirm Cancellation';
+                        modalConfirmBtn.classList.remove('bg-primary', 'text-primary-foreground', 'hover:bg-primary/90');
+                        modalConfirmBtn.classList.add('border', 'border-destructive', 'text-destructive', 'hover:bg-destructive', 'hover:text-destructive-foreground');
+                    } else {
+                        modalTitleEl.textContent = 'Register for Event';
+                        if (subtitleEl) subtitleEl.textContent = 'Confirm your registration';
+                        modalBodyEl.textContent = `Do you want to register for "${sessionName}"?`;
+                        modalForm.action = `/events/${encodeURIComponent(sessionId)}/register`;
+                        modalConfirmBtn.textContent = 'Confirm Registration';
+                        modalConfirmBtn.classList.remove('border', 'border-destructive', 'text-destructive', 'hover:bg-destructive', 'hover:text-destructive-foreground');
+                        modalConfirmBtn.classList.add('bg-primary', 'text-primary-foreground', 'hover:bg-primary/90');
+                    }
+
+                    const returnInput = document.getElementById('eventDetailsReturnTabInput');
+                    if (returnInput) {
+                        returnInput.value = returnTab;
+                    }
+
+                    modalElement.classList.remove('hidden');
+                    modalElement.classList.add('flex');
+                });
+            });
+        });
     </script>
 </body>
 </html>
