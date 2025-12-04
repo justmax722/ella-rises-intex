@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Profile - Ella Rises</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="min-h-screen bg-cream flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <!-- Back to Home Link -->
+        <div class="mb-4">
+            <a class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground" href="/">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left h-4 w-4">
+                    <path d="m12 19-7-7 7-7"></path>
+                    <path d="M19 12H5"></path>
+                </svg>
+                <span>Back to Home</span>
+            </a>
+        </div>
+
+        <!-- Card -->
+        <div class="rounded-lg border text-card-foreground shadow-sm bg-background">
+            <!-- Title Section -->
+            <div class="flex flex-col space-y-1.5 p-6 text-center">
+                <h3 class="tracking-tight text-3xl font-serif font-bold text-primary">Complete Your Profile</h3>
+                <p class="text-sm text-muted-foreground">Please provide the following information to complete your account setup.</p>
+            </div>
+
+            <!-- Form Container -->
+            <div class="p-6 pt-0">
+                <!-- Error Message -->
+                <% if (typeof error !== 'undefined' && error) { %>
+                <div class="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+                    <p class="text-sm text-destructive"><%= error %></p>
+                </div>
+                <% } %>
+
+                <!-- Profile Form -->
+                <form id="profileForm" action="/profile" method="POST" class="space-y-4">
+                    <!-- Date of Birth - Month, Day, Year side by side -->
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Date of Birth</label>
+                        <div class="grid grid-cols-3 gap-4 w-full">
+                            <div class="space-y-2">
+                                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="dob_month">Month</label>
+                                <select 
+                                    id="dob_month" 
+                                    name="dob_month" 
+                                    required
+                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                >
+                                    <option value="">Month</option>
+                                    <option value="01">January</option>
+                                    <option value="02">February</option>
+                                    <option value="03">March</option>
+                                    <option value="04">April</option>
+                                    <option value="05">May</option>
+                                    <option value="06">June</option>
+                                    <option value="07">July</option>
+                                    <option value="08">August</option>
+                                    <option value="09">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="dob_day">Day</label>
+                                <select 
+                                    id="dob_day" 
+                                    name="dob_day" 
+                                    required
+                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                >
+                                    <option value="">Day</option>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="dob_year">Year</label>
+                                <select 
+                                    id="dob_year" 
+                                    name="dob_year" 
+                                    required
+                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                >
+                                    <option value="">Year</option>
+                                </select>
+                            </div>
+                        </div>
+                        <input type="hidden" id="profiledob" name="profiledob" required />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilephone">Phone Number</label>
+                        <input 
+                            type="tel" 
+                            id="profilephone" 
+                            name="profilephone" 
+                            required
+                            placeholder="(555) 123-4567"
+                            maxlength="14"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                        />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilecity">City</label>
+                        <input 
+                            type="text" 
+                            id="profilecity" 
+                            name="profilecity" 
+                            required
+                            placeholder="New York"
+                            maxlength="100"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                        />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilestate">State</label>
+                        <input 
+                            type="text" 
+                            id="profilestate" 
+                            name="profilestate" 
+                            required
+                            placeholder="NY"
+                            maxlength="50"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                        />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilezip">Zip Code</label>
+                        <input 
+                            type="text" 
+                            id="profilezip" 
+                            name="profilezip" 
+                            required
+                            placeholder="10001"
+                            maxlength="20"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                        />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profileschooloremployer">School or Employer</label>
+                        <input 
+                            type="text" 
+                            id="profileschooloremployer" 
+                            name="profileschooloremployer" 
+                            required
+                            placeholder="ABC University or XYZ Company"
+                            maxlength="200"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                        />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilefieldofinterest">Field of Interest</label>
+                        <input 
+                            type="text" 
+                            id="profilefieldofinterest" 
+                            name="profilefieldofinterest" 
+                            required
+                            placeholder="Technology, Education, Healthcare, etc."
+                            maxlength="100"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                        />
+                    </div>
+
+                    <button 
+                        type="submit"
+                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-green-600 text-white hover:bg-green-700 h-10 px-4 py-2 w-full"
+                    >
+                        Submit Profile
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Populate year dropdown (from current year back to 100 years ago)
+        const yearSelect = document.getElementById('dob_year');
+        const currentYear = new Date().getFullYear();
+        for (let year = currentYear; year >= currentYear - 100; year--) {
+            const option = document.createElement('option');
+            option.value = year.toString();
+            option.textContent = year.toString();
+            yearSelect.appendChild(option);
+        }
+
+        // Populate day dropdown - show all 31 days initially
+        const monthSelect = document.getElementById('dob_month');
+        const daySelect = document.getElementById('dob_day');
+        const dobHidden = document.getElementById('profiledob');
+
+        // Initialize with all 31 days
+        function initializeDays() {
+            daySelect.innerHTML = '<option value="">Day</option>';
+            for (let day = 1; day <= 31; day++) {
+                const option = document.createElement('option');
+                option.value = day.toString().padStart(2, '0');
+                option.textContent = day.toString();
+                daySelect.appendChild(option);
+            }
+        }
+
+        // Update day dropdown when month/year changes to show valid days
+        function updateDays() {
+            const month = monthSelect.value;
+            const year = yearSelect.value;
+            
+            // If both month and year are selected, limit to valid days
+            if (month && year) {
+                // Get number of days in the selected month (handles leap years)
+                const daysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate();
+                
+                // Save currently selected day
+                const selectedDay = daySelect.value;
+                
+                // Rebuild day options
+                daySelect.innerHTML = '<option value="">Day</option>';
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const option = document.createElement('option');
+                    option.value = day.toString().padStart(2, '0');
+                    option.textContent = day.toString();
+                    // Restore selection if it's still valid
+                    if (selectedDay && parseInt(selectedDay) === day) {
+                        option.selected = true;
+                    }
+                    daySelect.appendChild(option);
+                }
+            } else {
+                // If month/year not selected, show all 31 days
+                initializeDays();
+            }
+        }
+
+        function updateHiddenDate() {
+            const month = monthSelect.value;
+            const day = daySelect.value;
+            const year = yearSelect.value;
+            
+            if (month && day && year) {
+                dobHidden.value = `${year}-${month}-${day}`;
+            } else {
+                dobHidden.value = '';
+            }
+        }
+
+        // Initialize days on page load
+        initializeDays();
+
+        monthSelect.addEventListener('change', function() {
+            updateDays();
+            updateHiddenDate();
+        });
+
+        yearSelect.addEventListener('change', function() {
+            updateDays();
+            updateHiddenDate();
+        });
+
+        daySelect.addEventListener('change', updateHiddenDate);
+
+        // Phone number formatting: (XXX) XXX-XXXX
+        const phoneInput = document.getElementById('profilephone');
+        phoneInput.addEventListener('input', function(e) {
+            // Remove all non-digit characters
+            let value = e.target.value.replace(/\D/g, '');
+            
+            // Limit to 10 digits
+            if (value.length > 10) {
+                value = value.slice(0, 10);
+            }
+            
+            // Format as (XXX) XXX-XXXX
+            if (value.length > 0) {
+                if (value.length <= 3) {
+                    e.target.value = `(${value}`;
+                } else if (value.length <= 6) {
+                    e.target.value = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+                } else {
+                    e.target.value = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6)}`;
+                }
+            } else {
+                e.target.value = '';
+            }
+        });
+
+        // Prevent non-numeric input
+        phoneInput.addEventListener('keypress', function(e) {
+            if (!/\d/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
+

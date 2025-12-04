@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claim Your Account - Ella Rises</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="min-h-screen bg-cream flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <!-- Back to Home Link -->
+        <div class="mb-4">
+            <a class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground" href="/">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left h-4 w-4">
+                    <path d="m12 19-7-7 7-7"></path>
+                    <path d="M19 12H5"></path>
+                </svg>
+                <span>Back to Home</span>
+            </a>
+        </div>
+
+        <!-- Card -->
+        <div class="rounded-lg border text-card-foreground shadow-sm bg-background">
+            <!-- Title Section -->
+            <div class="flex flex-col space-y-1.5 p-6 text-center">
+                <h3 class="tracking-tight text-3xl font-serif font-bold text-primary">Claim Your Account</h3>
+                <p class="text-sm text-muted-foreground">Your account is pending. Please verify your identity to activate it.</p>
+            </div>
+
+            <!-- Form Container -->
+            <div class="p-6 pt-0">
+                <!-- Error Message -->
+                <% if (typeof error !== 'undefined' && error) { %>
+                <div class="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+                    <p class="text-sm text-destructive"><%= error %></p>
+                </div>
+                <% } %>
+
+                <!-- Max Attempts Reached Message -->
+                <% if (typeof maxAttemptsReached !== 'undefined' && maxAttemptsReached) { %>
+                <div class="mb-6 p-4 bg-blue-100 border-2 border-blue-400 rounded-md shadow-sm">
+                    <p class="text-sm font-medium text-blue-900">Too many failed attempts. Please contact an administrator to access your account.</p>
+                </div>
+                <% } %>
+
+                <!-- Attempts Remaining -->
+                <% if (typeof remainingAttempts !== 'undefined' && remainingAttempts > 0 && remainingAttempts < 5) { %>
+                <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <p class="text-sm text-yellow-800"><%= remainingAttempts %> attempt(s) remaining</p>
+                </div>
+                <% } %>
+
+                <!-- Account Claim Form -->
+                <form id="claimForm" action="/account-claim" method="POST" class="space-y-4" <%= typeof maxAttemptsReached !== 'undefined' && maxAttemptsReached ? 'onsubmit="return false;"' : '' %>>
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Date of Birth</label>
+                        <div class="grid grid-cols-3 gap-4 w-full">
+                            <div class="space-y-2">
+                                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="dob_month">Month</label>
+                                <select 
+                                    id="dob_month" 
+                                    name="dob_month" 
+                                    required
+                                    <%= typeof maxAttemptsReached !== 'undefined' && maxAttemptsReached ? 'disabled' : '' %>
+                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                >
+                                    <option value="">Month</option>
+                                    <option value="01">January</option>
+                                    <option value="02">February</option>
+                                    <option value="03">March</option>
+                                    <option value="04">April</option>
+                                    <option value="05">May</option>
+                                    <option value="06">June</option>
+                                    <option value="07">July</option>
+                                    <option value="08">August</option>
+                                    <option value="09">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="dob_day">Day</label>
+                                <select 
+                                    id="dob_day" 
+                                    name="dob_day" 
+                                    required
+                                    <%= typeof maxAttemptsReached !== 'undefined' && maxAttemptsReached ? 'disabled' : '' %>
+                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                >
+                                    <option value="">Day</option>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="dob_year">Year</label>
+                                <select 
+                                    id="dob_year" 
+                                    name="dob_year" 
+                                    required
+                                    <%= typeof maxAttemptsReached !== 'undefined' && maxAttemptsReached ? 'disabled' : '' %>
+                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                >
+                                    <option value="">Year</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilezip">Zip Code</label>
+                        <input 
+                            type="text" 
+                            id="profilezip" 
+                            name="profilezip" 
+                            required
+                            placeholder="10001"
+                            maxlength="20"
+                            <%= typeof maxAttemptsReached !== 'undefined' && maxAttemptsReached ? 'disabled' : '' %>
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                        />
+                    </div>
+
+                    <button 
+                        type="submit"
+                        <%= typeof maxAttemptsReached !== 'undefined' && maxAttemptsReached ? 'disabled' : '' %>
+                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full"
+                    >
+                        Verify Identity
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Populate year dropdown (from current year back to 100 years ago)
+        const yearSelect = document.getElementById('dob_year');
+        const currentYear = new Date().getFullYear();
+        for (let year = currentYear; year >= currentYear - 100; year--) {
+            const option = document.createElement('option');
+            option.value = year.toString();
+            option.textContent = year.toString();
+            yearSelect.appendChild(option);
+        }
+
+        // Populate day dropdown - show all 31 days initially
+        const monthSelect = document.getElementById('dob_month');
+        const daySelect = document.getElementById('dob_day');
+
+        // Initialize with all 31 days
+        function initializeDays() {
+            daySelect.innerHTML = '<option value="">Day</option>';
+            for (let day = 1; day <= 31; day++) {
+                const option = document.createElement('option');
+                option.value = day.toString().padStart(2, '0');
+                option.textContent = day.toString();
+                daySelect.appendChild(option);
+            }
+        }
+
+        // Update day dropdown when month/year changes to show valid days
+        function updateDays() {
+            const month = monthSelect.value;
+            const year = yearSelect.value;
+            
+            // If both month and year are selected, limit to valid days
+            if (month && year) {
+                // Get number of days in the selected month (handles leap years)
+                const daysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate();
+                
+                // Save currently selected day
+                const selectedDay = daySelect.value;
+                
+                // Rebuild day options
+                daySelect.innerHTML = '<option value="">Day</option>';
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const option = document.createElement('option');
+                    option.value = day.toString().padStart(2, '0');
+                    option.textContent = day.toString();
+                    // Restore selection if it's still valid
+                    if (selectedDay && parseInt(selectedDay) === day) {
+                        option.selected = true;
+                    }
+                    daySelect.appendChild(option);
+                }
+            } else {
+                // If month/year not selected, show all 31 days
+                initializeDays();
+            }
+        }
+
+        // Initialize days on page load
+        initializeDays();
+
+        monthSelect.addEventListener('change', updateDays);
+        yearSelect.addEventListener('change', updateDays);
+    </script>
+</body>
+</html>
+
