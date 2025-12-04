@@ -18,11 +18,19 @@ const db = knex(knexConfig);
     console.log('✓ Database connection successful');
   } catch (error) {
     console.error('✗ Database connection failed:', error.message);
+    const host = process.env.RDS_HOSTNAME || process.env.DB_HOST || 'localhost';
+    const isRDS = !!(
+      process.env.RDS_HOSTNAME || 
+      process.env.RDS_DB_NAME || 
+      process.env.AWS_EXECUTION_ENV ||
+      host.includes('.rds.amazonaws.com') ||
+      host.includes('.rds.')
+    );
     console.error('Connection details:', {
-      host: process.env.RDS_HOSTNAME || process.env.DB_HOST || 'localhost',
+      host: host,
       database: process.env.RDS_DB_NAME || process.env.DB_NAME || 'ella_rises',
       user: process.env.RDS_USERNAME || process.env.DB_USER || 'postgres',
-      sslEnabled: !!(process.env.RDS_HOSTNAME || process.env.RDS_DB_NAME || process.env.AWS_EXECUTION_ENV)
+      sslEnabled: isRDS
     });
     console.error('Please check your database configuration and ensure RDS security groups allow connections.');
   }
