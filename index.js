@@ -3697,6 +3697,7 @@ app.get('/donations', requireAuth, async (req, res) => {
       viewPersonal: viewPersonal,
       stats: {
         totalDonations: formatCurrency(totalDonations),
+        totalDonationCount: donations.length,
         thisMonthDonations: formatCurrency(thisMonthDonations),
         thisMonthCount: thisMonthCount.toLocaleString('en-US'),
         averageDonation: formatCurrency(averageDonation)

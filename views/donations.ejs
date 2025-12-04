@@ -45,7 +45,7 @@
                         </svg>
                     </div>
                     <p class="text-3xl font-semibold text-card-foreground">$<%= stats.totalDonations %></p>
-                    <p class="text-xs text-card-foreground/70 mt-1">All time</p>
+                    <p class="text-xs text-card-foreground/70 mt-1"><%= stats.totalDonationCount.toLocaleString('en-US') %> donation<%= stats.totalDonationCount !== 1 ? 's' : '' %></p>
                 </div>
 
                 <!-- This Month -->
@@ -69,7 +69,7 @@
                         </svg>
                     </div>
                     <p class="text-3xl font-semibold text-card-foreground">$<%= stats.averageDonation %></p>
-                    <p class="text-xs text-card-foreground/70 mt-1">Per donor</p>
+                    <p class="text-xs text-card-foreground/70 mt-1"><% if (user.role === 'manager' && !viewPersonal) { %>Per donor<% } else { %>Per donation<% } %></p>
                 </div>
             </div>
 
@@ -141,8 +141,32 @@
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Donor Name</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Email</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Amount</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">
+                                    <div class="flex items-center gap-2">
+                                        <span>Amount</span>
+                                        <% if (user.role === 'manager') { %>
+                                        <button onclick="sortTable('amount')" class="flex items-center text-card-foreground/60 hover:text-card-foreground transition-colors focus:outline-none" id="sortAmountBtn" title="Sort by Amount">
+                                            <svg id="sortAmountIcon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="m7 15 5 5 5-5"></path>
+                                                <path d="m7 9 5-5 5 5"></path>
+                                            </svg>
+                                        </button>
+                                        <% } %>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">
+                                    <div class="flex items-center gap-2">
+                                        <span>Date</span>
+                                        <% if (user.role === 'manager') { %>
+                                        <button onclick="sortTable('date')" class="flex items-center text-card-foreground/60 hover:text-card-foreground transition-colors focus:outline-none" id="sortDateBtn" title="Sort by Date">
+                                            <svg id="sortDateIcon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="m7 15 5 5 5-5"></path>
+                                                <path d="m7 9 5-5 5 5"></path>
+                                            </svg>
+                                        </button>
+                                        <% } %>
+                                    </div>
+                                </th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Message</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Export to PDF</th>
                             </tr>
@@ -357,6 +381,112 @@
                 dateTo.value = '';
                 filterDonations();
             });
+        }
+
+        // Sorting functionality
+        let currentSort = { column: null, direction: null };
+
+        function sortTable(column) {
+            const tbody = document.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => !row.querySelector('td[colspan]'));
+            
+            // Determine sort direction
+            if (currentSort.column === column) {
+                // Toggle direction if same column
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                // New column, start with ascending
+                currentSort.column = column;
+                currentSort.direction = 'asc';
+            }
+
+            // Sort rows
+            rows.sort((a, b) => {
+                const aCells = a.querySelectorAll('td');
+                const bCells = b.querySelectorAll('td');
+                
+                let aValue, bValue;
+                
+                if (column === 'amount') {
+                    // Extract numeric value from amount (remove $ and commas)
+                    aValue = parseFloat(aCells[2]?.textContent?.replace(/[$,]/g, '') || 0);
+                    bValue = parseFloat(bCells[2]?.textContent?.replace(/[$,]/g, '') || 0);
+                } else if (column === 'date') {
+                    // Parse date (format: MM/DD/YYYY from toLocaleDateString)
+                    const aDateText = aCells[3]?.textContent?.trim();
+                    const bDateText = bCells[3]?.textContent?.trim();
+                    
+                    // Parse MM/DD/YYYY format
+                    const parseDate = (dateStr) => {
+                        if (!dateStr) return 0;
+                        const parts = dateStr.split('/');
+                        if (parts.length === 3) {
+                            // MM/DD/YYYY
+                            const month = parseInt(parts[0], 10) - 1; // Month is 0-indexed
+                            const day = parseInt(parts[1], 10);
+                            const year = parseInt(parts[2], 10);
+                            return new Date(year, month, day).getTime();
+                        }
+                        // Fallback to Date constructor
+                        return new Date(dateStr).getTime() || 0;
+                    };
+                    
+                    aValue = parseDate(aDateText);
+                    bValue = parseDate(bDateText);
+                }
+                
+                if (currentSort.direction === 'asc') {
+                    return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+                } else {
+                    return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+                }
+            });
+
+            // Clear tbody and re-append sorted rows
+            const noDonationsRow = Array.from(tbody.querySelectorAll('tr')).find(row => row.querySelector('td[colspan]'));
+            rows.forEach(row => tbody.removeChild(row));
+            rows.forEach(row => tbody.appendChild(row));
+            if (noDonationsRow) {
+                tbody.appendChild(noDonationsRow);
+            }
+
+            // Update arrow icons
+            updateSortIcons();
+            
+            // Reapply filters to maintain filter state
+            filterDonations();
+        }
+
+        function updateSortIcons() {
+            // Reset all icons to neutral state (both up and down)
+            const amountIcon = document.getElementById('sortAmountIcon');
+            const dateIcon = document.getElementById('sortDateIcon');
+            
+            if (amountIcon) {
+                amountIcon.innerHTML = '<path d="m7 15 5 5 5-5"></path><path d="m7 9 5-5 5 5"></path>';
+            }
+            if (dateIcon) {
+                dateIcon.innerHTML = '<path d="m7 15 5 5 5-5"></path><path d="m7 9 5-5 5 5"></path>';
+            }
+
+            // Update active column icon (show only up or down arrow)
+            if (currentSort.column === 'amount' && amountIcon) {
+                if (currentSort.direction === 'asc') {
+                    // Show only up arrow
+                    amountIcon.innerHTML = '<path d="m7 15 5 5 5-5"></path>';
+                } else {
+                    // Show only down arrow
+                    amountIcon.innerHTML = '<path d="m7 9 5-5 5 5"></path>';
+                }
+            } else if (currentSort.column === 'date' && dateIcon) {
+                if (currentSort.direction === 'asc') {
+                    // Show only up arrow
+                    dateIcon.innerHTML = '<path d="m7 15 5 5 5-5"></path>';
+                } else {
+                    // Show only down arrow
+                    dateIcon.innerHTML = '<path d="m7 9 5-5 5 5"></path>';
+                }
+            }
         }
         <% } %>
     </script>
