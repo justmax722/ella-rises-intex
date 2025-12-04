@@ -2448,7 +2448,7 @@ app.post('/events/:sessionId/register', requireAuth, restrictDonor, async (req, 
       registrationcreatedat: now,
       surveynpsbucket: null,
       surveycomments: null,
-      overallsurveryscore: null,
+      overallsurveyscore: null,
       surveysubmissiondate: null
     };
 
@@ -2513,66 +2513,171 @@ app.get('/surveys', requireAuth, restrictDonor, async (req, res) => {
       lastName: req.session.userLastName || ''
     };
 
+    // Get filter/sort parameters (for managers only)
+    const filters = {
+      surveyDateFrom: req.query.surveyDateFrom || '',
+      surveyDateTo: req.query.surveyDateTo || '',
+      sessionDateFrom: req.query.sessionDateFrom || '',
+      sessionDateTo: req.query.sessionDateTo || '',
+      minScore: req.query.minScore || '',
+      maxScore: req.query.maxScore || '',
+      eventId: req.query.eventId || '',
+      sessionId: req.query.sessionId || '',
+      participantSearch: req.query.participantSearch || '',
+      sortBy: req.query.sortBy || 'surveysubmissiondate',
+      sortOrder: req.query.sortOrder || 'desc',
+      success: req.query.success || '',
+      error: req.query.error || ''
+    };
+
     // Get all survey metrics (these will be the dynamic columns)
     const surveyMetrics = await db('surveymetric')
-      .select('metricid', 'surveymetric')
+      .select('metricid', 'surveymetric', 'surveyquestiontext')
+      .where(function() {
+        this.where('active', true).orWhereNull('active');
+      })
       .orderBy('metricid');
 
-    // Get all survey data - start from survey table since that has the metric scores
-    const rawSurveyData = await db('survey as sv')
-      .join('users as u', 'sv.userid', 'u.userid')
-      .join('session as s', 'sv.sessionid', 's.sessionid')
+    // Get events list for filter dropdown (managers only)
+    let eventsList = [];
+    let sessionsList = [];
+    if (user.role === 'manager') {
+      eventsList = await db('event').select('eventid', 'eventname').orderBy('eventname');
+      sessionsList = await db('session as s')
+        .join('event as e', 's.eventid', 'e.eventid')
+        .select('s.sessionid', 's.eventdatetimestart', 'e.eventname')
+        .orderBy('s.eventdatetimestart', 'desc');
+    }
+
+    // Get registration data where survey was completed (NPS bucket not null)
+    // For managers: show all surveys with optional filters
+    // For participants (users): show only their own surveys
+    let registrationQuery = db('registration as r')
+      .join('users as u', 'r.userid', 'u.userid')
+      .join('session as s', 'r.sessionid', 's.sessionid')
       .join('event as e', 's.eventid', 'e.eventid')
-      .leftJoin('registration as r', function() {
-        this.on('sv.userid', '=', 'r.userid')
-            .andOn('sv.sessionid', '=', 'r.sessionid');
-      })
+      .whereNotNull('r.surveynpsbucket')
       .select(
-        'sv.userid',
-        'sv.sessionid',
-        'sv.metricid',
-        'sv.surveyscore',
+        'r.userid',
+        'r.sessionid',
         'u.userfirstname',
         'u.userlastname',
+        'e.eventid',
         'e.eventname',
         's.eventdatetimestart',
         'r.surveycomments',
         'r.surveynpsbucket',
         'r.surveysubmissiondate',
-        'r.overallsurveryscore'
-      )
-      .orderBy('sv.userid')
-      .orderBy('sv.sessionid');
+        'r.overallsurveyscore'
+      );
 
-    // Pivot the data: group by userid+sessionid, with metric scores as columns
-    const pivotedData = {};
-    for (const row of rawSurveyData) {
-      const key = `${row.userid}-${row.sessionid}`;
-      if (!pivotedData[key]) {
-        pivotedData[key] = {
-          userid: row.userid,
-          sessionid: row.sessionid,
-          participantName: `${row.userfirstname || ''} ${row.userlastname || ''}`.trim(),
-          eventName: row.eventname,
-          eventDate: row.eventdatetimestart,
-          overallScore: row.overallsurveryscore,
-          surveyComments: row.surveycomments,
-          npsBucket: row.surveynpsbucket,
-          submittedAt: row.surveysubmissiondate,
-          metricScores: {}
-        };
+    // For participants: also get pending surveys (events attended but no survey submitted)
+    let pendingSurveys = [];
+    if (user.role !== 'manager') {
+      pendingSurveys = await db('registration as r')
+        .join('session as s', 'r.sessionid', 's.sessionid')
+        .join('event as e', 's.eventid', 'e.eventid')
+        .where('r.userid', req.session.userId)
+        .whereNull('r.surveynpsbucket')  // No survey submitted yet
+        .where('s.eventdatetimestart', '<', new Date())  // Event has passed
+        .select(
+          'r.userid',
+          'r.sessionid',
+          'e.eventid',
+          'e.eventname',
+          's.eventdatetimestart',
+          's.eventlocation'
+        )
+        .orderBy('s.eventdatetimestart', 'desc');
+    }
+
+    // If not a manager, filter to only show the logged-in user's surveys
+    if (user.role !== 'manager') {
+      registrationQuery = registrationQuery.where('r.userid', req.session.userId);
+    } else {
+      // Apply manager filters
+      if (filters.surveyDateFrom) {
+        registrationQuery = registrationQuery.where('r.surveysubmissiondate', '>=', filters.surveyDateFrom);
       }
-      // Add the metric score to this row (pivot)
-      if (row.metricid !== null) {
-        pivotedData[key].metricScores[row.metricid] = row.surveyscore;
+      if (filters.surveyDateTo) {
+        registrationQuery = registrationQuery.where('r.surveysubmissiondate', '<=', filters.surveyDateTo + ' 23:59:59');
+      }
+      if (filters.sessionDateFrom) {
+        registrationQuery = registrationQuery.where('s.eventdatetimestart', '>=', filters.sessionDateFrom);
+      }
+      if (filters.sessionDateTo) {
+        registrationQuery = registrationQuery.where('s.eventdatetimestart', '<=', filters.sessionDateTo + ' 23:59:59');
+      }
+      if (filters.minScore) {
+        registrationQuery = registrationQuery.where('r.overallsurveyscore', '>=', parseFloat(filters.minScore));
+      }
+      if (filters.maxScore) {
+        registrationQuery = registrationQuery.where('r.overallsurveyscore', '<=', parseFloat(filters.maxScore));
+      }
+      if (filters.eventId) {
+        registrationQuery = registrationQuery.where('e.eventid', filters.eventId);
+      }
+      if (filters.sessionId) {
+        registrationQuery = registrationQuery.where('s.sessionid', filters.sessionId);
+      }
+      if (filters.participantSearch) {
+        const searchTerm = `%${filters.participantSearch}%`;
+        registrationQuery = registrationQuery.where(function() {
+          this.whereILike('u.userfirstname', searchTerm)
+              .orWhereILike('u.userlastname', searchTerm)
+              .orWhereRaw("LOWER(u.userfirstname || ' ' || u.userlastname) LIKE LOWER(?)", [searchTerm]);
+        });
       }
     }
 
-    // Convert to array and sort by submission date (most recent first)
-    const surveyResponses = Object.values(pivotedData).sort((a, b) => {
-      if (!a.submittedAt) return 1;
-      if (!b.submittedAt) return -1;
-      return new Date(b.submittedAt) - new Date(a.submittedAt);
+    // Apply sorting
+    const validSortColumns = {
+      'surveysubmissiondate': 'r.surveysubmissiondate',
+      'sessiondate': 's.eventdatetimestart',
+      'overallscore': 'r.overallsurveyscore',
+      'eventname': 'e.eventname',
+      'participant': 'u.userlastname'
+    };
+    const sortColumn = validSortColumns[filters.sortBy] || 'r.surveysubmissiondate';
+    const sortOrder = filters.sortOrder === 'asc' ? 'asc' : 'desc';
+    registrationQuery = registrationQuery.orderBy(sortColumn, sortOrder);
+
+    const registrationData = await registrationQuery;
+
+    // Get metric scores from survey table and create lookup
+    // For participants, only get their own scores
+    let surveyScoresQuery = db('survey').select('userid', 'sessionid', 'metricid', 'surveyscore');
+    
+    if (user.role !== 'manager') {
+      surveyScoresQuery = surveyScoresQuery.where('userid', req.session.userId);
+    }
+    
+    const allSurveyScores = await surveyScoresQuery;
+    
+    const metricScoreLookup = {};
+    for (const score of allSurveyScores) {
+      const key = `${score.userid}-${score.sessionid}`;
+      if (!metricScoreLookup[key]) {
+        metricScoreLookup[key] = {};
+      }
+      metricScoreLookup[key][score.metricid] = score.surveyscore;
+    }
+
+    // Build survey responses - start from registration data, add metric scores if available
+    const surveyResponses = registrationData.map(row => {
+      const key = `${row.userid}-${row.sessionid}`;
+      return {
+        userid: row.userid,
+        sessionid: row.sessionid,
+        participantName: `${row.userfirstname || ''} ${row.userlastname || ''}`.trim(),
+        eventName: row.eventname,
+        eventDate: row.eventdatetimestart,
+        overallScore: row.overallsurveyscore,
+        surveyComments: row.surveycomments,
+        npsBucket: row.surveynpsbucket,
+        submittedAt: row.surveysubmissiondate,
+        metricScores: metricScoreLookup[key] || {}
+      };
     });
 
     // Calculate stats for the cards
@@ -2620,6 +2725,10 @@ app.get('/surveys', requireAuth, restrictDonor, async (req, res) => {
       user,
       surveyMetrics,
       surveyResponses,
+      pendingSurveys,
+      filters,
+      eventsList,
+      sessionsList,
       stats: {
         totalResponses,
         responseRate,
@@ -2637,6 +2746,223 @@ app.get('/surveys', requireAuth, restrictDonor, async (req, res) => {
   }
 });
 
+// Add/Edit survey question (manager only)
+app.post('/surveys/questions', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.status(403).send('Forbidden');
+    }
+
+    const { surveyMetric, surveyQuestionText, action, originalMetricId } = req.body;
+
+    if (!surveyMetric) {
+      return res.redirect('/surveys?error=question_name_required');
+    }
+
+    // Check if name already exists (among active questions)
+    const existingQuestion = await db('surveymetric')
+      .where('surveymetric', surveyMetric)
+      .where(function() {
+        this.where('active', true).orWhereNull('active');
+      })
+      .first();
+
+    // If editing, allow same name if it's the same question being edited
+    if (existingQuestion && existingQuestion.metricid != originalMetricId) {
+      return res.redirect('/surveys?error=question_name_exists');
+    }
+
+    // Get max metricid to avoid sequence conflicts
+    const maxIdResult = await db('surveymetric').max('metricid as maxId').first();
+    const newId = (maxIdResult.maxId || 0) + 1;
+
+    if (action === 'edit' && originalMetricId) {
+      // Create the new question entry FIRST (before updating references)
+      await db('surveymetric').insert({
+        metricid: newId,
+        surveymetric: surveyMetric,
+        surveyquestiontext: surveyQuestionText || null,
+        active: true,
+        createdat: new Date()
+      });
+
+      // Update any existing survey responses to use the new metricid
+      await db('survey')
+        .where('metricid', originalMetricId)
+        .update({ metricid: newId });
+
+      // Mark the old question as inactive (don't delete)
+      await db('surveymetric')
+        .where('metricid', originalMetricId)
+        .update({ active: false });
+    } else {
+      // Add new question at the end
+      await db('surveymetric').insert({
+        metricid: newId,
+        surveymetric: surveyMetric,
+        surveyquestiontext: surveyQuestionText || null,
+        active: true,
+        createdat: new Date()
+      });
+    }
+
+    res.redirect('/surveys?success=question_saved');
+  } catch (error) {
+    console.error('Survey question save error:', error);
+    res.redirect('/surveys?error=question_save_failed');
+  }
+});
+
+// Submit survey (participant)
+app.post('/surveys/submit', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const { sessionId, comments, ...metricScores } = req.body;
+
+    if (!sessionId) {
+      return res.redirect('/surveys?error=survey_incomplete');
+    }
+
+    // Verify this user is registered for this session
+    const registration = await db('registration')
+      .where('userid', userId)
+      .where('sessionid', sessionId)
+      .first();
+
+    if (!registration) {
+      return res.redirect('/surveys?error=not_registered');
+    }
+
+    // Check if survey already submitted
+    if (registration.surveynpsbucket) {
+      return res.redirect('/surveys?error=already_submitted');
+    }
+
+    // Get active survey metrics
+    const activeMetrics = await db('surveymetric')
+      .where(function() {
+        this.where('active', true).orWhereNull('active');
+      })
+      .select('metricid');
+
+    // Collect scores for calculating overall score
+    const scores = [];
+
+    // Insert metric scores into survey table
+    for (const metric of activeMetrics) {
+      const scoreKey = `metric_${metric.metricid}`;
+      const score = metricScores[scoreKey];
+      if (score !== undefined && score !== '') {
+        const scoreValue = parseInt(score);
+        scores.push(scoreValue);
+        await db('survey').insert({
+          userid: userId,
+          sessionid: parseInt(sessionId),
+          metricid: metric.metricid,
+          surveyscore: scoreValue
+        });
+      }
+    }
+
+    // Calculate overall score as average of all metric scores
+    const overallScore = scores.length > 0 
+      ? scores.reduce((sum, s) => sum + s, 0) / scores.length 
+      : null;
+
+    // Calculate NPS bucket based on overall score (1-5 scale)
+    // 5 = Promoter, 3-4 = Passive, 1-2 = Detractor
+    let npsBucket = 'Passive';
+    if (overallScore !== null) {
+      if (overallScore >= 4.5) {
+        npsBucket = 'Promoter';
+      } else if (overallScore < 3) {
+        npsBucket = 'Detractor';
+      }
+    }
+
+    // Update registration with survey data
+    await db('registration')
+      .where('userid', userId)
+      .where('sessionid', sessionId)
+      .update({
+        surveynpsbucket: npsBucket,
+        surveycomments: comments || null,
+        overallsurveyscore: overallScore,
+        surveysubmissiondate: new Date()
+      });
+
+    res.redirect('/surveys?success=survey_submitted');
+  } catch (error) {
+    console.error('Survey submit error:', error);
+    res.redirect('/surveys?error=survey_submit_failed');
+  }
+});
+
+// Deactivate survey question (manager only)
+app.post('/surveys/questions/delete', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.status(403).send('Forbidden');
+    }
+
+    const { metricId } = req.body;
+
+    if (!metricId) {
+      return res.redirect('/surveys?error=invalid_request');
+    }
+
+    // Mark the question as inactive (don't actually delete)
+    await db('surveymetric')
+      .where('metricid', metricId)
+      .update({ active: false });
+
+    res.redirect('/surveys?success=question_deleted');
+  } catch (error) {
+    console.error('Survey question deactivate error:', error);
+    res.redirect('/surveys?error=question_delete_failed');
+  }
+});
+
+// Delete survey response (manager only)
+app.post('/surveys/delete', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.status(403).send('Forbidden');
+    }
+
+    const { userId, sessionId } = req.body;
+
+    if (!userId || !sessionId) {
+      return res.redirect('/surveys?error=invalid_request');
+    }
+
+    // Delete metric scores from survey table
+    await db('survey')
+      .where('userid', userId)
+      .where('sessionid', sessionId)
+      .del();
+
+    // Clear survey data from registration (but keep the registration itself)
+    await db('registration')
+      .where('userid', userId)
+      .where('sessionid', sessionId)
+      .update({
+        overallsurveyscore: null,
+        surveynpsbucket: null,
+        surveycomments: null,
+        surveysubmissiondate: null
+      });
+
+    res.redirect('/surveys?success=survey_deleted');
+  } catch (error) {
+    console.error('Survey delete error:', error);
+    res.redirect('/surveys?error=delete_failed');
+  }
+});
+
 // Milestones route (protected, no donor access)
 app.get('/milestones', requireAuth, restrictDonor, async (req, res) => {
   try {
@@ -2646,10 +2972,194 @@ app.get('/milestones', requireAuth, restrictDonor, async (req, res) => {
       firstName: req.session.userFirstName || '',
       lastName: req.session.userLastName || ''
     };
-    res.render('milestones', { user });
+
+    // Get query parameters for filtering
+    const filters = {
+      participantSearch: req.query.participantSearch || '',
+      milestoneType: req.query.milestoneType || '',
+      success: req.query.success || '',
+      error: req.query.error || ''
+    };
+
+    // Get all milestone types
+    const milestoneTypes = await db('milestonetype')
+      .select('milestoneid', 'milestonetitle')
+      .orderBy('milestonetitle');
+
+    // Get all participants (users) for the add milestone dropdown
+    const participants = await db('users')
+      .select('userid', 'userfirstname', 'userlastname', 'useremail')
+      .orderBy('userlastname');
+
+    // Build query for user milestones
+    let milestonesQuery = db('usermilestone as um')
+      .join('users as u', 'um.userid', 'u.userid')
+      .join('milestonetype as mt', 'um.milestoneid', 'mt.milestoneid')
+      .select(
+        'um.userid',
+        'um.milestoneid',
+        'um.milestonedate',
+        'u.userfirstname',
+        'u.userlastname',
+        'u.useremail',
+        'mt.milestonetitle'
+      )
+      .orderBy('um.milestonedate', 'desc');
+
+    // For non-managers, only show their own milestones
+    if (user.role !== 'manager') {
+      milestonesQuery = milestonesQuery.where('um.userid', req.session.userId);
+    } else {
+      // Apply filters (managers only)
+      if (filters.participantSearch) {
+        const searchTerm = `%${filters.participantSearch}%`;
+        milestonesQuery = milestonesQuery.where(function() {
+          this.whereILike('u.userfirstname', searchTerm)
+              .orWhereILike('u.userlastname', searchTerm)
+              .orWhereRaw("LOWER(u.userfirstname || ' ' || u.userlastname) LIKE LOWER(?)", [searchTerm]);
+        });
+      }
+    }
+
+    if (filters.milestoneType) {
+      milestonesQuery = milestonesQuery.where('um.milestoneid', filters.milestoneType);
+    }
+
+    const userMilestones = await milestonesQuery;
+
+    // Calculate milestone counts by type
+    const milestoneCounts = await db('usermilestone')
+      .select('milestoneid')
+      .count('* as count')
+      .groupBy('milestoneid');
+
+    const countsMap = {};
+    milestoneCounts.forEach(mc => {
+      countsMap[mc.milestoneid] = parseInt(mc.count);
+    });
+
+    // Add counts to milestone types
+    const milestoneTypesWithCounts = milestoneTypes.map(mt => ({
+      ...mt,
+      count: countsMap[mt.milestoneid] || 0
+    }));
+
+    res.render('milestones', { 
+      user,
+      milestoneTypes: milestoneTypesWithCounts,
+      participants,
+      userMilestones,
+      filters
+    });
   } catch (error) {
     console.error('Milestones error:', error);
     res.redirect('/login');
+  }
+});
+
+// Add milestone (manager can add for anyone, participant can add for themselves)
+app.post('/milestones/add', requireAuth, async (req, res) => {
+  try {
+    let { userId, milestoneId, milestoneDate } = req.body;
+
+    // Participants can only add milestones for themselves
+    if (req.session.userRole !== 'manager') {
+      userId = req.session.userId;
+    }
+
+    if (!userId || !milestoneId || !milestoneDate) {
+      return res.redirect('/milestones?error=missing_fields');
+    }
+
+    // Check if this milestone already exists for this user on this date
+    const existing = await db('usermilestone')
+      .where('userid', userId)
+      .where('milestoneid', milestoneId)
+      .where('milestonedate', milestoneDate)
+      .first();
+
+    if (existing) {
+      return res.redirect('/milestones?error=milestone_exists');
+    }
+
+    await db('usermilestone').insert({
+      userid: parseInt(userId),
+      milestoneid: parseInt(milestoneId),
+      milestonedate: milestoneDate
+    });
+
+    res.redirect('/milestones?success=milestone_added');
+  } catch (error) {
+    console.error('Add milestone error:', error);
+    res.redirect('/milestones?error=add_failed');
+  }
+});
+
+// Update milestone (manager can update any, participant can only update their own)
+app.post('/milestones/update', requireAuth, async (req, res) => {
+  try {
+    let { originalUserId, originalMilestoneId, originalDate, newUserId, newMilestoneId, newDate } = req.body;
+
+    // Participants can only update their own milestones
+    if (req.session.userRole !== 'manager') {
+      if (parseInt(originalUserId) !== req.session.userId) {
+        return res.status(403).send('Forbidden');
+      }
+      // Force the new userId to be themselves (can't transfer to another user)
+      newUserId = req.session.userId;
+    }
+
+    if (!originalUserId || !originalMilestoneId || !originalDate || !newUserId || !newMilestoneId || !newDate) {
+      return res.redirect('/milestones?error=missing_fields');
+    }
+
+    // Delete old record
+    await db('usermilestone')
+      .where('userid', originalUserId)
+      .where('milestoneid', originalMilestoneId)
+      .where('milestonedate', originalDate)
+      .del();
+
+    // Insert new record
+    await db('usermilestone').insert({
+      userid: parseInt(newUserId),
+      milestoneid: parseInt(newMilestoneId),
+      milestonedate: newDate
+    });
+
+    res.redirect('/milestones?success=milestone_updated');
+  } catch (error) {
+    console.error('Update milestone error:', error);
+    res.redirect('/milestones?error=update_failed');
+  }
+});
+
+// Delete milestone (manager can delete any, participant can only delete their own)
+app.post('/milestones/delete', requireAuth, async (req, res) => {
+  try {
+    const { userId, milestoneId, milestoneDate } = req.body;
+
+    // Participants can only delete their own milestones
+    if (req.session.userRole !== 'manager') {
+      if (parseInt(userId) !== req.session.userId) {
+        return res.status(403).send('Forbidden');
+      }
+    }
+
+    if (!userId || !milestoneId || !milestoneDate) {
+      return res.redirect('/milestones?error=missing_fields');
+    }
+
+    await db('usermilestone')
+      .where('userid', userId)
+      .where('milestoneid', milestoneId)
+      .where('milestonedate', milestoneDate)
+      .del();
+
+    res.redirect('/milestones?success=milestone_deleted');
+  } catch (error) {
+    console.error('Delete milestone error:', error);
+    res.redirect('/milestones?error=delete_failed');
   }
 });
 
