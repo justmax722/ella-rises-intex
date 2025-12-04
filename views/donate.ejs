@@ -55,6 +55,17 @@
                 </p>
             </div>
 
+            <!-- Back to Home Link -->
+            <div class="mb-4">
+                <a class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground" href="/">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left h-4 w-4">
+                        <path d="m12 19-7-7 7-7"></path>
+                        <path d="M19 12H5"></path>
+                    </svg>
+                    <span>Back to Home</span>
+                </a>
+            </div>
+
             <!-- Donation Form Card -->
             <div class="bg-card rounded-lg p-6 md:p-8 shadow-sm">
                 <h2 class="text-xl md:text-2xl font-semibold text-card-foreground mb-2">
@@ -65,35 +76,6 @@
                 </p>
 
                 <form action="/donate" method="POST" class="space-y-6">
-                    <!-- Full Name -->
-                    <div>
-                        <label for="fullName" class="block text-sm font-medium text-card-foreground mb-2">
-                            Full Name <span class="text-destructive">*</span>
-                        </label>
-                        <input 
-                            type="text" 
-                            id="fullName" 
-                            name="fullName" 
-                            required
-                            placeholder="Your full name"
-                            class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
-                        />
-                    </div>
-
-                    <!-- Email -->
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-card-foreground mb-2">
-                            Email <span class="text-muted-foreground text-xs">(Optional)</span>
-                        </label>
-                        <input 
-                            type="email" 
-                            id="email" 
-                            name="email" 
-                            placeholder="your@email.com"
-                            class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
-                        />
-                    </div>
-
                     <!-- Donation Amount -->
                     <div>
                         <label class="block text-sm font-medium text-card-foreground mb-3">
@@ -177,6 +159,280 @@
                         </div>
                     </div>
 
+
+                    <!-- Payment Method Specific Sections -->
+                    
+                    <!-- Credit Card Section -->
+                    <div id="creditCardSection" class="hidden payment-section space-y-4 p-4 border border-input rounded-md bg-muted/20">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-card-foreground">Credit Card Information</h3>
+                            <button type="button" onclick="fillProxyData('credit')" class="px-3 py-1.5 text-xs border border-input rounded-md text-card-foreground hover:bg-muted transition-colors">
+                                Fill with Proxy data
+                            </button>
+                        </div>
+                        
+                        <div>
+                            <label for="cardNumber" class="block text-sm font-medium text-card-foreground mb-2">
+                                Card Number <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="cardNumber" 
+                                name="cardNumber" 
+                                required
+                                placeholder="1234 5678 9012 3456"
+                                maxlength="19"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="expiryDate" class="block text-sm font-medium text-card-foreground mb-2">
+                                    Expiry Date (MM/YY) <span class="text-destructive">*</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="expiryDate" 
+                                    name="expiryDate" 
+                                    required
+                                    placeholder="MM/YY"
+                                    maxlength="5"
+                                    class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                />
+                            </div>
+                            <div>
+                                <label for="cvv" class="block text-sm font-medium text-card-foreground mb-2">
+                                    CVV <span class="text-destructive">*</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="cvv" 
+                                    name="cvv" 
+                                    required
+                                    placeholder="123"
+                                    maxlength="4"
+                                    class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="nameOnCard" class="block text-sm font-medium text-card-foreground mb-2">
+                                Name on Card <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="nameOnCard" 
+                                name="nameOnCard" 
+                                required
+                                placeholder="John Doe"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+
+                        <div>
+                            <label for="creditEmail" class="block text-sm font-medium text-card-foreground mb-2">
+                                Email <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="email" 
+                                id="creditEmail" 
+                                name="creditEmail" 
+                                required
+                                placeholder="your@email.com"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Debit Card Section -->
+                    <div id="debitCardSection" class="hidden payment-section space-y-4 p-4 border border-input rounded-md bg-muted/20">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-card-foreground">Debit Card Information</h3>
+                            <button type="button" onclick="fillProxyData('debit')" class="px-3 py-1.5 text-xs border border-input rounded-md text-card-foreground hover:bg-muted transition-colors">
+                                Fill with Proxy data
+                            </button>
+                        </div>
+                        
+                        <div>
+                            <label for="debitCardNumber" class="block text-sm font-medium text-card-foreground mb-2">
+                                Card Number <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="debitCardNumber" 
+                                name="debitCardNumber" 
+                                required
+                                placeholder="1234 5678 9012 3456"
+                                maxlength="19"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="debitExpiryDate" class="block text-sm font-medium text-card-foreground mb-2">
+                                    Expiry Date (MM/YY) <span class="text-destructive">*</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="debitExpiryDate" 
+                                    name="debitExpiryDate" 
+                                    required
+                                    placeholder="MM/YY"
+                                    maxlength="5"
+                                    class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                />
+                            </div>
+                            <div>
+                                <label for="debitCvv" class="block text-sm font-medium text-card-foreground mb-2">
+                                    CVV <span class="text-destructive">*</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="debitCvv" 
+                                    name="debitCvv" 
+                                    required
+                                    placeholder="123"
+                                    maxlength="4"
+                                    class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="debitNameOnCard" class="block text-sm font-medium text-card-foreground mb-2">
+                                Name on Card <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="debitNameOnCard" 
+                                name="debitNameOnCard" 
+                                required
+                                placeholder="John Doe"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+
+                        <div>
+                            <label for="debitEmail" class="block text-sm font-medium text-card-foreground mb-2">
+                                Email <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="email" 
+                                id="debitEmail" 
+                                name="debitEmail" 
+                                required
+                                placeholder="your@email.com"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- PayPal Section -->
+                    <div id="paypalSection" class="hidden payment-section space-y-4 p-4 border border-input rounded-md bg-muted/20">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-card-foreground">PayPal Information</h3>
+                            <button type="button" onclick="fillProxyData('paypal')" class="px-3 py-1.5 text-xs border border-input rounded-md text-card-foreground hover:bg-muted transition-colors">
+                                Fill with Proxy data
+                            </button>
+                        </div>
+                        
+                        <div>
+                            <label for="paypalEmail" class="block text-sm font-medium text-card-foreground mb-2">
+                                Email <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="email" 
+                                id="paypalEmail" 
+                                name="paypalEmail" 
+                                required
+                                placeholder="your@email.com"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+
+                        <div>
+                            <label for="paypalAccountName" class="block text-sm font-medium text-card-foreground mb-2">
+                                PayPal Account Name <span class="text-muted-foreground text-xs">(Optional)</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="paypalAccountName" 
+                                name="paypalAccountName" 
+                                placeholder="John Doe"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Bank Transfer Section -->
+                    <div id="bankSection" class="hidden payment-section space-y-4 p-4 border border-input rounded-md bg-muted/20">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-card-foreground">Bank Transfer Information</h3>
+                            <button type="button" onclick="fillProxyData('bank')" class="px-3 py-1.5 text-xs border border-input rounded-md text-card-foreground hover:bg-muted transition-colors">
+                                Fill with Proxy data
+                            </button>
+                        </div>
+                        
+                        <div>
+                            <label for="accountNumber" class="block text-sm font-medium text-card-foreground mb-2">
+                                Account Number <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="accountNumber" 
+                                name="accountNumber" 
+                                required
+                                placeholder="1234567890"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+
+                        <div>
+                            <label for="routingNumber" class="block text-sm font-medium text-card-foreground mb-2">
+                                Routing Number <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="routingNumber" 
+                                name="routingNumber" 
+                                required
+                                placeholder="123456789"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+
+                        <div>
+                            <label for="bankName" class="block text-sm font-medium text-card-foreground mb-2">
+                                Bank Name <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="bankName" 
+                                name="bankName" 
+                                required
+                                placeholder="Bank of America"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+
+                        <div>
+                            <label for="bankEmail" class="block text-sm font-medium text-card-foreground mb-2">
+                                Email <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="email" 
+                                id="bankEmail" 
+                                name="bankEmail" 
+                                required
+                                placeholder="your@email.com"
+                                class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
+                            />
+                        </div>
+                    </div>
+
                     <!-- Message -->
                     <div>
                         <label for="message" class="block text-sm font-medium text-card-foreground mb-2">
@@ -248,6 +504,117 @@
                 });
             }
         });
+
+        // Handle payment method selection
+        const paymentMethodSelect = document.getElementById('paymentMethod');
+        const paymentSections = {
+            'credit': document.getElementById('creditCardSection'),
+            'debit': document.getElementById('debitCardSection'),
+            'paypal': document.getElementById('paypalSection'),
+            'bank': document.getElementById('bankSection')
+        };
+
+        paymentMethodSelect.addEventListener('change', function() {
+            const selectedMethod = this.value;
+            
+            // Hide all payment sections
+            Object.values(paymentSections).forEach(section => {
+                if (section) {
+                    section.classList.add('hidden');
+                    // Clear required attributes when hidden
+                    const inputs = section.querySelectorAll('input[required]');
+                    inputs.forEach(input => {
+                        input.removeAttribute('required');
+                    });
+                }
+            });
+            
+            // Show selected payment section
+            if (selectedMethod && paymentSections[selectedMethod]) {
+                paymentSections[selectedMethod].classList.remove('hidden');
+                // Add required attributes back when shown
+                const inputs = paymentSections[selectedMethod].querySelectorAll('input[required]');
+                inputs.forEach(input => {
+                    input.setAttribute('required', 'required');
+                });
+            }
+        });
+
+        // Format card number input (add spaces every 4 digits)
+        function formatCardNumber(input) {
+            let value = input.value.replace(/\s/g, '');
+            let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+            if (formattedValue.length > 19) formattedValue = formattedValue.substring(0, 19);
+            input.value = formattedValue;
+        }
+
+        // Format expiry date input (MM/YY)
+        function formatExpiryDate(input) {
+            let value = input.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            if (value.length > 5) value = value.substring(0, 5);
+            input.value = value;
+        }
+
+        // Add event listeners for card number formatting
+        const cardNumberInputs = ['cardNumber', 'debitCardNumber'];
+        cardNumberInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener('input', function() {
+                    formatCardNumber(this);
+                });
+            }
+        });
+
+        // Add event listeners for expiry date formatting
+        const expiryInputs = ['expiryDate', 'debitExpiryDate'];
+        expiryInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener('input', function() {
+                    formatExpiryDate(this);
+                });
+            }
+        });
+
+        // Restrict CVV to numbers only
+        const cvvInputs = ['cvv', 'debitCvv'];
+        cvvInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '');
+                });
+            }
+        });
+
+        // Fill proxy data function
+        function fillProxyData(paymentMethod) {
+            if (paymentMethod === 'credit') {
+                document.getElementById('cardNumber').value = '4111 1111 1111 1111';
+                document.getElementById('expiryDate').value = '12/25';
+                document.getElementById('cvv').value = '123';
+                document.getElementById('nameOnCard').value = 'John Doe';
+                // Email field is NOT filled - user must enter it
+            } else if (paymentMethod === 'debit') {
+                document.getElementById('debitCardNumber').value = '4111 1111 1111 1111';
+                document.getElementById('debitExpiryDate').value = '12/25';
+                document.getElementById('debitCvv').value = '123';
+                document.getElementById('debitNameOnCard').value = 'John Doe';
+                // Email field is NOT filled - user must enter it
+            } else if (paymentMethod === 'paypal') {
+                document.getElementById('paypalAccountName').value = 'John Doe';
+                // Email field is NOT filled - user must enter it
+            } else if (paymentMethod === 'bank') {
+                document.getElementById('accountNumber').value = '1234567890';
+                document.getElementById('routingNumber').value = '123456789';
+                document.getElementById('bankName').value = 'Bank of America';
+                // Email field is NOT filled - user must enter it
+            }
+        }
     </script>
 </body>
 </html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donation Success - Ella Rises</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="min-h-screen bg-cream flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <!-- Back to Home Link -->
+        <div class="mb-4">
+            <a class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground" href="/">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left h-4 w-4">
+                    <path d="m12 19-7-7 7-7"></path>
+                    <path d="M19 12H5"></path>
+                </svg>
+                <span>Back to Home</span>
+            </a>
+        </div>
+
+        <!-- Card -->
+        <div class="rounded-lg border text-card-foreground shadow-sm bg-background">
+            <!-- Success Message -->
+            <div class="flex flex-col space-y-1.5 p-6 text-center">
+                <div class="flex justify-center mb-4">
+                    <div class="w-16 h-16 rounded-full border-2 border-accent flex items-center justify-center bg-accent/10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <h3 class="tracking-tight text-3xl font-serif font-bold text-primary">Thank You!</h3>
+                <p class="text-sm text-muted-foreground">
+                    Thank you for your $<%= amount.toFixed(2) %> donation!
+                </p>
+            </div>
+
+            <!-- Error Messages -->
+            <% if (typeof query !== 'undefined' && query.error) { %>
+            <div class="px-6 pb-0">
+                <div class="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+                    <p class="text-sm text-destructive">
+                        <% if (query.error === 'missing_password') { %>
+                            Please fill in all password fields.
+                        <% } else if (query.error === 'password_mismatch') { %>
+                            Passwords do not match.
+                        <% } else if (query.error === 'password_too_short') { %>
+                            Password must be at least 6 characters long.
+                        <% } else if (query.error === 'missing_name') { %>
+                            Please fill in both first and last name.
+                        <% } else { %>
+                            An error occurred. Please try again.
+                        <% } %>
+                    </p>
+                </div>
+            </div>
+            <% } %>
+
+            <!-- Claim Account Form (only show if account is not active) -->
+            <% if (!isActive) { %>
+            <div class="p-6 pt-0">
+                <p class="text-sm text-muted-foreground mb-6 text-center">
+                    Create a password to save this receipt to your account.
+                </p>
+
+                <form action="/donate/claim" method="POST" class="space-y-4">
+                    <input type="hidden" name="userId" value="<%= userId %>" />
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="email">Email</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            value="<%= email %>"
+                            readonly
+                            class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm cursor-not-allowed"
+                        />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="firstName">First Name</label>
+                        <input 
+                            type="text" 
+                            id="firstName" 
+                            name="firstName" 
+                            required
+                            placeholder="Enter your first name"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                        />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="lastName">Last Name</label>
+                        <input 
+                            type="text" 
+                            id="lastName" 
+                            name="lastName" 
+                            required
+                            placeholder="Enter your last name"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                        />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="password">Password</label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            required
+                            placeholder="Enter password"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                        />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="confirmPassword">Confirm Password</label>
+                        <input 
+                            type="password" 
+                            id="confirmPassword" 
+                            name="confirmPassword" 
+                            required
+                            placeholder="Confirm password"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                        />
+                    </div>
+
+                    <button 
+                        type="submit"
+                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full"
+                    >
+                        Create Account
+                    </button>
+                </form>
+            </div>
+            <% } else { %>
+            <!-- Active user - just show success, no form -->
+            <div class="p-6 pt-0 text-center">
+                <p class="text-sm text-muted-foreground mb-4">
+                    Your donation has been recorded to your account.
+                </p>
+                <a href="/dashboard" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                    Go to Dashboard
+                </a>
+            </div>
+            <% } %>
+        </div>
+    </div>
+</body>
+</html>
+

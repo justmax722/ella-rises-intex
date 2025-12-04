@@ -30,7 +30,7 @@
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.376 1.292V18a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 15.766 14 14.991 14 14c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 11.092V9.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.375-1.292V6z" clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <p class="text-3xl font-semibold text-card-foreground">$750</p>
+                    <p class="text-3xl font-semibold text-card-foreground">$<%= typeof stats !== 'undefined' ? stats.totalDonations : '0.00' %></p>
                     <p class="text-xs text-card-foreground/70 mt-1">All time</p>
                 </div>
 
@@ -42,8 +42,8 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                         </svg>
                     </div>
-                    <p class="text-3xl font-semibold text-card-foreground">$0</p>
-                    <p class="text-xs text-card-foreground/70 mt-1">0 donations</p>
+                    <p class="text-3xl font-semibold text-card-foreground">$<%= typeof stats !== 'undefined' ? stats.thisMonthDonations : '0.00' %></p>
+                    <p class="text-xs text-card-foreground/70 mt-1"><%= typeof stats !== 'undefined' ? stats.thisMonthCount : 0 %> donation<%= typeof stats !== 'undefined' && stats.thisMonthCount !== 1 ? 's' : '' %></p>
                 </div>
 
                 <!-- Average Donation -->
@@ -54,8 +54,8 @@
                             <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                         </svg>
                     </div>
-                    <p class="text-3xl font-semibold text-card-foreground">$375</p>
-                    <p class="text-xs text-card-foreground/70 mt-1">Per donor</p>
+                    <p class="text-3xl font-semibold text-card-foreground">$<%= typeof stats !== 'undefined' ? stats.averageDonation : '0.00' %></p>
+                    <p class="text-xs text-card-foreground/70 mt-1">Per donation</p>
                 </div>
             </div>
 
@@ -80,60 +80,44 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-border">
-                            <!-- Jane Doe -->
-                            <tr class="hover:bg-muted/30 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-card-foreground">Jane Doe</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-card-foreground/70">jane.doe@email.com</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-card-foreground">$250</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-card-foreground/70">11/19/2024</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-card-foreground">PayPal</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary text-primary-foreground">Sent</span>
-                                </td>
-                                <% if (user.role === 'manager') { %>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <button class="text-accent hover:text-accent/80 mr-3">Edit</button>
-                                    <button class="text-destructive hover:text-destructive/80">Delete</button>
-                                </td>
-                                <% } %>
-                            </tr>
-                            <!-- John Smith -->
-                            <tr class="hover:bg-muted/30 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-card-foreground">John Smith</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-card-foreground/70">john.smith@email.com</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-card-foreground">$500</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-card-foreground/70">11/14/2024</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-card-foreground">Credit Card</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary text-primary-foreground">Sent</span>
-                                </td>
-                                <% if (user.role === 'manager') { %>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <button class="text-accent hover:text-accent/80 mr-3">Edit</button>
-                                    <button class="text-destructive hover:text-destructive/80">Delete</button>
-                                </td>
-                                <% } %>
-                            </tr>
+                            <% if (typeof donations !== 'undefined' && donations.length > 0) { %>
+                                <% donations.forEach(function(donation) { %>
+                                    <tr class="hover:bg-muted/30 transition-colors">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-card-foreground">
+                                                <%= (user.firstName || '') + ' ' + (user.lastName || '') || 'N/A' %>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-card-foreground/70"><%= user.email %></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-card-foreground">$<%= donation.donationamount.toFixed(2) %></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-card-foreground/70"><%= donation.formattedDate %></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-card-foreground">N/A</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary text-primary-foreground">Available</span>
+                                        </td>
+                                        <% if (user.role === 'manager') { %>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <button class="text-accent hover:text-accent/80 mr-3">Edit</button>
+                                            <button class="text-destructive hover:text-destructive/80">Delete</button>
+                                        </td>
+                                        <% } %>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="<%= user.role === 'manager' ? '7' : '6' %>" class="px-6 py-4 text-center text-sm text-card-foreground/70">
+                                        No donations found.
+                                    </td>
+                                </tr>
+                            <% } %>
                         </tbody>
                     </table>
                 </div>

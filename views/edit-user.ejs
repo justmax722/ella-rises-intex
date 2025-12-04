@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit User - Ella Rises CRM</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-background min-h-screen flex">
+    <!-- Sidebar Navigation -->
+    <%- include('partials/sidebar', { user: currentUser, currentPage: 'users' }) %>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-6 md:p-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Page Header -->
+            <div class="mb-8 flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">Edit User</h1>
+                    <p class="text-base text-card-foreground/70">Update user information</p>
+                </div>
+                <a href="/users" class="px-4 py-2.5 border border-input rounded-md font-medium text-card-foreground hover:bg-muted transition-colors">
+                    ← Back to Users
+                </a>
+            </div>
+
+            <!-- Success/Error Messages -->
+            <% if (typeof query !== 'undefined' && query.error) { %>
+            <div class="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+                <p class="text-sm text-destructive text-center">
+                    <% if (query.error === 'missing_fields') { %>
+                        Please fill in all required fields.
+                    <% } else if (query.error === 'update_failed') { %>
+                        Failed to update user. Please try again.
+                    <% } else if (query.error === 'user_not_found') { %>
+                        User not found.
+                    <% } else if (query.error === 'invalid_user_id') { %>
+                        Invalid user ID.
+                    <% } else { %>
+                        An error occurred. Please try again.
+                    <% } %>
+                </p>
+            </div>
+            <% } %>
+
+            <!-- Edit User Form -->
+            <div class="bg-card rounded-lg shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-border">
+                    <h3 class="text-lg font-semibold text-card-foreground">User Information</h3>
+                </div>
+                <form method="POST" action="/users/update/<%= user.userid %>" class="p-6">
+                    <div class="space-y-6">
+                        <!-- Email -->
+                        <div>
+                            <label for="useremail" class="block text-sm font-medium text-card-foreground mb-2">Email <span class="text-destructive">*</span></label>
+                            <input type="email" id="useremail" name="useremail" value="<%= user.useremail || '' %>" required class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors">
+                        </div>
+
+                        <!-- First Name -->
+                        <div>
+                            <label for="userfirstname" class="block text-sm font-medium text-card-foreground mb-2">First Name <span class="text-destructive">*</span></label>
+                            <input type="text" id="userfirstname" name="userfirstname" value="<%= user.userfirstname || '' %>" required class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors">
+                        </div>
+
+                        <!-- Last Name -->
+                        <div>
+                            <label for="userlastname" class="block text-sm font-medium text-card-foreground mb-2">Last Name <span class="text-destructive">*</span></label>
+                            <input type="text" id="userlastname" name="userlastname" value="<%= user.userlastname || '' %>" required class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors">
+                        </div>
+
+                        <!-- Password -->
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-card-foreground mb-2">Password</label>
+                            <input type="password" id="password" name="password" placeholder="Leave blank to keep current password" class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors">
+                            <p class="mt-1 text-xs text-card-foreground/70">Leave blank if you don't want to change the password</p>
+                        </div>
+
+                        <!-- Role -->
+                        <div>
+                            <label for="roleid" class="block text-sm font-medium text-card-foreground mb-2">Role <span class="text-destructive">*</span></label>
+                            <select id="roleid" name="roleid" required class="w-full px-4 py-2.5 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors">
+                                <% if (typeof roles !== 'undefined' && roles.length > 0) { %>
+                                    <% roles.forEach(function(role) { %>
+                                        <option value="<%= role.roleid %>" <%= user.roleid == role.roleid ? 'selected' : '' %>><%= role.rolename %></option>
+                                    <% }); %>
+                                <% } else { %>
+                                    <option value="<%= user.roleid %>"><%= user.rolename || 'N/A' %></option>
+                                <% } %>
+                            </select>
+                        </div>
+
+                        <!-- Account Active -->
+                        <div>
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" name="accountactive" <%= user.accountactive ? 'checked' : '' %> class="w-4 h-4 border border-input rounded bg-background text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer">
+                                <span class="text-sm font-medium text-card-foreground">Account Active</span>
+                            </label>
+                            <p class="mt-1 text-xs text-card-foreground/70">Uncheck to deactivate this user account</p>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex gap-3 justify-end mt-8 pt-6 border-t border-border">
+                        <a href="/users" class="px-4 py-2 border border-input rounded-md text-sm font-medium text-card-foreground hover:bg-muted transition-colors">
+                            Cancel
+                        </a>
+                        <button type="submit" class="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
+
