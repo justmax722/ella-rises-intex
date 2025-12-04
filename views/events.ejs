@@ -87,9 +87,9 @@
             <% } %>
 
             <!-- Events List -->
-            <div class="space-y-8">
+            <div class="space-y-6">
                 <!-- Upcoming Events -->
-                <div id="upcomingEvents" class="events-container">
+                <div id="upcomingEvents" class="events-container space-y-6">
                     <% if (typeof currentSessions !== 'undefined' && currentSessions.length > 0) { %>
                         <% currentSessions.forEach(session => { %>
                             <% 
@@ -210,13 +210,18 @@
                         <% }); %>
                     <% } else { %>
                         <div class="bg-card rounded-lg p-8 text-center">
-                            <p class="text-muted-foreground">No upcoming events found.</p>
+                            <p class="text-muted-foreground mb-6 pt-4">No upcoming events found.</p>
+                            <% if (user.role === 'manager') { %>
+                            <a href="/events/create" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 mb-4">
+                                + Create Event
+                            </a>
+                            <% } %>
                         </div>
                     <% } %>
                 </div>
 
                 <!-- Past Events -->
-                <div id="pastEvents" class="events-container hidden">
+                <div id="pastEvents" class="events-container hidden space-y-6">
                     <% if (typeof pastSessions !== 'undefined' && pastSessions.length > 0) { %>
                         <% pastSessions.forEach(session => { %>
                             <% 

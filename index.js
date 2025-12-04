@@ -130,12 +130,22 @@ app.post('/donate', async (req, res) => {
 
     // Validate required fields
     if (!donationAmount || !paymentMethod) {
-      return res.redirect('/donate?error=missing_fields');
+      const errorParams = new URLSearchParams();
+      errorParams.set('error', 'missing_fields');
+      if (donationAmount) errorParams.set('amount', donationAmount);
+      if (message) errorParams.set('message', encodeURIComponent(message));
+      if (paymentMethod) errorParams.set('paymentMethod', paymentMethod);
+      return res.redirect(`/donate?${errorParams.toString()}`);
     }
 
     const donationAmountNum = parseFloat(donationAmount);
     if (isNaN(donationAmountNum) || donationAmountNum <= 0) {
-      return res.redirect('/donate?error=invalid_amount');
+      const errorParams = new URLSearchParams();
+      errorParams.set('error', 'invalid_amount');
+      errorParams.set('amount', donationAmount);
+      if (message) errorParams.set('message', encodeURIComponent(message));
+      if (paymentMethod) errorParams.set('paymentMethod', paymentMethod);
+      return res.redirect(`/donate?${errorParams.toString()}`);
     }
 
     // Check if user is logged in (via session or loggedInUserId from form)
@@ -169,7 +179,8 @@ app.post('/donate', async (req, res) => {
         userid: userId,
         donationno: nextDonationNo,
         donationamount: donationAmountNum,
-        donationdate: new Date()
+        donationdate: new Date(),
+        donationmessage: message && message.trim() ? message.trim() : null
       });
 
       // Update total donations
@@ -225,7 +236,8 @@ app.post('/donate', async (req, res) => {
           userid: userId,
           donationno: nextDonationNo,
           donationamount: donationAmountNum,
-          donationdate: new Date()
+          donationdate: new Date(),
+          donationmessage: message && message.trim() ? message.trim() : null
         });
 
         // Update total donations
@@ -248,7 +260,8 @@ app.post('/donate', async (req, res) => {
           userid: userId,
           donationno: nextDonationNo,
           donationamount: donationAmountNum,
-          donationdate: new Date()
+          donationdate: new Date(),
+          donationmessage: message && message.trim() ? message.trim() : null
         });
 
         await db('users')
@@ -270,27 +283,56 @@ app.post('/donate', async (req, res) => {
 
       // Create shadow user (accountactive = false, userpassword = NULL)
       // Use empty strings for first/last name since database has NOT NULL constraints
-      const [newUser] = await db('users')
-        .insert({
-          useremail: email,
-          userfirstname: '',
-          userlastname: '',
-          userpassword: null,
-          roleid: 3,
-          accountactive: false,
-          totaldonations: donationAmountNum
-        })
-        .returning('userid');
+      let userId;
+      try {
+        const [newUser] = await db('users')
+          .insert({
+            useremail: email,
+            userfirstname: '',
+            userlastname: '',
+            userpassword: null,
+            roleid: 3,
+            accountactive: false,
+            totaldonations: donationAmountNum
+          })
+          .returning('userid');
 
-      userId = newUser.userid;
-      isNewShadowUser = true;
+        userId = newUser.userid;
+        isNewShadowUser = true;
+      } catch (insertError) {
+        // Handle sequence sync issues
+        if (insertError.code === '23505') { // Duplicate key error
+          console.error('Sequence out of sync. Attempting to fix...');
+          const maxResult = await db('users').max('userid as maxid').first();
+          const maxId = maxResult?.maxid || 0;
+          await db.raw(`SELECT setval('users_userid_seq', ?)`, [maxId + 1]);
+          
+          // Retry the insert
+          const [newUser] = await db('users')
+            .insert({
+              useremail: email,
+              userfirstname: '',
+              userlastname: '',
+              userpassword: null,
+              roleid: 3,
+              accountactive: false,
+              totaldonations: donationAmountNum
+            })
+            .returning('userid');
+          userId = newUser.userid;
+          isNewShadowUser = true;
+        } else {
+          throw insertError; // Re-throw if it's a different error
+        }
+      }
 
       // Insert donation (donationno = 1 for first donation)
       await db('donation').insert({
         userid: userId,
         donationno: 1,
         donationamount: donationAmountNum,
-        donationdate: new Date()
+        donationdate: new Date(),
+        donationmessage: message && message.trim() ? message.trim() : null
       });
 
       // Redirect to success page for account claiming
@@ -298,7 +340,34 @@ app.post('/donate', async (req, res) => {
     }
   } catch (error) {
     console.error('Donation submission error:', error);
-    res.redirect('/donate?error=submission_failed');
+    
+    // Preserve form data on error
+    const errorParams = new URLSearchParams();
+    errorParams.set('error', 'submission_failed');
+    
+    if (req.body.donationAmount) {
+      errorParams.set('amount', req.body.donationAmount);
+    }
+    if (req.body.message) {
+      errorParams.set('message', encodeURIComponent(req.body.message));
+    }
+    if (req.body.paymentMethod) {
+      errorParams.set('paymentMethod', req.body.paymentMethod);
+    }
+    if (req.body.creditEmail) {
+      errorParams.set('creditEmail', encodeURIComponent(req.body.creditEmail));
+    }
+    if (req.body.debitEmail) {
+      errorParams.set('debitEmail', encodeURIComponent(req.body.debitEmail));
+    }
+    if (req.body.paypalEmail) {
+      errorParams.set('paypalEmail', encodeURIComponent(req.body.paypalEmail));
+    }
+    if (req.body.bankEmail) {
+      errorParams.set('bankEmail', encodeURIComponent(req.body.bankEmail));
+    }
+    
+    res.redirect(`/donate?${errorParams.toString()}`);
   }
 });
 
@@ -909,7 +978,8 @@ app.post('/account-claim', requireClaimSession, async (req, res) => {
         error: 'Please fill in all fields',
         email: req.session.claimEmail,
         remainingAttempts: 5 - attempts,
-        maxAttemptsReached: false
+        maxAttemptsReached: false,
+        formData: { dob_month, dob_day, dob_year, profilezip }
       });
     }
     
@@ -943,7 +1013,8 @@ app.post('/account-claim', requireClaimSession, async (req, res) => {
         error: 'Invalid date. Please try again.',
         email: req.session.claimEmail,
         remainingAttempts: 5 - req.session.claimAttempts,
-        maxAttemptsReached: req.session.claimAttempts >= 5
+        maxAttemptsReached: req.session.claimAttempts >= 5,
+        formData: { dob_month, dob_day, dob_year, profilezip }
       });
     }
     
@@ -975,24 +1046,28 @@ app.post('/account-claim', requireClaimSession, async (req, res) => {
           error: 'Too many failed attempts. Please contact an administrator to access your account.',
           email: req.session.claimEmail,
           remainingAttempts: 0,
-          maxAttemptsReached: true
+          maxAttemptsReached: true,
+          formData: { dob_month, dob_day, dob_year, profilezip }
         });
       } else {
         return res.render('account-claim', {
           error: `Verification failed. Please check your date of birth and zip code. ${remainingAttempts} attempt(s) remaining.`,
           email: req.session.claimEmail,
           remainingAttempts: remainingAttempts,
-          maxAttemptsReached: false
+          maxAttemptsReached: false,
+          formData: { dob_month, dob_day, dob_year, profilezip }
         });
       }
     }
   } catch (error) {
     console.error('Account claim error:', error);
+    const { dob_month, dob_day, dob_year, profilezip } = req.body;
     return res.render('account-claim', {
       error: 'An error occurred during verification. Please try again.',
       email: req.session.claimEmail,
       remainingAttempts: 5 - (req.session.claimAttempts || 0),
-      maxAttemptsReached: (req.session.claimAttempts || 0) >= 5
+      maxAttemptsReached: (req.session.claimAttempts || 0) >= 5,
+      formData: { dob_month, dob_day, dob_year, profilezip }
     });
   }
 });
@@ -2875,9 +2950,9 @@ app.get('/surveys', requireAuth, restrictDonor, async (req, res) => {
 
     // Get all survey metrics (these will be the dynamic columns)
     const surveyMetrics = await db('surveymetric')
-      .select('metricid', 'surveymetric', 'surveyquestiontext')
+      .select('metricid', 'surveymetric', 'metricquestion')
       .where(function() {
-        this.where('active', true).orWhereNull('active');
+        this.where('metricactive', true).orWhereNull('metricactive');
       })
       .orderBy('metricid');
 
@@ -3107,7 +3182,7 @@ app.post('/surveys/questions', requireAuth, async (req, res) => {
     const existingQuestion = await db('surveymetric')
       .where('surveymetric', surveyMetric)
       .where(function() {
-        this.where('active', true).orWhereNull('active');
+        this.where('metricactive', true).orWhereNull('metricactive');
       })
       .first();
 
@@ -3125,8 +3200,8 @@ app.post('/surveys/questions', requireAuth, async (req, res) => {
       await db('surveymetric').insert({
         metricid: newId,
         surveymetric: surveyMetric,
-        surveyquestiontext: surveyQuestionText || null,
-        active: true,
+        metricquestion: surveyQuestionText || null,
+        metricactive: true,
         createdat: new Date()
       });
 
@@ -3138,14 +3213,14 @@ app.post('/surveys/questions', requireAuth, async (req, res) => {
       // Mark the old question as inactive (don't delete)
       await db('surveymetric')
         .where('metricid', originalMetricId)
-        .update({ active: false });
+        .update({ metricactive: false });
     } else {
       // Add new question at the end
       await db('surveymetric').insert({
         metricid: newId,
         surveymetric: surveyMetric,
-        surveyquestiontext: surveyQuestionText || null,
-        active: true,
+        metricquestion: surveyQuestionText || null,
+        metricactive: true,
         createdat: new Date()
       });
     }
@@ -3185,7 +3260,7 @@ app.post('/surveys/submit', requireAuth, async (req, res) => {
     // Get active survey metrics
     const activeMetrics = await db('surveymetric')
       .where(function() {
-        this.where('active', true).orWhereNull('active');
+        this.where('metricactive', true).orWhereNull('metricactive');
       })
       .select('metricid');
 
@@ -3259,7 +3334,7 @@ app.post('/surveys/questions/delete', requireAuth, async (req, res) => {
     // Mark the question as inactive (don't actually delete)
     await db('surveymetric')
       .where('metricid', metricId)
-      .update({ active: false });
+      .update({ metricactive: false });
 
     res.redirect('/surveys?success=question_deleted');
   } catch (error) {

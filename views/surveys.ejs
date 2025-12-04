@@ -687,11 +687,11 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div onclick="editQuestion(<%= metric.metricid %>, 'Q<%= index + 1 %>', '<%= metric.surveymetric.replace(/'/g, "\\'") %>', '<%= (metric.surveyquestiontext || '').replace(/'/g, "\\'") %>')" 
+                                <div onclick="editQuestion(<%= metric.metricid %>, 'Q<%= index + 1 %>', '<%= metric.surveymetric.replace(/'/g, "\\'") %>', '<%= (metric.metricquestion || '').replace(/'/g, "\\'") %>')" 
                                      class="cursor-pointer hover:bg-muted/50 -mx-4 -mb-4 px-4 pb-4 pt-2 rounded-b-lg transition-colors">
                                     <p class="text-sm font-medium text-card-foreground"><%= metric.surveymetric %></p>
-                                    <% if (metric.surveyquestiontext) { %>
-                                    <p class="text-xs text-card-foreground/70 mt-1 line-clamp-2"><%= metric.surveyquestiontext %></p>
+                                    <% if (metric.metricquestion) { %>
+                                    <p class="text-xs text-card-foreground/70 mt-1 line-clamp-2"><%= metric.metricquestion %></p>
                                     <% } %>
                                 </div>
                             </div>
