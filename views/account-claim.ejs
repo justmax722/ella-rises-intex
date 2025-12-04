@@ -65,18 +65,18 @@
                                     class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                                 >
                                     <option value="">Month</option>
-                                    <option value="01">January</option>
-                                    <option value="02">February</option>
-                                    <option value="03">March</option>
-                                    <option value="04">April</option>
-                                    <option value="05">May</option>
-                                    <option value="06">June</option>
-                                    <option value="07">July</option>
-                                    <option value="08">August</option>
-                                    <option value="09">September</option>
-                                    <option value="10">October</option>
-                                    <option value="11">November</option>
-                                    <option value="12">December</option>
+                                    <option value="01" <%= typeof formData !== 'undefined' && formData.dob_month === '01' ? 'selected' : '' %>>January</option>
+                                    <option value="02" <%= typeof formData !== 'undefined' && formData.dob_month === '02' ? 'selected' : '' %>>February</option>
+                                    <option value="03" <%= typeof formData !== 'undefined' && formData.dob_month === '03' ? 'selected' : '' %>>March</option>
+                                    <option value="04" <%= typeof formData !== 'undefined' && formData.dob_month === '04' ? 'selected' : '' %>>April</option>
+                                    <option value="05" <%= typeof formData !== 'undefined' && formData.dob_month === '05' ? 'selected' : '' %>>May</option>
+                                    <option value="06" <%= typeof formData !== 'undefined' && formData.dob_month === '06' ? 'selected' : '' %>>June</option>
+                                    <option value="07" <%= typeof formData !== 'undefined' && formData.dob_month === '07' ? 'selected' : '' %>>July</option>
+                                    <option value="08" <%= typeof formData !== 'undefined' && formData.dob_month === '08' ? 'selected' : '' %>>August</option>
+                                    <option value="09" <%= typeof formData !== 'undefined' && formData.dob_month === '09' ? 'selected' : '' %>>September</option>
+                                    <option value="10" <%= typeof formData !== 'undefined' && formData.dob_month === '10' ? 'selected' : '' %>>October</option>
+                                    <option value="11" <%= typeof formData !== 'undefined' && formData.dob_month === '11' ? 'selected' : '' %>>November</option>
+                                    <option value="12" <%= typeof formData !== 'undefined' && formData.dob_month === '12' ? 'selected' : '' %>>December</option>
                                 </select>
                             </div>
                             <div class="space-y-2">
@@ -115,6 +115,7 @@
                             required
                             placeholder="10001"
                             maxlength="20"
+                            value="<%= typeof formData !== 'undefined' && formData.profilezip ? formData.profilezip : '' %>"
                             <%= typeof maxAttemptsReached !== 'undefined' && maxAttemptsReached ? 'disabled' : '' %>
                             class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                         />
@@ -133,6 +134,9 @@
     </div>
 
     <script>
+        // Preserve form data if available
+        var preservedFormData = <%- typeof formData !== 'undefined' && formData ? JSON.stringify(formData) : 'null' %>;
+
         // Populate year dropdown (from current year back to 100 years ago)
         const yearSelect = document.getElementById('dob_year');
         const currentYear = new Date().getFullYear();
@@ -140,6 +144,9 @@
             const option = document.createElement('option');
             option.value = year.toString();
             option.textContent = year.toString();
+            if (preservedFormData && preservedFormData.dob_year === year.toString()) {
+                option.selected = true;
+            }
             yearSelect.appendChild(option);
         }
 
@@ -150,10 +157,14 @@
         // Initialize with all 31 days
         function initializeDays() {
             daySelect.innerHTML = '<option value="">Day</option>';
+            const preservedDay = preservedFormData ? preservedFormData.dob_day : null;
             for (let day = 1; day <= 31; day++) {
                 const option = document.createElement('option');
                 option.value = day.toString().padStart(2, '0');
                 option.textContent = day.toString();
+                if (preservedDay && preservedDay === option.value) {
+                    option.selected = true;
+                }
                 daySelect.appendChild(option);
             }
         }
