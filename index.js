@@ -3011,14 +3011,146 @@ app.get('/events/:sessionId/attendance', requireAuth, async (req, res) => {
       return res.redirect('/events');
     }
 
+    // Fetch all registered participants (excluding cancelled)
+    const registrations = await db('registration as r')
+      .join('users as u', 'r.userid', 'u.userid')
+      .where('r.sessionid', sessionId)
+      .where(function() {
+        this.whereNull('r.registrationstatus')
+          .orWhereNot('r.registrationstatus', 'cancelled');
+      })
+      .select(
+        'r.userid',
+        'r.registrationstatus',
+        'r.registrationattendedflag',
+        'r.registrationcheckintime',
+        'u.userfirstname',
+        'u.userlastname',
+        'u.useremail'
+      )
+      .orderBy('u.userlastname', 'asc')
+      .orderBy('u.userfirstname', 'asc');
+
+    // Format participants data
+    const participants = registrations.map(reg => ({
+      userid: reg.userid,
+      firstName: reg.userfirstname || '',
+      lastName: reg.userlastname || '',
+      fullName: `${reg.userfirstname || ''} ${reg.userlastname || ''}`.trim() || 'No Name',
+      email: reg.useremail,
+      registrationstatus: reg.registrationstatus,
+      registrationattendedflag: reg.registrationattendedflag,
+      registrationcheckintime: reg.registrationcheckintime,
+      isAttended: reg.registrationstatus === 'attended' && reg.registrationattendedflag === true
+    }));
+
     res.render('event-attendance', { 
       user, 
       session,
+      participants,
       query: req.query
     });
   } catch (error) {
     console.error('Take attendance GET error:', error);
     res.redirect('/events');
+  }
+});
+
+// Take Attendance Route - POST (manager only)
+app.post('/events/:sessionId/attendance', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.status(403).send('Forbidden');
+    }
+
+    const sessionId = parseInt(req.params.sessionId);
+    if (isNaN(sessionId)) {
+      return res.redirect('/events?error=invalid_session');
+    }
+
+    // Get array of user IDs marked as attended (from checkboxes)
+    const attendedUserIds = Array.isArray(req.body.userIds) 
+      ? req.body.userIds.map(id => parseInt(id)).filter(id => !isNaN(id))
+      : req.body.userIds 
+        ? [parseInt(req.body.userIds)].filter(id => !isNaN(id))
+        : [];
+
+    // Check if this is a bulk "mark all as no-show" action
+    const markAllNoShow = req.body.bulkAction === 'mark_all_no_show';
+
+    // Get all registrations for this session (excluding cancelled)
+    const allRegistrations = await db('registration')
+      .where('sessionid', sessionId)
+      .where(function() {
+        this.whereNull('registrationstatus')
+          .orWhereNot('registrationstatus', 'cancelled');
+      })
+      .select('userid', 'sessionid', 'registrationstatus', 'registrationattendedflag');
+
+    const now = new Date();
+
+    // Use transaction for batch updates
+    await db.transaction(async (trx) => {
+      for (const reg of allRegistrations) {
+        if (markAllNoShow) {
+          // Bulk action: mark all as no-show (except those explicitly marked as attended)
+          if (attendedUserIds.includes(reg.userid)) {
+            // Mark as attended
+            await trx('registration')
+              .where('userid', reg.userid)
+              .where('sessionid', sessionId)
+              .update({
+                registrationstatus: 'attended',
+                registrationattendedflag: true,
+                registrationcheckintime: now
+              });
+          } else {
+            // Mark as no-show
+            await trx('registration')
+              .where('userid', reg.userid)
+              .where('sessionid', sessionId)
+              .update({
+                registrationstatus: 'no-show',
+                registrationattendedflag: false,
+                registrationcheckintime: null
+              });
+          }
+        } else {
+          // Normal attendance marking
+          const isMarkedAsAttended = attendedUserIds.includes(reg.userid);
+          const wasPreviouslyAttended = reg.registrationstatus === 'attended' && reg.registrationattendedflag === true;
+
+          if (isMarkedAsAttended) {
+            // Mark as attended
+            await trx('registration')
+              .where('userid', reg.userid)
+              .where('sessionid', sessionId)
+              .update({
+                registrationstatus: 'attended',
+                registrationattendedflag: true,
+                registrationcheckintime: now
+              });
+          } else if (wasPreviouslyAttended) {
+            // Allow unchecking - reset to null (will be auto-marked as no-show when event ends)
+            await trx('registration')
+              .where('userid', reg.userid)
+              .where('sessionid', sessionId)
+              .update({
+                registrationstatus: null,
+                registrationattendedflag: null,
+                registrationcheckintime: null
+              });
+          }
+          // Otherwise, leave unchanged (will be auto-marked as no-show when event ends)
+        }
+      }
+    });
+
+    res.redirect(`/events/${sessionId}/attendance?success=attendance_saved`);
+  } catch (error) {
+    console.error('Take attendance POST error:', error);
+    res.redirect(`/events/${req.params.sessionId}/attendance?error=attendance_save_failed`);
   }
 });
 
@@ -3227,6 +3359,7 @@ app.get('/surveys', requireAuth, restrictDonor, async (req, res) => {
         .join('event as e', 's.eventid', 'e.eventid')
         .where('r.userid', req.session.userId)
         .whereNull('r.surveynpsbucket')  // No survey submitted yet
+        .where('r.registrationattendedflag', true)  // Must have been marked as attended
         .where('s.eventdatetimestart', '<', new Date())  // Event has passed
         .select(
           'r.userid',

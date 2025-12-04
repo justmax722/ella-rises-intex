@@ -21,6 +21,32 @@
                     <p class="text-muted-foreground mt-1">Event: <%= session.eventname %></p>
                 </div>
 
+                <!-- Event Details -->
+                <div class="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                    <% 
+                        const startDate = new Date(session.eventdatetimestart);
+                        const endDate = new Date(session.eventdatetimeend);
+                        const formattedStartDate = startDate.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+                        const formattedStartTime = startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                        const formattedEndTime = endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    %>
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span><%= formattedStartDate %> <%= formattedStartTime %> - <%= formattedEndTime %></span>
+                    </div>
+                    <% if (session.eventlocation) { %>
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span><%= session.eventlocation %></span>
+                    </div>
+                    <% } %>
+                </div>
+
                 <!-- Actions Row -->
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div class="flex items-center gap-4">
@@ -36,14 +62,222 @@
                 </div>
             </div>
 
-            <!-- Placeholder Content -->
+            <!-- Success/Error Messages -->
+            <% if (typeof query !== 'undefined' && query.success) { %>
+            <div class="p-4 bg-secondary/20 border border-secondary rounded-md">
+                <p class="text-sm text-card-foreground text-center">
+                    <% if (query.success === 'attendance_saved') { %>
+                        Attendance saved successfully.
+                    <% } %>
+                </p>
+            </div>
+            <% } %>
+            <% if (typeof query !== 'undefined' && query.error) { %>
+            <div class="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+                <p class="text-sm text-destructive text-center">
+                    <% if (query.error === 'attendance_save_failed') { %>
+                        Failed to save attendance. Please try again.
+                    <% } else if (query.error === 'invalid_session') { %>
+                        Invalid session ID.
+                    <% } %>
+                </p>
+            </div>
+            <% } %>
+
+            <!-- Attendance Form -->
             <div class="rounded-lg border bg-card text-card-foreground shadow-sm">
-                <div class="p-6">
-                    <p class="text-muted-foreground">Attendance functionality coming soon...</p>
-                </div>
+                <form id="attendanceForm" method="POST" action="/events/<%= session.sessionid %>/attendance">
+                    <input type="hidden" name="bulkAction" id="bulkActionInput" value="" />
+                    <!-- Bulk Actions Bar -->
+                    <div class="p-6 border-b flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-card-foreground">
+                                <% 
+                                    const totalCount = typeof participants !== 'undefined' ? participants.length : 0;
+                                    const attendedCount = typeof participants !== 'undefined' ? participants.filter(p => p.isAttended).length : 0;
+                                %>
+                                <%= totalCount %> Registered • <%= attendedCount %> Checked In
+                            </span>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" id="markAllAttendedBtn" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 py-2">
+                                Mark All as Attended
+                            </button>
+                            <button type="button" id="markAllNoShowBtn" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 py-2">
+                                Mark All as No-Show
+                            </button>
+                            <button type="button" id="clearAllBtn" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 py-2">
+                                Clear All
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Participants List -->
+                    <div class="p-6">
+                        <% if (typeof participants !== 'undefined' && participants.length > 0) { %>
+                            <div class="rounded-md border">
+                                <div class="relative w-full overflow-auto">
+                                    <table class="w-full caption-bottom text-sm">
+                                        <thead class="[&_tr]:border-b">
+                                            <tr class="border-b transition-colors hover:bg-muted/50">
+                                                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-12">
+                                                    <input type="checkbox" id="selectAllCheckbox" class="h-4 w-4 rounded border-input" />
+                                                </th>
+                                                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Name</th>
+                                                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Email</th>
+                                                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
+                                                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Check-in Time</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="[&_tr:last-child]:border-0">
+                                            <% participants.forEach(function(participant) { %>
+                                            <tr class="border-b transition-colors hover:bg-muted/30" data-userid="<%= participant.userid %>">
+                                                <td class="h-12 px-4 align-middle">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        name="userIds[]" 
+                                                        value="<%= participant.userid %>" 
+                                                        class="attendance-checkbox h-4 w-4 rounded border-input" 
+                                                        <%= participant.isAttended ? 'checked' : '' %>
+                                                    />
+                                                </td>
+                                                <td class="h-12 px-4 align-middle">
+                                                    <div class="flex items-center gap-2">
+                                                        <%= participant.fullName %>
+                                                        <% if (participant.isAttended) { %>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        <% } %>
+                                                    </div>
+                                                </td>
+                                                <td class="h-12 px-4 align-middle text-muted-foreground"><%= participant.email %></td>
+                                                <td class="h-12 px-4 align-middle">
+                                                    <% if (participant.isAttended) { %>
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Attended</span>
+                                                    <% } else if (participant.registrationstatus === 'no-show') { %>
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">No-Show</span>
+                                                    <% } else { %>
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Pending</span>
+                                                    <% } %>
+                                                </td>
+                                                <td class="h-12 px-4 align-middle text-muted-foreground">
+                                                    <% if (participant.registrationcheckintime) { %>
+                                                        <%= new Date(participant.registrationcheckintime).toLocaleString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                                                    <% } else { %>
+                                                        —
+                                                    <% } %>
+                                                </td>
+                                            </tr>
+                                            <% }); %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <div class="text-center py-12">
+                                <p class="text-muted-foreground">No registered participants found for this event.</p>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="p-6 border-t flex justify-end">
+                        <button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                            Save Attendance
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </main>
+
+    <script>
+        // Select All checkbox functionality
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const attendanceCheckboxes = document.querySelectorAll('.attendance-checkbox');
+        
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                attendanceCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+            });
+        }
+
+        // Update select all checkbox state when individual checkboxes change
+        attendanceCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const allChecked = Array.from(attendanceCheckboxes).every(cb => cb.checked);
+                const someChecked = Array.from(attendanceCheckboxes).some(cb => cb.checked);
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.checked = allChecked;
+                    selectAllCheckbox.indeterminate = someChecked && !allChecked;
+                }
+            });
+        });
+
+        // Bulk Actions
+        const markAllAttendedBtn = document.getElementById('markAllAttendedBtn');
+        const markAllNoShowBtn = document.getElementById('markAllNoShowBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+
+        if (markAllAttendedBtn) {
+            markAllAttendedBtn.addEventListener('click', function() {
+                attendanceCheckboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.checked = true;
+                    selectAllCheckbox.indeterminate = false;
+                }
+            });
+        }
+
+        if (markAllNoShowBtn) {
+            markAllNoShowBtn.addEventListener('click', function() {
+                // Uncheck all boxes and submit with bulk action
+                attendanceCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = false;
+                }
+                // Set bulk action and submit
+                const bulkActionInput = document.getElementById('bulkActionInput');
+                if (bulkActionInput) {
+                    bulkActionInput.value = 'mark_all_no_show';
+                }
+                if (attendanceForm) {
+                    attendanceForm.submit();
+                }
+            });
+        }
+
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', function() {
+                attendanceCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = false;
+                }
+            });
+        }
+
+        // Form submission with loading state
+        const attendanceForm = document.getElementById('attendanceForm');
+        if (attendanceForm) {
+            attendanceForm.addEventListener('submit', function(e) {
+                const submitButton = this.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Saving...';
+                }
+            });
+        }
+    </script>
 </body>
 </html>
-
