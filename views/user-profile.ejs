@@ -66,7 +66,20 @@
                         </div>
                         <div>
                             <label class="text-sm font-medium text-muted-foreground">Phone Number</label>
-                            <p class="mt-1 text-sm font-medium"><%= profileData.profilephone || 'Not set' %></p>
+                            <p class="mt-1 text-sm font-medium">
+                                <% if (profileData.profilephone) { %>
+                                    <% 
+                                        const phone = profileData.profilephone.replace(/\D/g, '');
+                                        let formattedPhone = profileData.profilephone;
+                                        if (phone.length === 10) {
+                                            formattedPhone = `(${phone.slice(0, 3)}) ${phone.slice(3, 6)}-${phone.slice(6)}`;
+                                        }
+                                    %>
+                                    <%= formattedPhone %>
+                                <% } else { %>
+                                    Not set
+                                <% } %>
+                            </p>
                         </div>
                         <div>
                             <label class="text-sm font-medium text-muted-foreground">City</label>

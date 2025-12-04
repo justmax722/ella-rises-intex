@@ -1,5 +1,3 @@
-<!-- I see london I see France -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,133 +16,18 @@
             <!-- Page Header -->
             <div class="mb-8">
                 <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">Dashboard</h1>
+                <p class="text-card-foreground/70">Analytics and insights powered by Tableau</p>
             </div>
 
-            <!-- Key Metrics Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <!-- Active Participants -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-sm font-medium text-card-foreground/70">Active Participants</h3>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-secondary flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                        </svg>
-                    </div>
-                    <p class="text-3xl font-semibold text-card-foreground">2</p>
-                    <p class="text-xs text-card-foreground/70 mt-1">total enrolled</p>
-                </div>
-
-                <!-- Upcoming Events -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-sm font-medium text-card-foreground/70">Upcoming Events</h3>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-secondary flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                    <p class="text-3xl font-semibold text-card-foreground">0</p>
-                    <p class="text-xs text-card-foreground/70 mt-1">scheduled events</p>
-                </div>
-
-                <!-- Survey Responses -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-sm font-medium text-card-foreground/70">Survey Responses</h3>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-secondary flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                    <p class="text-3xl font-semibold text-card-foreground">1</p>
-                    <p class="text-xs text-card-foreground/70 mt-1">total collected</p>
-                </div>
-
-                <!-- STEAM Major Rate -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-sm font-medium text-card-foreground/70">STEAM Major Rate</h3>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                    <p class="text-3xl font-semibold text-purple">50.0%</p>
-                    <p class="text-xs text-card-foreground/70 mt-1">declared STEAM majors</p>
-                </div>
-
-                <!-- STEAM Job Placement -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-sm font-medium text-card-foreground/70">STEAM Job Placement</h3>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                    </div>
-                    <p class="text-3xl font-semibold text-accent">0.0%</p>
-                    <p class="text-xs text-card-foreground/70 mt-1">employed in STEAM fields</p>
-                </div>
-
-                <!-- Program Completion -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-sm font-medium text-card-foreground/70">Program Completion</h3>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-secondary flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                    <p class="text-3xl font-semibold text-foreground">87.5%</p>
-                    <p class="text-xs text-card-foreground/70 mt-1">participants completing programs</p>
-                </div>
-            </div>
-
-            <!-- Charts Section -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Event Participation Trends -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
-                    <h3 class="text-lg font-semibold text-card-foreground mb-4">Event Participation Trends</h3>
-                    <div class="h-48 flex items-end justify-center gap-2">
-                        <div class="flex flex-col items-center">
-                            <div class="w-12 bg-destructive h-4 rounded-t mb-1"></div>
-                            <span class="text-xs text-card-foreground/70">Jul</span>
-                        </div>
-                        <div class="flex flex-col items-center">
-                            <div class="w-12 bg-secondary h-16 rounded-t mb-1"></div>
-                            <span class="text-xs text-card-foreground/70">Aug</span>
-                        </div>
-                        <div class="flex flex-col items-center">
-                            <div class="w-12 bg-destructive h-4 rounded-t mb-1"></div>
-                            <span class="text-xs text-card-foreground/70">Sep</span>
-                        </div>
-                        <div class="flex flex-col items-center">
-                            <div class="w-12 bg-destructive h-4 rounded-t mb-1"></div>
-                            <span class="text-xs text-card-foreground/70">Oct</span>
-                        </div>
-                        <div class="flex flex-col items-center">
-                            <div class="w-12 bg-destructive h-4 rounded-t mb-1"></div>
-                            <span class="text-xs text-card-foreground/70">Nov</span>
-                        </div>
-                        <div class="flex flex-col items-center">
-                            <div class="w-12 bg-destructive h-4 rounded-t mb-1"></div>
-                            <span class="text-xs text-card-foreground/70">Dec</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Milestone Achievements -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
-                    <h3 class="text-lg font-semibold text-card-foreground mb-4">Milestone Achievements</h3>
-                    <div class="h-48 flex items-end justify-center gap-4">
-                        <div class="flex flex-col items-center">
-                            <div class="w-16 bg-destructive h-4 rounded-t mb-1"></div>
-                            <span class="text-xs text-card-foreground/70">University</span>
-                        </div>
-                        <div class="flex flex-col items-center">
-                            <div class="w-16 bg-secondary h-16 rounded-t mb-1"></div>
-                            <span class="text-xs text-card-foreground/70">STEM</span>
-                        </div>
-                        <div class="flex flex-col items-center">
-                            <div class="w-16 bg-destructive h-4 rounded-t mb-1"></div>
-                            <span class="text-xs text-card-foreground/70">STEM</span>
-                        </div>
-                    </div>
+            <!-- Tableau Dashboard Placeholder -->
+            <div class="bg-card rounded-lg p-6 shadow-sm">
+                <div class="border-2 border-dashed border-border rounded-lg p-12 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <h3 class="text-xl font-semibold text-card-foreground mb-2">Tableau Dashboard</h3>
+                    <p class="text-card-foreground/70 mb-4">Tableau dashboard will be embedded here</p>
+                    <p class="text-sm text-muted-foreground">This area is reserved for future Tableau integration</p>
                 </div>
             </div>
         </div>

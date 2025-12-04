@@ -76,7 +76,7 @@ const requireAuth = (req, res, next) => {
 // Middleware to restrict routes for donor role
 const restrictDonor = (req, res, next) => {
   if (req.session.userRole === 'donor') {
-    return res.redirect('/dashboard');
+    return res.redirect('/home');
   }
   next();
 };
@@ -385,7 +385,7 @@ app.post('/donate/claim', async (req, res) => {
     req.session.userRole = 'donor';
 
     // Redirect to dashboard
-    res.redirect('/dashboard');
+    res.redirect('/home');
   } catch (error) {
     console.error('Claim account error:', error);
     res.redirect('/donate?error=claim_failed');
@@ -396,7 +396,7 @@ app.post('/donate/claim', async (req, res) => {
 app.get('/login', (req, res) => {
   // If already logged in, redirect to dashboard
   if (req.session.userId) {
-    return res.redirect('/dashboard');
+    return res.redirect('/home');
   }
   
   // Check if redirecting from login with non-existent email
@@ -826,7 +826,7 @@ app.post('/profile', async (req, res) => {
       delete req.session.tempUserLastName;
 
       // Redirect to dashboard
-      return res.redirect('/dashboard');
+      return res.redirect('/home');
     }
   } catch (error) {
     console.error('Profile error:', error);
@@ -989,7 +989,7 @@ app.get('/set-password', (req, res) => {
 // Change Password route (GET) - for users with admin-set passwords
 app.get('/change-password', requireAuth, (req, res) => {
   if (!req.session.passwordChangeRequired || !req.session.userId) {
-    return res.redirect('/dashboard');
+    return res.redirect('/home');
   }
   
   res.render('change-password', {
@@ -1002,7 +1002,7 @@ app.get('/change-password', requireAuth, (req, res) => {
 app.post('/change-password', requireAuth, async (req, res) => {
   try {
     if (!req.session.passwordChangeRequired || !req.session.userId) {
-      return res.redirect('/dashboard');
+      return res.redirect('/home');
     }
     
     const { password, confirm_password } = req.body;
@@ -1070,7 +1070,7 @@ app.post('/change-password', requireAuth, async (req, res) => {
     }
     
     // Redirect to dashboard
-    res.redirect('/dashboard');
+    res.redirect('/home');
   } catch (error) {
     console.error('Change password error:', error);
     return res.render('change-password', {
@@ -1157,7 +1157,7 @@ app.post('/set-password', async (req, res) => {
     delete req.session.claimAttempts;
     
     // Redirect to dashboard
-    res.redirect('/dashboard');
+    res.redirect('/home');
   } catch (error) {
     console.error('Set password error:', error);
     return res.render('set-password', {
@@ -1291,7 +1291,7 @@ app.post('/verify-claim', async (req, res) => {
     req.session.userRole = 'donor';
 
     // Redirect to dashboard
-    res.redirect('/dashboard');
+    res.redirect('/home');
   } catch (error) {
     console.error('Verify claim error:', error);
     res.redirect('/login?error=verification_failed');
@@ -1307,7 +1307,9 @@ app.post('/login', async (req, res) => {
       return res.render('login', {
         error: 'Please provide both email and password',
         success: null,
-        showSignUp: false
+        showSignUp: false,
+        loginEmail: email || '',
+        loginPassword: password || ''
       });
     }
 
@@ -1335,12 +1337,14 @@ app.post('/login', async (req, res) => {
         req.session.userRole = demoAccount.role;
         req.session.userFirstName = demoAccount.role === 'manager' ? 'Demo' : 'Demo';
         req.session.userLastName = demoAccount.role === 'manager' ? 'Manager' : 'User';
-        return res.redirect('/dashboard');
+        return res.redirect('/home');
       } else {
         return res.render('login', {
           error: 'Invalid email or password',
           success: null,
-          showSignUp: false
+          showSignUp: false,
+          loginEmail: email,
+          loginPassword: password
         });
       }
     }
@@ -1411,7 +1415,9 @@ app.post('/login', async (req, res) => {
         return res.render('login', {
           error: 'Invalid email or password',
           success: null,
-          showSignUp: false
+          showSignUp: false,
+          loginEmail: email,
+          loginPassword: password
         });
       }
     }
@@ -1477,7 +1483,7 @@ app.post('/login', async (req, res) => {
       }
     }
 
-    res.redirect('/dashboard');
+    res.redirect('/home');
   } catch (error) {
     console.error('Login error:', error);
     res.render('login', {
@@ -1488,12 +1494,12 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Dashboard route (protected)
-app.get('/dashboard', requireAuth, async (req, res) => {
+// Home route (protected) - renamed from dashboard
+app.get('/home', requireAuth, async (req, res) => {
   try {
     // Handle demo accounts (they don't exist in database)
     if (req.session.userId === 'demo-manager' || req.session.userId === 'demo-user') {
-      return res.render('dashboard', {
+      return res.render('home', {
         user: {
           email: req.session.userEmail,
           role: req.session.userRole,
@@ -1506,6 +1512,41 @@ app.get('/dashboard', requireAuth, async (req, res) => {
     // Handle regular database users
     // We already have user info in session from login, no need to query again
     // But if we did, we'd use userid (lowercase), not id
+    res.render('home', {
+      user: {
+        email: req.session.userEmail,
+        role: req.session.userRole,
+        firstName: req.session.userFirstName || '',
+        lastName: req.session.userLastName || ''
+      }
+    });
+  } catch (error) {
+    console.error('Home error:', error);
+    res.redirect('/login');
+  }
+});
+
+// Dashboard route (protected, manager only) - new route for Tableau dashboard
+app.get('/dashboard', requireAuth, async (req, res) => {
+  try {
+    // Only managers can access the dashboard
+    if (req.session.userRole !== 'manager') {
+      return res.redirect('/home');
+    }
+
+    // Handle demo accounts (they don't exist in database)
+    if (req.session.userId === 'demo-manager') {
+      return res.render('dashboard', {
+        user: {
+          email: req.session.userEmail,
+          role: req.session.userRole,
+          firstName: 'Demo',
+          lastName: 'Manager'
+        }
+      });
+    }
+
+    // Handle regular database users
     res.render('dashboard', {
       user: {
         email: req.session.userEmail,
@@ -1525,7 +1566,7 @@ app.get('/participants', requireAuth, restrictDonor, async (req, res) => {
   try {
     // Check if user is manager
     if (req.session.userRole !== 'manager') {
-      return res.redirect('/dashboard');
+      return res.redirect('/home');
     }
 
     // Query all participants (users with roleid = 2) with LEFT JOIN to profile table
@@ -1585,7 +1626,7 @@ app.get('/participants/edit/:userid', requireAuth, restrictDonor, async (req, re
   try {
     // Check if user is manager
     if (req.session.userRole !== 'manager') {
-      return res.redirect('/dashboard');
+      return res.redirect('/home');
     }
 
     const userId = parseInt(req.params.userid);
@@ -2593,7 +2634,7 @@ app.get('/events/:sessionId', requireAuth, async (req, res) => {
 
     // Donors should not access event details
     if (userRole === 'donor') {
-      return res.redirect('/dashboard');
+      return res.redirect('/home');
     }
 
     const sessionId = parseInt(req.params.sessionId);
@@ -3622,7 +3663,7 @@ app.get('/users', requireAuth, async (req, res) => {
   try {
     // Check if user is manager
     if (req.session.userRole !== 'manager') {
-      return res.redirect('/dashboard');
+      return res.redirect('/home');
     }
     
     // Query all users from database
@@ -3669,7 +3710,7 @@ app.get('/users/add', requireAuth, async (req, res) => {
   try {
     // Check if user is manager
     if (req.session.userRole !== 'manager') {
-      return res.redirect('/dashboard');
+      return res.redirect('/home');
     }
 
     const user = {
@@ -3777,7 +3818,7 @@ app.get('/users/edit/:userid', requireAuth, async (req, res) => {
   try {
     // Check if user is manager
     if (req.session.userRole !== 'manager') {
-      return res.redirect('/dashboard');
+      return res.redirect('/home');
     }
 
     const userId = parseInt(req.params.userid);
