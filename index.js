@@ -16,16 +16,6 @@ const db = knex(knexConfig);
   try {
     await db.raw('SELECT 1');
     console.log('✓ Database connection successful');
-    
-    // Always check for and run new migrations (safe - won't re-run old ones)
-    console.log('Checking for pending migrations...');
-    const [batchNo, log] = await db.migrate.latest();
-    if (log.length === 0) {
-      console.log('✓ All migrations are up to date');
-    } else {
-      console.log(`✓ Applied ${log.length} new migration(s) in batch ${batchNo}`);
-      log.forEach(logEntry => console.log(`  - ${logEntry}`));
-    }
   } catch (error) {
     console.error('✗ Database connection failed:', error.message);
     console.error('Connection details:', {
@@ -73,6 +63,14 @@ const requireAuth = (req, res, next) => {
   } else {
     res.redirect('/login');
   }
+};
+
+// Middleware to restrict routes for donor role
+const restrictDonor = (req, res, next) => {
+  if (req.session.userRole === 'donor') {
+    return res.redirect('/dashboard');
+  }
+  next();
 };
 
 // Landing page route
@@ -219,19 +217,34 @@ app.post('/login', async (req, res) => {
       }
     }
 
-    // Find user by email in database
-    const user = await db('users').where({ email: email.toLowerCase() }).first();
+    // Find user by email in users table (lowercase) with AccountActive check
+    // All column names are lowercase in PostgreSQL (unquoted identifiers are lowercased)
+    const user = await db('users')
+      .where('useremail', email.toLowerCase())
+      .where('accountactive', true)
+      .first();
 
     if (!user) {
       return res.render('login', {
-        error: 'Invalid email or password',
+        error: 'Invalid email or password, or account is inactive',
         success: null,
         showSignUp: false
       });
     }
 
-    // Check password using bcrypt
-    const passwordMatch = await bcrypt.compare(password, user.password);
+    // Check password - note: if passwords are stored plain text, use direct comparison
+    // If they're hashed, use bcrypt.compare
+    // Column names are lowercase: userpassword
+    const userPassword = user.userpassword;
+    let passwordMatch;
+    if (userPassword && userPassword.startsWith('$2')) {
+      // Password is hashed with bcrypt
+      passwordMatch = await bcrypt.compare(password, userPassword);
+    } else {
+      // Password is plain text (for your test accounts)
+      passwordMatch = password === userPassword;
+    }
+
     if (!passwordMatch) {
       return res.render('login', {
         error: 'Invalid email or password',
@@ -240,10 +253,25 @@ app.post('/login', async (req, res) => {
       });
     }
 
-    // Set session
-    req.session.userId = user.id;
-    req.session.userEmail = user.email;
-    req.session.userRole = user.user_role;
+    // Map RoleID to role string
+    // RoleID 1 = admin/manager, RoleID 2 = user, RoleID 3 = donor
+    // Column names are lowercase: roleid
+    const roleID = user.roleid;
+    let roleString;
+    if (roleID === 1 || roleID === '1') {
+      roleString = 'manager';
+    } else if (roleID === 2 || roleID === '2') {
+      roleString = 'user';
+    } else if (roleID === 3 || roleID === '3') {
+      roleString = 'donor';
+    } else {
+      roleString = 'user'; // default
+    }
+
+    // Set session - column names are lowercase: userid, useremail
+    req.session.userId = user.userid;
+    req.session.userEmail = user.useremail;
+    req.session.userRole = roleString;
 
     res.redirect('/dashboard');
   } catch (error) {
@@ -270,11 +298,8 @@ app.get('/dashboard', requireAuth, async (req, res) => {
     }
 
     // Handle regular database users
-    const user = await db('users').where({ id: req.session.userId }).first();
-    if (!user) {
-      return res.redirect('/login');
-    }
-    
+    // We already have user info in session from login, no need to query again
+    // But if we did, we'd use userid (lowercase), not id
     res.render('dashboard', {
       user: {
         email: req.session.userEmail,
@@ -301,8 +326,8 @@ app.get('/participants', requireAuth, async (req, res) => {
   }
 });
 
-// Events route (protected)
-app.get('/events', requireAuth, async (req, res) => {
+// Events route (protected, no donor access)
+app.get('/events', requireAuth, restrictDonor, async (req, res) => {
   try {
     const user = {
       email: req.session.userEmail,
@@ -315,8 +340,8 @@ app.get('/events', requireAuth, async (req, res) => {
   }
 });
 
-// Surveys route (protected)
-app.get('/surveys', requireAuth, async (req, res) => {
+// Surveys route (protected, no donor access)
+app.get('/surveys', requireAuth, restrictDonor, async (req, res) => {
   try {
     const user = {
       email: req.session.userEmail,
@@ -329,8 +354,8 @@ app.get('/surveys', requireAuth, async (req, res) => {
   }
 });
 
-// Milestones route (protected)
-app.get('/milestones', requireAuth, async (req, res) => {
+// Milestones route (protected, no donor access)
+app.get('/milestones', requireAuth, restrictDonor, async (req, res) => {
   try {
     const user = {
       email: req.session.userEmail,
