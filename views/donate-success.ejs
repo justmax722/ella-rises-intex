@@ -6,7 +6,7 @@
     <title>Donation Success - Ella Rises</title>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
-<body class="min-h-screen bg-cream flex items-center justify-center p-4">
+<body class="min-h-screen bg-cream flex items-center justify-center p-4 pt-12 md:pt-16 lg:pt-20">
     <div class="w-full max-w-md">
         <!-- Back to Home Link -->
         <div class="mb-4">
@@ -22,19 +22,12 @@
         <!-- Card -->
         <div class="rounded-lg border text-card-foreground shadow-sm bg-background">
             <!-- Title Section -->
-            <div class="flex flex-col space-y-1.5 p-6 text-center">
-                <h3 class="tracking-tight text-3xl font-serif font-bold text-primary">Thank You!</h3>
-                <p class="text-sm text-muted-foreground">Your donation of $<%= amount.toFixed(2) %> has been received.</p>
-            </div>
-
-            <!-- Success Message -->
-            <% if (typeof query.error === 'undefined' || !query.error) { %>
-            <div class="px-6 pb-6">
-                <div class="p-4 bg-primary/10 border border-primary/20 rounded-md">
-                    <p class="text-sm text-primary">Thank you for your generous donation!</p>
+            <div class="p-6">
+                <div class="p-4 bg-sage border border-sage/30 rounded-md text-center">
+                    <h3 class="tracking-tight text-2xl md:text-3xl font-serif font-bold text-sage-foreground mb-2">Thank You!</h3>
+                    <p class="text-sm md:text-base text-sage-foreground">Your donation of <span class="font-bold">$<%= amount.toFixed(2) %></span> has been received.</p>
                 </div>
             </div>
-            <% } %>
 
             <!-- Error Message -->
             <% if (typeof query.error !== 'undefined' && query.error) { %>
@@ -60,7 +53,7 @@
             <!-- Claim Account Form (only show if account is not active) -->
             <% if (!isActive) { %>
             <div class="p-6 pt-0">
-                <p class="text-sm text-muted-foreground mb-6 text-center">
+                <p class="text-base md:text-md font-semibold text-foreground mb-6 text-center mt-6">
                     Create a password to save this receipt to your account.
                 </p>
 
@@ -105,31 +98,59 @@
 
                     <div class="space-y-2">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="password">Password</label>
-                        <input 
-                            type="password" 
-                            id="password" 
-                            name="password" 
-                            required
-                            placeholder="Enter password"
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                        />
+                        <div class="relative">
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                required
+                                placeholder="Enter password"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                            <button 
+                                type="button"
+                                onclick="togglePasswordVisibility('password', 'passwordToggle')"
+                                id="passwordToggle"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+                                tabindex="-1"
+                            >
+                                <svg id="passwordToggleIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="space-y-2">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="confirmPassword">Confirm Password</label>
-                        <input 
-                            type="password" 
-                            id="confirmPassword" 
-                            name="confirmPassword" 
-                            required
-                            placeholder="Confirm password"
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                        />
+                        <div class="relative">
+                            <input 
+                                type="password" 
+                                id="confirmPassword" 
+                                name="confirmPassword" 
+                                required
+                                placeholder="Confirm password"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                            <button 
+                                type="button"
+                                onclick="togglePasswordVisibility('confirmPassword', 'confirmPasswordToggle')"
+                                id="confirmPasswordToggle"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+                                tabindex="-1"
+                            >
+                                <svg id="confirmPasswordToggleIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     <button 
                         type="submit"
-                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full"
+                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-sage text-sage-foreground hover:bg-sage/80 h-10 px-4 py-2 w-full"
                     >
                         Create Account
                     </button>
@@ -150,6 +171,22 @@
             <% } %>
         </div>
     </div>
+
+    <script>
+        // Password visibility toggle function
+        function togglePasswordVisibility(inputId, toggleId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(toggleId + 'Icon');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+            } else {
+                input.type = 'password';
+                icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+            }
+        }
+    </script>
 </body>
 </html>
 

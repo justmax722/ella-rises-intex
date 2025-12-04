@@ -5,10 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ella Rises</title>
     <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
 </head>
 <body class="bg-background">
     <!-- Header -->
-    <header class="w-full px-6 py-4 md:px-8 md:py-6">
+    <header class="w-full px-6 py-4 md:px-8 md:py-6 bg-muted border-b border-border">
         <div class="container mx-auto flex items-center justify-between">
             <div class="flex items-center">
                 <a href="/" class="block">
@@ -16,7 +21,7 @@
                 </a>
             </div>
             <div class="flex items-center gap-3 md:gap-4">
-                <a href="/donate" class="px-4 py-2 md:px-6 md:py-2.5 bg-muted text-foreground rounded-md font-medium hover:bg-muted/80 transition-colors">
+                <a href="/donate" class="px-4 py-2 md:px-6 md:py-2.5 bg-sage text-sage-foreground rounded-md font-medium hover:bg-sage/80 transition-colors">
                     Donate
                 </a>
                 <% if (typeof isLoggedIn !== 'undefined' && isLoggedIn === true) { %>
@@ -44,7 +49,7 @@
                 and Mathematics.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <a href="/donate" class="px-6 py-3 md:px-8 md:py-3.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors inline-flex items-center gap-2">
+                <a href="/donate" class="px-6 py-3 md:px-8 md:py-3.5 bg-sage text-sage-foreground rounded-md font-medium hover:bg-primary/90 transition-colors inline-flex items-center gap-2">
                     Support Our Mission
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
@@ -176,7 +181,7 @@
             <p class="text-base md:text-lg text-foreground/80 mb-8 md:mb-10 max-w-2xl mx-auto leading-relaxed">
                 Your support helps us provide life-changing opportunities to young women in our community. Every contribution makes an impact.
             </p>
-            <a href="/donate" class="inline-flex items-center gap-2 px-6 py-3 md:px-8 md:py-3.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
+            <a href="/donate" class="inline-flex items-center gap-2 px-6 py-3 md:px-8 md:py-3.5 bg-sage text-sage-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
                 Donate Today
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -189,7 +194,7 @@
     <footer class="w-full px-6 py-8 md:py-10 border-t border-border">
         <div class="container mx-auto max-w-6xl text-center">
             <p class="text-sm text-muted-foreground mb-2">
-                © 2024 Ella Rises. All rights reserved.
+                © 2025 Ella Rises. All rights reserved.
             </p>
             <p class="text-sm text-muted-foreground">
                 Empowering young women through education and opportunity.
