@@ -15,9 +15,122 @@
         <div class="max-w-full mx-auto">
             <!-- Page Header -->
             <div class="mb-8">
-                <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">Post-Event Surveys</h1>
-                <p class="text-base text-card-foreground/70">Participant feedback and satisfaction.</p>
+                <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">
+                    <% if (user.role === 'manager') { %>
+                        Post-Event Surveys
+                    <% } else { %>
+                        My Survey Responses
+                    <% } %>
+                </h1>
+                <p class="text-base text-card-foreground/70">
+                    <% if (user.role === 'manager') { %>
+                        All participant feedback and satisfaction scores.
+                    <% } else { %>
+                        Your submitted survey responses and feedback.
+                    <% } %>
+                </p>
             </div>
+
+            <!-- Success/Error Messages -->
+            <% const urlParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : ''); %>
+            <% if (typeof filters !== 'undefined') { %>
+                <% if (filters.success === 'survey_deleted') { %>
+                <div class="mb-6 p-4 bg-secondary/20 border border-secondary rounded-lg text-secondary-foreground">
+                    Survey response deleted successfully.
+                </div>
+                <% } %>
+                <% if (filters.error === 'delete_failed') { %>
+                <div class="mb-6 p-4 bg-destructive/20 border border-destructive rounded-lg text-destructive">
+                    Failed to delete survey response. Please try again.
+                </div>
+                <% } %>
+                <% if (filters.error === 'invalid_request') { %>
+                <div class="mb-6 p-4 bg-destructive/20 border border-destructive rounded-lg text-destructive">
+                    Invalid request. Please try again.
+                </div>
+                <% } %>
+                <% if (filters.success === 'question_saved') { %>
+                <div class="mb-6 p-4 bg-secondary/20 border border-secondary rounded-lg text-secondary-foreground">
+                    Survey question saved successfully.
+                </div>
+                <% } %>
+                <% if (filters.error === 'question_name_required') { %>
+                <div class="mb-6 p-4 bg-destructive/20 border border-destructive rounded-lg text-destructive">
+                    Question name is required.
+                </div>
+                <% } %>
+                <% if (filters.error === 'question_name_exists') { %>
+                <div class="mb-6 p-4 bg-destructive/20 border border-destructive rounded-lg text-destructive">
+                    A question with this name already exists. Please use a unique name.
+                </div>
+                <% } %>
+                <% if (filters.error === 'question_save_failed') { %>
+                <div class="mb-6 p-4 bg-destructive/20 border border-destructive rounded-lg text-destructive">
+                    Failed to save question. Please try again.
+                </div>
+                <% } %>
+                <% if (filters.success === 'question_deleted') { %>
+                <div class="mb-6 p-4 bg-secondary/20 border border-secondary rounded-lg text-secondary-foreground">
+                    Survey question deactivated successfully.
+                </div>
+                <% } %>
+                <% if (filters.error === 'question_delete_failed') { %>
+                <div class="mb-6 p-4 bg-destructive/20 border border-destructive rounded-lg text-destructive">
+                    Failed to deactivate question. Please try again.
+                </div>
+                <% } %>
+                <% if (filters.success === 'survey_submitted') { %>
+                <div class="mb-6 p-4 bg-secondary/20 border border-secondary rounded-lg text-secondary-foreground">
+                    Thank you! Your survey has been submitted successfully.
+                </div>
+                <% } %>
+                <% if (filters.error === 'survey_incomplete') { %>
+                <div class="mb-6 p-4 bg-destructive/20 border border-destructive rounded-lg text-destructive">
+                    Please complete all required fields in the survey.
+                </div>
+                <% } %>
+                <% if (filters.error === 'survey_submit_failed') { %>
+                <div class="mb-6 p-4 bg-destructive/20 border border-destructive rounded-lg text-destructive">
+                    Failed to submit survey. Please try again.
+                </div>
+                <% } %>
+            <% } %>
+
+            <!-- Pending Surveys Section (Participants Only) -->
+            <% if (user.role !== 'manager' && typeof pendingSurveys !== 'undefined' && pendingSurveys.length > 0) { %>
+            <div class="bg-card rounded-lg shadow-sm overflow-hidden mb-8">
+                <div class="p-6 border-b border-border">
+                    <h3 class="text-lg font-semibold text-card-foreground">Pending Surveys</h3>
+                    <p class="text-sm text-card-foreground/70 mt-1">
+                        You have <%= pendingSurveys.length %> survey<%= pendingSurveys.length !== 1 ? 's' : '' %> waiting for your feedback
+                    </p>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <% pendingSurveys.forEach(survey => { %>
+                        <div class="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border">
+                            <div>
+                                <h4 class="font-medium text-card-foreground"><%= survey.eventname %></h4>
+                                <p class="text-sm text-card-foreground/70">
+                                    <%= new Date(survey.eventdatetimestart).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) %>
+                                    <% if (survey.eventlocation) { %>
+                                        • <%= survey.eventlocation %>
+                                    <% } %>
+                                </p>
+                            </div>
+                            <button onclick="openSurveyForm(<%= survey.sessionid %>, '<%= survey.eventname.replace(/'/g, "\\'") %>', '<%= new Date(survey.eventdatetimestart).toLocaleDateString() %>')" 
+                                    class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Take Survey
+                            </button>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+            </div>
+            <% } %>
 
             <% if (typeof stats !== 'undefined') { %>
             <!-- Key Metrics Cards -->
@@ -117,44 +230,158 @@
             </div>
             <% } %>
 
+            <!-- Filter Controls (Managers Only) -->
+            <% if (user.role === 'manager' && typeof filters !== 'undefined') { %>
+            <div class="bg-card rounded-lg p-6 shadow-sm mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-card-foreground">Filter & Sort</h3>
+                    <% const hasFilters = filters.surveyDateFrom || filters.surveyDateTo || filters.sessionDateFrom || filters.sessionDateTo || filters.minScore || filters.maxScore || filters.eventId || filters.sessionId || filters.participantSearch; %>
+                    <% if (hasFilters) { %>
+                    <a href="/surveys" class="text-sm text-primary hover:underline">Clear All Filters</a>
+                    <% } %>
+                </div>
+                <form method="GET" action="/surveys" class="space-y-4">
+                    <!-- Row 1: Date Ranges -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-card-foreground/70 mb-1">Survey Date From</label>
+                            <input type="date" name="surveyDateFrom" value="<%= filters.surveyDateFrom %>" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-card-foreground/70 mb-1">Survey Date To</label>
+                            <input type="date" name="surveyDateTo" value="<%= filters.surveyDateTo %>" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-card-foreground/70 mb-1">Session Date From</label>
+                            <input type="date" name="sessionDateFrom" value="<%= filters.sessionDateFrom %>" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-card-foreground/70 mb-1">Session Date To</label>
+                            <input type="date" name="sessionDateTo" value="<%= filters.sessionDateTo %>" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Score, Event, Session, Participant -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-card-foreground/70 mb-1">Min Score</label>
+                            <input type="number" name="minScore" value="<%= filters.minScore %>" min="0" max="10" step="0.1" placeholder="0" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-card-foreground/70 mb-1">Max Score</label>
+                            <input type="number" name="maxScore" value="<%= filters.maxScore %>" min="0" max="10" step="0.1" placeholder="10" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-card-foreground/70 mb-1">Event</label>
+                            <select name="eventId" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="">All Events</option>
+                                <% if (typeof eventsList !== 'undefined') { %>
+                                    <% eventsList.forEach(event => { %>
+                                    <option value="<%= event.eventid %>" <%= filters.eventId == event.eventid ? 'selected' : '' %>><%= event.eventname %></option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-card-foreground/70 mb-1">Participant Name</label>
+                            <input type="text" name="participantSearch" value="<%= filters.participantSearch %>" placeholder="Search name..." class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-card-foreground/70 mb-1">Sort By</label>
+                            <select name="sortBy" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="surveysubmissiondate" <%= filters.sortBy === 'surveysubmissiondate' ? 'selected' : '' %>>Survey Date</option>
+                                <option value="sessiondate" <%= filters.sortBy === 'sessiondate' ? 'selected' : '' %>>Session Date</option>
+                                <option value="overallscore" <%= filters.sortBy === 'overallscore' ? 'selected' : '' %>>Overall Score</option>
+                                <option value="eventname" <%= filters.sortBy === 'eventname' ? 'selected' : '' %>>Event Name</option>
+                                <option value="participant" <%= filters.sortBy === 'participant' ? 'selected' : '' %>>Participant Last Name</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Sort Order & Submit -->
+                    <div class="flex flex-wrap items-end gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-card-foreground/70 mb-1">Order</label>
+                            <select name="sortOrder" class="px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="desc" <%= filters.sortOrder === 'desc' ? 'selected' : '' %>>Decsending</option>
+                                <option value="asc" <%= filters.sortOrder === 'asc' ? 'selected' : '' %>>Ascending</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+                            Apply Filters
+                        </button>
+                        <a href="/surveys" class="px-6 py-2 border border-border rounded-lg hover:bg-muted transition-colors text-sm font-medium text-card-foreground">
+                            Reset All
+                        </a>
+                    </div>
+                </form>
+            </div>
+            <% } %>
+
             <!-- Survey Responses Pivot Table -->
             <div class="bg-card rounded-lg shadow-sm overflow-hidden">
-                <div class="p-6 border-b border-border">
-                    <h3 class="text-lg font-semibold text-card-foreground">Survey Responses</h3>
-                    <p class="text-sm text-card-foreground/70 mt-1">
-                        <% if (typeof surveyResponses !== 'undefined') { %>
-                            <%= surveyResponses.length %> responses with individual metric scores (pivot table)
-                        <% } %>
-                    </p>
+                <div class="p-6 border-b border-border flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-card-foreground">
+                            <% if (user.role === 'manager') { %>
+                                All Survey Responses
+                            <% } else { %>
+                                Your Survey Responses
+                            <% } %>
+                        </h3>
+                        <p class="text-sm text-card-foreground/70 mt-1">
+                            <% if (typeof surveyResponses !== 'undefined') { %>
+                                <%= surveyResponses.length %> <%= user.role === 'manager' ? 'total' : '' %> response<%= surveyResponses.length !== 1 ? 's' : '' %>
+                                <% if (user.role === 'manager' && (filters.surveyDateFrom || filters.surveyDateTo || filters.sessionDateFrom || filters.sessionDateTo || filters.minScore || filters.maxScore || filters.eventId || filters.participantSearch)) { %>
+                                    (filtered)
+                                <% } %>
+                            <% } %>
+                        </p>
+                    </div>
+                    <% if (user.role === 'manager') { %>
+                    <button onclick="openQuestionsModal()" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit Questions
+                    </button>
+                    <% } %>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full min-w-max">
                         <thead class="bg-muted/50 border-b border-border">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Participant</th>
+                                <% if (user.role === 'manager') { %>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Participant</th>
+                                <% } %>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Event</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Event Date</th>
-                                <!-- Dynamic metric columns (pivot) -->
+                                <!-- Dynamic metric columns (pivot) - show as Q1, Q2, etc. -->
                                 <% if (typeof surveyMetrics !== 'undefined') { %>
-                                    <% surveyMetrics.forEach(metric => { %>
-                                    <th class="px-4 py-3 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap" title="<%= metric.surveymetric %>">
-                                        <%= metric.surveymetric.length > 12 ? metric.surveymetric.substring(0, 12) + '...' : metric.surveymetric %>
+                                    <% surveyMetrics.forEach((metric, idx) => { %>
+                                    <th class="px-2 py-2 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap" title="<%= metric.surveymetric %>">
+                                        Q<%= idx + 1 %>
                                     </th>
                                     <% }); %>
                                 <% } %>
                                 <th class="px-4 py-3 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap bg-primary/10">Overall</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Comments</th>
+                                <th class="px-2 py-2 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Info</th>
                                 <th class="px-4 py-3 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">NPS Bucket</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Submitted</th>
+                                <% if (user.role === 'manager') { %>
+                                <th class="px-2 py-2 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Delete</th>
+                                <% } %>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-border">
                             <% if (typeof surveyResponses !== 'undefined' && surveyResponses.length > 0) { %>
                                 <% surveyResponses.forEach(response => { %>
                                 <tr class="hover:bg-muted/30 transition-colors">
-                                    <td class="px-4 py-3 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-card-foreground"><%= response.participantName || 'Unknown' %></div>
+                                    <% if (user.role === 'manager') { %>
+                                    <td class="px-3 py-2 whitespace-nowrap">
+                                        <div class="text-xs font-medium text-card-foreground"><%= response.participantName || 'Unknown' %></div>
                                     </td>
+                                    <% } %>
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <div class="text-sm text-card-foreground/70"><%= response.eventName || 'N/A' %></div>
                                     </td>
@@ -196,15 +423,15 @@
                                             <span class="text-card-foreground/30">-</span>
                                         <% } %>
                                     </td>
-                                    <!-- Comments -->
-                                    <td class="px-4 py-3 max-w-xs">
-                                        <% if (response.surveyComments) { %>
-                                            <div class="text-sm text-card-foreground/70 truncate" title="<%= response.surveyComments %>">
-                                                <%= response.surveyComments.length > 40 ? response.surveyComments.substring(0, 40) + '...' : response.surveyComments %>
-                                            </div>
-                                        <% } else { %>
-                                            <span class="text-card-foreground/30 text-sm">-</span>
-                                        <% } %>
+                                    <!-- Info Button -->
+                                    <td class="px-2 py-2 text-center">
+                                        <button onclick="showSurveyInfo('<%= response.participantName.replace(/'/g, "\\'") %>', '<%= response.eventName.replace(/'/g, "\\'") %>', '<%= response.eventDate ? new Date(response.eventDate).toLocaleDateString() : "N/A" %>', '<%= response.npsBucket || "N/A" %>', '<%= response.overallScore ? parseFloat(response.overallScore).toFixed(1) : "N/A" %>', `<%= response.surveyComments ? response.surveyComments.replace(/`/g, '\\`').replace(/\\/g, '\\\\').replace(/\n/g, '<br>') : 'No comments provided.' %>`)" 
+                                            class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:text-primary/80 hover:bg-primary/10 rounded transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            View
+                                        </button>
                                     </td>
                                     <!-- NPS Bucket -->
                                     <td class="px-4 py-3 whitespace-nowrap text-center">
@@ -232,6 +459,20 @@
                                             <span class="text-card-foreground/30 text-sm">-</span>
                                         <% } %>
                                     </td>
+                                    <!-- Delete Button (Managers Only) -->
+                                    <% if (user.role === 'manager') { %>
+                                    <td class="px-2 py-2 text-center">
+                                        <form method="POST" action="/surveys/delete" onsubmit="return confirm('Are you sure you want to delete this survey response? This cannot be undone.');" class="inline">
+                                            <input type="hidden" name="userId" value="<%= response.userid %>">
+                                            <input type="hidden" name="sessionId" value="<%= response.sessionid %>">
+                                            <button type="submit" class="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors" title="Delete survey response">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    </td>
+                                    <% } %>
                                 </tr>
                                 <% }); %>
                             <% } else { %>
@@ -249,15 +490,15 @@
                 </div>
             </div>
 
-            <!-- Survey Metrics Legend -->
+            <!-- Survey Questions Legend -->
             <% if (typeof surveyMetrics !== 'undefined' && surveyMetrics.length > 0) { %>
             <div class="mt-6 bg-card rounded-lg p-6 shadow-sm">
-                <h4 class="text-sm font-semibold text-card-foreground mb-3">Survey Metrics Legend</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <h4 class="text-sm font-semibold text-card-foreground mb-3">Survey Questions</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <% surveyMetrics.forEach((metric, index) => { %>
-                    <div class="flex items-start gap-2 text-sm">
-                        <span class="flex-shrink-0 w-6 h-6 rounded bg-primary/10 text-primary text-xs flex items-center justify-center font-medium"><%= index + 1 %></span>
-                        <span class="text-card-foreground/70"><%= metric.surveymetric %></span>
+                    <div class="flex items-start gap-3 text-sm p-2 rounded bg-muted/30">
+                        <span class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">Q<%= index + 1 %></span>
+                        <span class="text-card-foreground pt-1"><%= metric.surveymetric %></span>
                     </div>
                     <% }); %>
                 </div>
@@ -265,5 +506,344 @@
             <% } %>
         </div>
     </main>
+
+    <!-- Survey Info Modal Popup -->
+    <div id="surveyInfoModal" class="fixed inset-0 z-50 hidden">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" onclick="closeSurveyInfo()"></div>
+        
+        <!-- Modal Content -->
+        <div class="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
+            <div class="bg-card rounded-lg shadow-xl max-w-lg w-full max-h-[80vh] overflow-hidden pointer-events-auto">
+                <!-- Modal Header -->
+                <div class="px-6 py-4 border-b border-border flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-card-foreground" id="modalTitle">Survey Details</h3>
+                        <p class="text-sm text-card-foreground/70" id="modalSubtitle"></p>
+                    </div>
+                    <button onclick="closeSurveyInfo()" class="p-2 hover:bg-muted rounded-lg transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-card-foreground/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Modal Body -->
+                <div class="px-6 py-4 overflow-y-auto max-h-[60vh]">
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-card-foreground/70">Event:</span>
+                                <p class="font-medium text-card-foreground" id="modalEvent"></p>
+                            </div>
+                            <div>
+                                <span class="text-card-foreground/70">Date:</span>
+                                <p class="font-medium text-card-foreground" id="modalDate"></p>
+                            </div>
+                            <div>
+                                <span class="text-card-foreground/70">NPS:</span>
+                                <p class="font-medium text-card-foreground" id="modalNPS"></p>
+                            </div>
+                            <div>
+                                <span class="text-card-foreground/70">Overall Score:</span>
+                                <p class="font-medium text-card-foreground" id="modalScore"></p>
+                            </div>
+                        </div>
+                        <div class="border-t border-border pt-4">
+                            <span class="text-card-foreground/70 text-sm">Comments:</span>
+                            <p class="mt-2 text-card-foreground whitespace-pre-wrap" id="modalComments"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal Footer -->
+                <div class="px-6 py-4 border-t border-border bg-muted/30">
+                    <button onclick="closeSurveyInfo()" class="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Take Survey Modal (Participants Only) -->
+    <% if (user.role !== 'manager') { %>
+    <div id="surveyFormModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="min-h-screen px-4 py-8 flex items-start justify-center">
+            <div class="fixed inset-0 bg-black/50" onclick="closeSurveyForm()"></div>
+            <div class="bg-card rounded-lg shadow-xl w-full max-w-lg relative z-10">
+                <!-- Modal Header -->
+                <div class="p-4 border-b border-border sticky top-0 bg-card rounded-t-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-card-foreground" id="surveyFormTitle">Event Survey</h3>
+                            <p class="text-sm text-card-foreground/70" id="surveyFormSubtitle">Please share your feedback</p>
+                        </div>
+                        <button type="button" onclick="closeSurveyForm()" class="text-card-foreground/50 hover:text-card-foreground">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Modal Body -->
+                <div class="p-4">
+                    <form id="takeSurveyForm" method="POST" action="/surveys/submit">
+                        <input type="hidden" name="sessionId" id="surveySessionId" value="">
+                        
+                        <!-- Question Ratings -->
+                        <div class="space-y-4 mb-4">
+                            <% if (typeof surveyMetrics !== 'undefined' && surveyMetrics.length > 0) { %>
+                                <% surveyMetrics.forEach((metric, index) => { %>
+                                <div class="p-3 bg-muted/30 rounded-lg">
+                                    <label class="block text-sm font-medium text-card-foreground mb-2">
+                                        Q<%= index + 1 %>: <%= metric.surveymetric %>
+                                    </label>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class="text-xs text-card-foreground/50 w-12">Poor</span>
+                                        <div class="flex gap-2 justify-center">
+                                            <% for (let i = 1; i <= 5; i++) { %>
+                                            <label class="cursor-pointer">
+                                                <input type="radio" name="metric_<%= metric.metricid %>" value="<%= i %>" class="sr-only peer" required>
+                                                <span class="w-10 h-10 flex items-center justify-center rounded-full border-2 border-border text-sm font-medium text-card-foreground/70 peer-checked:bg-primary peer-checked:border-primary peer-checked:text-primary-foreground hover:border-primary/50 transition-colors">
+                                                    <%= i %>
+                                                </span>
+                                            </label>
+                                            <% } %>
+                                        </div>
+                                        <span class="text-xs text-card-foreground/50 w-12 text-right">Great</span>
+                                    </div>
+                                </div>
+                                <% }); %>
+                            <% } %>
+                        </div>
+                        
+                        <!-- Comments -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-card-foreground mb-1">
+                                Comments (Optional)
+                            </label>
+                            <textarea name="comments" rows="3" 
+                                      class="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
+                                      placeholder="Any additional feedback..."></textarea>
+                        </div>
+                        
+                        <!-- Submit Buttons -->
+                        <div class="flex gap-3">
+                            <button type="button" onclick="closeSurveyForm()" class="flex-1 px-4 py-2 border border-border text-card-foreground rounded-lg hover:bg-muted/50 transition-colors text-sm">
+                                Cancel
+                            </button>
+                            <button type="submit" class="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-sm">
+                                Submit Survey
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <% } %>
+
+    <!-- Questions Management Modal (Managers Only) -->
+    <% if (user.role === 'manager') { %>
+    <div id="questionsModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/50" onclick="closeQuestionsModal()"></div>
+        <div class="absolute inset-4 md:inset-10 lg:inset-20 flex items-center justify-center">
+            <div class="bg-card rounded-lg shadow-xl w-full max-w-2xl max-h-full overflow-hidden flex flex-col">
+                <!-- Modal Header -->
+                <div class="p-6 border-b border-border flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-card-foreground">Manage Survey Questions</h3>
+                        <p class="text-sm text-card-foreground/70">Click a question to edit or add a new one</p>
+                    </div>
+                    <button onclick="closeQuestionsModal()" class="text-card-foreground/50 hover:text-card-foreground transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <!-- Hidden Delete Form -->
+                <form id="deleteQuestionForm" method="POST" action="/surveys/questions/delete" class="hidden">
+                    <input type="hidden" name="metricId" id="deleteMetricId" value="">
+                </form>
+                <!-- Questions List View -->
+                <div id="questionsListView" class="p-6 overflow-y-auto flex-1">
+                    <div class="space-y-3">
+                        <% if (typeof surveyMetrics !== 'undefined' && surveyMetrics.length > 0) { %>
+                            <% surveyMetrics.forEach((metric, index) => { %>
+                            <div class="p-4 bg-muted/30 rounded-lg border border-border group">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-sm font-semibold text-primary">Q<%= index + 1 %></span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-card-foreground/50">ID: <%= metric.metricid %></span>
+                                        <button type="button" 
+                                                onclick="event.stopPropagation(); deleteQuestion(<%= metric.metricid %>, 'Q<%= index + 1 %>')"
+                                                class="p-1 text-destructive hover:bg-destructive/10 rounded transition-colors opacity-0 group-hover:opacity-100"
+                                                title="Delete question">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div onclick="editQuestion(<%= metric.metricid %>, 'Q<%= index + 1 %>', '<%= metric.surveymetric.replace(/'/g, "\\'") %>', '<%= (metric.surveyquestiontext || '').replace(/'/g, "\\'") %>')" 
+                                     class="cursor-pointer hover:bg-muted/50 -mx-4 -mb-4 px-4 pb-4 pt-2 rounded-b-lg transition-colors">
+                                    <p class="text-sm font-medium text-card-foreground"><%= metric.surveymetric %></p>
+                                    <% if (metric.surveyquestiontext) { %>
+                                    <p class="text-xs text-card-foreground/70 mt-1 line-clamp-2"><%= metric.surveyquestiontext %></p>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <% }); %>
+                        <% } else { %>
+                            <p class="text-card-foreground/50 text-center py-4">No questions found</p>
+                        <% } %>
+                    </div>
+                    <button onclick="showAddQuestionForm()" class="mt-4 w-full px-4 py-3 border-2 border-dashed border-border rounded-lg text-card-foreground/70 hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add New Question
+                    </button>
+                </div>
+                <!-- Edit/Add Question View -->
+                <div id="questionEditView" class="p-6 overflow-y-auto flex-1 hidden">
+                    <form id="questionForm" method="POST" action="/surveys/questions">
+                        <input type="hidden" name="originalMetricId" id="originalMetricId" value="">
+                        <input type="hidden" name="action" id="questionAction" value="add">
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-card-foreground mb-2">Question Name</label>
+                            <input type="text" name="surveyMetric" id="questionName" required
+                                   class="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                   placeholder="e.g., Overall Satisfaction">
+                            <p class="text-xs text-card-foreground/50 mt-1">Short name for the legend (table headers are always Q1, Q2, etc.)</p>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-card-foreground mb-2">Full Question Text (Optional)</label>
+                            <textarea name="surveyQuestionText" id="questionText" rows="3"
+                                      class="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                                      placeholder="e.g., How satisfied were you with the overall event experience?"></textarea>
+                            <p class="text-xs text-card-foreground/50 mt-1">Extended description shown in the Survey Questions legend</p>
+                        </div>
+                        
+                        <div id="editNotice" class="mb-4 p-3 bg-accent/20 border border-accent rounded-lg hidden">
+                            <p class="text-sm text-accent-foreground">
+                                <strong>Note:</strong> Editing creates a new question entry. Existing survey responses will be migrated to the new question, and the old question will be removed.
+                            </p>
+                        </div>
+                        
+                        <div class="flex gap-3">
+                            <button type="button" onclick="showQuestionsList()" class="flex-1 px-4 py-2 border border-border text-card-foreground rounded-lg hover:bg-muted/50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" class="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+                                <span id="submitBtnText">Add Question</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <% } %>
+
+    <script>
+        function showSurveyInfo(participant, event, date, nps, score, comments) {
+            document.getElementById('modalTitle').textContent = participant || 'Survey Details';
+            document.getElementById('modalSubtitle').textContent = 'Survey Response Details';
+            document.getElementById('modalEvent').textContent = event;
+            document.getElementById('modalDate').textContent = date;
+            document.getElementById('modalNPS').textContent = nps;
+            document.getElementById('modalScore').textContent = score;
+            document.getElementById('modalComments').innerHTML = comments;
+            document.getElementById('surveyInfoModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSurveyInfo() {
+            document.getElementById('surveyInfoModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        // Survey Form Functions (Participant only)
+        <% if (user.role !== 'manager') { %>
+        function openSurveyForm(sessionId, eventName, eventDate) {
+            document.getElementById('surveySessionId').value = sessionId;
+            document.getElementById('surveyFormTitle').textContent = eventName + ' Survey';
+            document.getElementById('surveyFormSubtitle').textContent = 'Event Date: ' + eventDate;
+            document.getElementById('takeSurveyForm').reset();
+            document.getElementById('surveySessionId').value = sessionId;
+            document.getElementById('surveyFormModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSurveyForm() {
+            document.getElementById('surveyFormModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        <% } %>
+
+        // Questions Modal Functions (Manager only)
+        <% if (user.role === 'manager') { %>
+        function openQuestionsModal() {
+            document.getElementById('questionsModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            showQuestionsList();
+        }
+
+        function closeQuestionsModal() {
+            document.getElementById('questionsModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function showQuestionsList() {
+            document.getElementById('questionsListView').classList.remove('hidden');
+            document.getElementById('questionEditView').classList.add('hidden');
+        }
+
+        function showAddQuestionForm() {
+            document.getElementById('questionsListView').classList.add('hidden');
+            document.getElementById('questionEditView').classList.remove('hidden');
+            document.getElementById('questionForm').reset();
+            document.getElementById('originalMetricId').value = '';
+            document.getElementById('questionAction').value = 'add';
+            document.getElementById('editNotice').classList.add('hidden');
+            document.getElementById('submitBtnText').textContent = 'Add Question';
+        }
+
+        function editQuestion(metricId, qNum, name, questionText) {
+            document.getElementById('questionsListView').classList.add('hidden');
+            document.getElementById('questionEditView').classList.remove('hidden');
+            document.getElementById('originalMetricId').value = metricId;
+            document.getElementById('questionAction').value = 'edit';
+            document.getElementById('questionName').value = name;
+            document.getElementById('questionText').value = questionText;
+            document.getElementById('editNotice').classList.remove('hidden');
+            document.getElementById('submitBtnText').textContent = 'Update Question';
+        }
+
+        function deleteQuestion(metricId, qNum) {
+            if (confirm('Are you sure you want to deactivate ' + qNum + '? It will no longer appear as an active survey question, but historical data will be preserved.')) {
+                document.getElementById('deleteMetricId').value = metricId;
+                document.getElementById('deleteQuestionForm').submit();
+            }
+        }
+        <% } %>
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeSurveyInfo();
+                <% if (user.role === 'manager') { %>
+                closeQuestionsModal();
+                <% } else { %>
+                closeSurveyForm();
+                <% } %>
+            }
+        });
+    </script>
 </body>
 </html>

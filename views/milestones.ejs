@@ -16,107 +16,354 @@
             <!-- Page Header -->
             <div class="mb-8 flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">Milestones</h1>
-                    <p class="text-base text-card-foreground/70">Track participant achievements.</p>
+                    <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">
+                        <% if (user.role === 'manager') { %>
+                            Milestones
+                        <% } else { %>
+                            My Milestones
+                        <% } %>
+                    </h1>
+                    <p class="text-base text-card-foreground/70">
+                        <% if (user.role === 'manager') { %>
+                            Track participant achievements.
+                        <% } else { %>
+                            Track and celebrate your achievements.
+                        <% } %>
+                    </p>
                 </div>
-                <% if (user.role === 'manager') { %>
-                <button class="px-4 py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
-                    + Add Milestone
+                <button onclick="openAddModal()" class="px-4 py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Milestone
                 </button>
-                <% } %>
             </div>
+
+            <!-- Success/Error Messages -->
+            <% if (typeof filters !== 'undefined') { %>
+                <% if (filters.success === 'milestone_added') { %>
+                <div class="mb-6 p-4 bg-secondary/20 border border-secondary rounded-lg text-secondary-foreground">
+                    Milestone added successfully.
+                </div>
+                <% } %>
+                <% if (filters.success === 'milestone_updated') { %>
+                <div class="mb-6 p-4 bg-secondary/20 border border-secondary rounded-lg text-secondary-foreground">
+                    Milestone updated successfully.
+                </div>
+                <% } %>
+                <% if (filters.success === 'milestone_deleted') { %>
+                <div class="mb-6 p-4 bg-secondary/20 border border-secondary rounded-lg text-secondary-foreground">
+                    Milestone deleted successfully.
+                </div>
+                <% } %>
+                <% if (filters.error === 'missing_fields') { %>
+                <div class="mb-6 p-4 bg-destructive/20 border border-destructive rounded-lg text-destructive">
+                    Please fill in all required fields.
+                </div>
+                <% } %>
+                <% if (filters.error === 'milestone_exists') { %>
+                <div class="mb-6 p-4 bg-destructive/20 border border-destructive rounded-lg text-destructive">
+                    This participant already has this milestone on that date.
+                </div>
+                <% } %>
+                <% if (filters.error === 'add_failed' || filters.error === 'update_failed' || filters.error === 'delete_failed') { %>
+                <div class="mb-6 p-4 bg-destructive/20 border border-destructive rounded-lg text-destructive">
+                    An error occurred. Please try again.
+                </div>
+                <% } %>
+            <% } %>
 
             <!-- Milestone Summary Cards -->
+            <% if (typeof milestoneTypes !== 'undefined' && milestoneTypes.length > 0) { %>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <!-- University Acceptance -->
+                <% milestoneTypes.slice(0, 4).forEach(mt => { %>
                 <div class="bg-card rounded-lg p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-sm font-medium text-card-foreground/70">University Acceptance</h3>
+                        <h3 class="text-sm font-medium text-card-foreground/70 truncate pr-2"><%= mt.milestonetitle %></h3>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-secondary flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                         </svg>
                     </div>
-                    <p class="text-3xl font-semibold text-card-foreground">0</p>
+                    <p class="text-3xl font-semibold text-card-foreground"><%= mt.count %></p>
                 </div>
-
-                <!-- STEM Major Declared -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-sm font-medium text-card-foreground/70">STEM Major Declared</h3>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-secondary flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                    </div>
-                    <p class="text-3xl font-semibold text-card-foreground">1</p>
-                </div>
-
-                <!-- STEM Job -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-sm font-medium text-card-foreground/70">STEM Job</h3>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-secondary flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                    </div>
-                    <p class="text-3xl font-semibold text-card-foreground">0</p>
-                </div>
-
-                <!-- Leadership Role -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-sm font-medium text-card-foreground/70">Leadership Role</h3>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-secondary flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                    </div>
-                    <p class="text-3xl font-semibold text-card-foreground">0</p>
-                </div>
+                <% }); %>
             </div>
+            <% } %>
+
+            <!-- Filter Controls (Manager Only) -->
+            <% if (user.role === 'manager') { %>
+            <div class="bg-card rounded-lg p-6 shadow-sm mb-8">
+                <h3 class="text-lg font-semibold text-card-foreground mb-4">Filter Milestones</h3>
+                <form method="GET" action="/milestones" class="flex flex-wrap items-end gap-4">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-medium text-card-foreground/70 mb-1">Search Participant</label>
+                        <input type="text" name="participantSearch" value="<%= filters.participantSearch %>" 
+                               class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                               placeholder="Name...">
+                    </div>
+                    <div class="min-w-[200px]">
+                        <label class="block text-xs font-medium text-card-foreground/70 mb-1">Milestone Type</label>
+                        <select name="milestoneType" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                            <option value="">All Types</option>
+                            <% milestoneTypes.forEach(mt => { %>
+                            <option value="<%= mt.milestoneid %>" <%= filters.milestoneType == mt.milestoneid ? 'selected' : '' %>><%= mt.milestonetitle %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <button type="submit" class="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+                        Apply Filters
+                    </button>
+                    <a href="/milestones" class="px-6 py-2 border border-border rounded-lg hover:bg-muted transition-colors text-sm font-medium text-card-foreground">
+                        Reset
+                    </a>
+                </form>
+            </div>
+            <% } %>
 
             <!-- Achievement History -->
             <div class="bg-card rounded-lg shadow-sm overflow-hidden">
                 <div class="p-6 border-b border-border">
                     <h3 class="text-lg font-semibold text-card-foreground">Achievement History</h3>
+                    <p class="text-sm text-card-foreground/70 mt-1">
+                        <% if (typeof userMilestones !== 'undefined') { %>
+                            <%= userMilestones.length %> milestone<%= userMilestones.length !== 1 ? 's' : '' %>
+                            <% if (filters.participantSearch || filters.milestoneType) { %>
+                                (filtered)
+                            <% } %>
+                        <% } %>
+                    </p>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead class="bg-muted/50 border-b border-border">
                             <tr>
+                                <% if (user.role === 'manager') { %>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Participant</th>
+                                <% } %>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Milestone Type</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Date Achieved</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Details</th>
-                                <% if (user.role === 'manager') { %>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Actions</th>
-                                <% } %>
+                                <th class="px-6 py-3 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-border">
-                            <tr class="hover:bg-muted/30 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-card-foreground">Maria Garcia</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">STEM Major Declared</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-card-foreground/70">10/31/2024</div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="text-sm text-card-foreground/70">Declared Computer Science major at Arizona State University</div>
-                                </td>
-                                <% if (user.role === 'manager') { %>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <button class="text-accent hover:text-accent/80 mr-3">Edit</button>
-                                    <button class="text-destructive hover:text-destructive/80">Delete</button>
-                                </td>
-                                <% } %>
-                            </tr>
+                            <% if (typeof userMilestones !== 'undefined' && userMilestones.length > 0) { %>
+                                <% userMilestones.forEach(milestone => { %>
+                                <tr class="hover:bg-muted/30 transition-colors">
+                                    <% if (user.role === 'manager') { %>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-card-foreground"><%= milestone.userfirstname %> <%= milestone.userlastname %></div>
+                                        <div class="text-xs text-card-foreground/50"><%= milestone.useremail %></div>
+                                    </td>
+                                    <% } %>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
+                                            <%= milestone.milestonetitle %>
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-card-foreground/70">
+                                            <%= milestone.milestonedate ? new Date(milestone.milestonedate).toLocaleDateString() : '-' %>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                                        <button onclick="openEditModal(<%= milestone.userid %>, <%= milestone.milestoneid %>, '<%= milestone.milestonedate ? new Date(milestone.milestonedate).toISOString().split('T')[0] : '' %>', '<%= milestone.userfirstname %> <%= milestone.userlastname %>', '<%= milestone.milestonetitle %>')" 
+                                                class="text-accent hover:text-accent/80 mr-3 text-sm font-medium">Edit</button>
+                                        <button onclick="confirmDelete(<%= milestone.userid %>, <%= milestone.milestoneid %>, '<%= milestone.milestonedate ? new Date(milestone.milestonedate).toISOString().split('T')[0] : '' %>', '<%= milestone.userfirstname %> <%= milestone.userlastname %>', '<%= milestone.milestonetitle %>')" 
+                                                class="text-destructive hover:text-destructive/80 text-sm font-medium">Delete</button>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="<%= user.role === 'manager' ? '4' : '3' %>" class="px-6 py-12 text-center text-card-foreground/50">
+                                        <% if (user.role === 'manager') { %>
+                                            No milestones found.
+                                        <% } else { %>
+                                            You haven't added any milestones yet. Click "Add Milestone" to record your achievements!
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% } %>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </main>
+
+    <!-- Add Milestone Modal -->
+    <div id="addModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/50" onclick="closeAddModal()"></div>
+        <div class="absolute inset-4 md:inset-10 flex items-center justify-center">
+            <div class="bg-card rounded-lg shadow-xl w-full max-w-md">
+                <div class="p-6 border-b border-border flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-card-foreground">Add Milestone</h3>
+                    <button onclick="closeAddModal()" class="text-card-foreground/50 hover:text-card-foreground">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <form method="POST" action="/milestones/add" class="p-6">
+                    <% if (user.role === 'manager') { %>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-card-foreground mb-2">Participant</label>
+                        <select name="userId" required class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                            <option value="">Select participant...</option>
+                            <% if (typeof participants !== 'undefined') { %>
+                                <% participants.forEach(p => { %>
+                                <option value="<%= p.userid %>"><%= p.userfirstname %> <%= p.userlastname %> (<%= p.useremail %>)</option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                    </div>
+                    <% } %>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-card-foreground mb-2">Milestone Type</label>
+                        <select name="milestoneId" required class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                            <option value="">Select milestone...</option>
+                            <% if (typeof milestoneTypes !== 'undefined') { %>
+                                <% milestoneTypes.forEach(mt => { %>
+                                <option value="<%= mt.milestoneid %>"><%= mt.milestonetitle %></option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-card-foreground mb-2">Date Achieved</label>
+                        <input type="date" name="milestoneDate" required 
+                               class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeAddModal()" class="flex-1 px-4 py-2 border border-border text-card-foreground rounded-lg hover:bg-muted/50 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" class="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium">
+                            Add Milestone
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Milestone Modal -->
+    <div id="editModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/50" onclick="closeEditModal()"></div>
+        <div class="absolute inset-4 md:inset-10 flex items-center justify-center">
+            <div class="bg-card rounded-lg shadow-xl w-full max-w-md">
+                <div class="p-6 border-b border-border flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-card-foreground">Edit Milestone</h3>
+                    <button onclick="closeEditModal()" class="text-card-foreground/50 hover:text-card-foreground">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <form method="POST" action="/milestones/update" class="p-6">
+                    <input type="hidden" name="originalUserId" id="editOriginalUserId">
+                    <input type="hidden" name="originalMilestoneId" id="editOriginalMilestoneId">
+                    <input type="hidden" name="originalDate" id="editOriginalDate">
+                    <input type="hidden" name="newUserId" id="editUserId">
+                    
+                    <% if (user.role === 'manager') { %>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-card-foreground mb-2">Participant</label>
+                        <select id="editUserIdSelect" onchange="document.getElementById('editUserId').value = this.value" class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                            <% if (typeof participants !== 'undefined') { %>
+                                <% participants.forEach(p => { %>
+                                <option value="<%= p.userid %>"><%= p.userfirstname %> <%= p.userlastname %></option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                    </div>
+                    <% } %>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-card-foreground mb-2">Milestone Type</label>
+                        <select name="newMilestoneId" id="editMilestoneId" required class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                            <% if (typeof milestoneTypes !== 'undefined') { %>
+                                <% milestoneTypes.forEach(mt => { %>
+                                <option value="<%= mt.milestoneid %>"><%= mt.milestonetitle %></option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-card-foreground mb-2">Date Achieved</label>
+                        <input type="date" name="newDate" id="editDate" required 
+                               class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeEditModal()" class="flex-1 px-4 py-2 border border-border text-card-foreground rounded-lg hover:bg-muted/50 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" class="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium">
+                            Update Milestone
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Form (Hidden) -->
+    <form id="deleteForm" method="POST" action="/milestones/delete" class="hidden">
+        <input type="hidden" name="userId" id="deleteUserId">
+        <input type="hidden" name="milestoneId" id="deleteMilestoneId">
+        <input type="hidden" name="milestoneDate" id="deleteMilestoneDate">
+    </form>
+
+    <script>
+        function openAddModal() {
+            document.getElementById('addModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function openEditModal(userId, milestoneId, date, participantName, milestoneTitle) {
+            document.getElementById('editOriginalUserId').value = userId;
+            document.getElementById('editOriginalMilestoneId').value = milestoneId;
+            document.getElementById('editOriginalDate').value = date;
+            document.getElementById('editUserId').value = userId;
+            document.getElementById('editMilestoneId').value = milestoneId;
+            document.getElementById('editDate').value = date;
+            <% if (user.role === 'manager') { %>
+            document.getElementById('editUserIdSelect').value = userId;
+            <% } %>
+            document.getElementById('editModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function confirmDelete(userId, milestoneId, date, participantName, milestoneTitle) {
+            <% if (user.role === 'manager') { %>
+            const message = 'Are you sure you want to delete the "' + milestoneTitle + '" milestone for ' + participantName + '?';
+            <% } else { %>
+            const message = 'Are you sure you want to delete your "' + milestoneTitle + '" milestone?';
+            <% } %>
+            if (confirm(message)) {
+                document.getElementById('deleteUserId').value = userId;
+                document.getElementById('deleteMilestoneId').value = milestoneId;
+                document.getElementById('deleteMilestoneDate').value = date;
+                document.getElementById('deleteForm').submit();
+            }
+        }
+
+        // Close modals on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeAddModal();
+                closeEditModal();
+            }
+        });
+    </script>
 </body>
 </html>
