@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - Ella Rises CRM</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-background min-h-screen flex">
+    <!-- Sidebar Navigation -->
+    <%- include('partials/sidebar', { user: user, currentPage: 'profile' }) %>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-6 overflow-auto">
+        <div class="space-y-6">
+            <!-- Page Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-serif font-bold text-primary">Edit Profile Information</h1>
+                    <p class="text-muted-foreground mt-1">Update your profile details</p>
+                </div>
+                <a href="/profile?tab=profile" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                    Cancel
+                </a>
+            </div>
+
+            <!-- Error Message -->
+            <% if (typeof query !== 'undefined' && query.error) { %>
+            <div class="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+                <p class="text-sm text-destructive">
+                    <% if (query.error === 'missing_fields') { %>
+                        Please fill in all fields.
+                    <% } else if (query.error === 'invalid_date') { %>
+                        Invalid date selected. Please check your date of birth.
+                    <% } else { %>
+                        An error occurred. Please try again.
+                    <% } %>
+                </p>
+            </div>
+            <% } %>
+
+            <!-- Edit Form -->
+            <div class="rounded-lg border bg-card text-card-foreground shadow-sm">
+                <div class="p-6">
+                    <form action="/profile/edit?type=profile" method="POST" class="space-y-4">
+                        <!-- Date of Birth -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Date of Birth</label>
+                            <input type="hidden" id="profiledob" name="profiledob" />
+                            <div class="grid grid-cols-3 gap-4 w-full">
+                                <div class="space-y-2">
+                                    <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="dob_month">Month</label>
+                                    <select 
+                                        id="dob_month" 
+                                        name="dob_month" 
+                                        required
+                                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                    >
+                                        <option value="">Month</option>
+                                        <% for (let i = 1; i <= 12; i++) { %>
+                                        <option value="<%= i %>" <%= profileData && profileData.profiledob ? (new Date(profileData.profiledob).getMonth() + 1 === i ? 'selected' : '') : '' %>><%= i %></option>
+                                        <% } %>
+                                    </select>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="dob_day">Day</label>
+                                    <select 
+                                        id="dob_day" 
+                                        name="dob_day" 
+                                        required
+                                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                    >
+                                        <option value="">Day</option>
+                                        <% for (let i = 1; i <= 31; i++) { %>
+                                        <option value="<%= i %>" <%= profileData && profileData.profiledob ? (new Date(profileData.profiledob).getDate() === i ? 'selected' : '') : '' %>><%= i %></option>
+                                        <% } %>
+                                    </select>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="dob_year">Year</label>
+                                    <select 
+                                        id="dob_year" 
+                                        name="dob_year" 
+                                        required
+                                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                    >
+                                        <option value="">Year</option>
+                                        <% const currentYear = new Date().getFullYear(); %>
+                                        <% for (let i = currentYear; i >= 1900; i--) { %>
+                                        <option value="<%= i %>" <%= profileData && profileData.profiledob ? (new Date(profileData.profiledob).getFullYear() === i ? 'selected' : '') : '' %>><%= i %></option>
+                                        <% } %>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Phone Number -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilephone">Phone Number</label>
+                            <input 
+                                type="tel" 
+                                id="profilephone" 
+                                name="profilephone" 
+                                value="<%= profileData ? (profileData.profilephone || '') : '' %>"
+                                required
+                                placeholder="(555) 123-4567"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                        </div>
+
+                        <!-- City -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilecity">City</label>
+                            <input 
+                                type="text" 
+                                id="profilecity" 
+                                name="profilecity" 
+                                value="<%= profileData ? (profileData.profilecity || '') : '' %>"
+                                required
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                        </div>
+
+                        <!-- State -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilestate">State</label>
+                            <input 
+                                type="text" 
+                                id="profilestate" 
+                                name="profilestate" 
+                                value="<%= profileData ? (profileData.profilestate || '') : '' %>"
+                                required
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                        </div>
+
+                        <!-- Zip Code -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilezip">Zip Code</label>
+                            <input 
+                                type="text" 
+                                id="profilezip" 
+                                name="profilezip" 
+                                value="<%= profileData ? (profileData.profilezip || '') : '' %>"
+                                required
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                        </div>
+
+                        <!-- School/Employer -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profileschooloremployer">School/Employer</label>
+                            <input 
+                                type="text" 
+                                id="profileschooloremployer" 
+                                name="profileschooloremployer" 
+                                value="<%= profileData ? (profileData.profileschooloremployer || '') : '' %>"
+                                required
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                        </div>
+
+                        <!-- Field of Interest -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilefieldofinterest">Field of Interest</label>
+                            <input 
+                                type="text" 
+                                id="profilefieldofinterest" 
+                                name="profilefieldofinterest" 
+                                value="<%= profileData ? (profileData.profilefieldofinterest || '') : '' %>"
+                                required
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="flex gap-4 pt-4">
+                            <button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                                Save Changes
+                            </button>
+                            <a href="/profile?tab=profile" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Update hidden date field when date selects change
+        const dobMonth = document.getElementById('dob_month');
+        const dobDay = document.getElementById('dob_day');
+        const dobYear = document.getElementById('dob_year');
+        const dobHidden = document.getElementById('profiledob');
+
+        function updateHiddenDate() {
+            if (dobMonth.value && dobDay.value && dobYear.value) {
+                const month = String(dobMonth.value).padStart(2, '0');
+                const day = String(dobDay.value).padStart(2, '0');
+                const year = dobYear.value;
+                dobHidden.value = `${year}-${month}-${day}`;
+            }
+        }
+
+        if (dobMonth) dobMonth.addEventListener('change', updateHiddenDate);
+        if (dobDay) dobDay.addEventListener('change', updateHiddenDate);
+        if (dobYear) dobYear.addEventListener('change', updateHiddenDate);
+    </script>
+</body>
+</html>
+

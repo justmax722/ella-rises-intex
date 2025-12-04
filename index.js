@@ -601,20 +601,55 @@ const requireSignupSession = (req, res, next) => {
   }
 };
 
-// Profile route (GET) - for completing profile during signup
-app.get('/profile', requireSignupSession, (req, res) => {
-  res.render('profile', { 
-    error: null,
-    user: {
-      email: req.session.tempUserEmail,
-      firstName: req.session.tempUserFirstName,
-      lastName: req.session.tempUserLastName
-    }
-  });
+// Profile completion route (for converted donors)
+app.get('/profile/complete', requireAuth, (req, res) => {
+  // Check if user is logged in and needs profile completion
+  if (req.session.userId) {
+    res.render('profile', { 
+      error: null,
+      user: {
+        email: req.session.userEmail,
+        firstName: req.session.userFirstName || '',
+        lastName: req.session.userLastName || ''
+      },
+      fromConversion: true
+    });
+  } else {
+    res.redirect('/login');
+  }
 });
 
-// Profile route (POST) - save profile and activate account
-app.post('/profile', requireSignupSession, async (req, res) => {
+// Profile route (GET) - for completing profile during signup
+// This route is for signup only - logged-in users will be handled by the user profile route below
+app.get('/profile', (req, res, next) => {
+  // If user is already logged in, skip this route and go to the user profile route
+  if (req.session.userId) {
+    return next('route');
+  }
+  // Otherwise, check if they're in signup process
+  if (req.session.tempUserId) {
+    res.render('profile', { 
+      error: null,
+      user: {
+        email: req.session.tempUserEmail,
+        firstName: req.session.tempUserFirstName,
+        lastName: req.session.tempUserLastName
+      }
+    });
+  } else {
+    res.redirect('/login');
+  }
+});
+
+// Profile route (POST) - save profile and activate account (for signup and conversion)
+app.post('/profile', async (req, res) => {
+  // Check if user is logged in (from conversion) or in signup process
+  const userId = req.session.userId || req.session.tempUserId;
+  const isFromConversion = !!req.session.userId;
+  
+  if (!userId) {
+    return res.redirect('/login');
+  }
   try {
     const { 
       profiledob,
@@ -701,61 +736,91 @@ app.post('/profile', requireSignupSession, async (req, res) => {
       });
     }
 
-    const userId = req.session.tempUserId;
-
     // Clean phone number - remove formatting characters for storage
     const cleanPhone = profilephone.replace(/\D/g, '');
 
-    // Insert profile data - only the combined date field, not the separate month/day/year
-    await db('profile')
-      .insert({
-        userid: userId,
-        profiledob: dateOfBirth, // Combined date in YYYY-MM-DD format
-        profilephone: cleanPhone,
-        profilecity: profilecity,
-        profilestate: profilestate,
-        profilezip: profilezip,
-        profileschooloremployer: profileschooloremployer,
-        profilefieldofinterest: profilefieldofinterest
-        // Note: dob_month, dob_day, dob_year are NOT inserted - only the combined profiledob
-      });
-
-    // Update users table: set accountactive = true
-    await db('users')
-      .where('userid', userId)
-      .update({ accountactive: true });
-
-    // Get user data to set proper session
-    const user = await db('users')
+    // Check if profile already exists (for conversion case)
+    const existingProfile = await db('profile')
       .where('userid', userId)
       .first();
 
-    // Map RoleID to role string
-    const roleID = user.roleid;
-    let roleString;
-    if (roleID === 1 || roleID === '1') {
-      roleString = 'manager';
-    } else if (roleID === 2 || roleID === '2') {
-      roleString = 'user';
-    } else if (roleID === 3 || roleID === '3') {
-      roleString = 'donor';
+    if (existingProfile) {
+      // Update existing profile
+      await db('profile')
+        .where('userid', userId)
+        .update({
+          profiledob: dateOfBirth,
+          profilephone: cleanPhone,
+          profilecity: profilecity,
+          profilestate: profilestate,
+          profilezip: profilezip,
+          profileschooloremployer: profileschooloremployer,
+          profilefieldofinterest: profilefieldofinterest
+        });
     } else {
-      roleString = 'user'; // default
+      // Insert new profile data
+      await db('profile')
+        .insert({
+          userid: userId,
+          profiledob: dateOfBirth,
+          profilephone: cleanPhone,
+          profilecity: profilecity,
+          profilestate: profilestate,
+          profilezip: profilezip,
+          profileschooloremployer: profileschooloremployer,
+          profilefieldofinterest: profilefieldofinterest
+        });
     }
 
-    // Set proper session variables
-    req.session.userId = user.userid;
-    req.session.userEmail = user.useremail;
-    req.session.userRole = roleString;
+    if (isFromConversion) {
+      // From conversion - user is already logged in, just redirect to profile page
+      // Clear temp session variables if they exist
+      delete req.session.tempUserId;
+      delete req.session.tempUserEmail;
+      delete req.session.tempUserFirstName;
+      delete req.session.tempUserLastName;
+      return res.redirect('/profile?tab=profile&success=true');
+    } else {
+      // From signup - activate account and set session
+      // Update users table: set accountactive = true
+      await db('users')
+        .where('userid', userId)
+        .update({ accountactive: true });
 
-    // Clear temp session variables
-    delete req.session.tempUserId;
-    delete req.session.tempUserEmail;
-    delete req.session.tempUserFirstName;
-    delete req.session.tempUserLastName;
+      // Get user data to set proper session
+      const user = await db('users')
+        .where('userid', userId)
+        .first();
 
-    // Redirect to dashboard
-    res.redirect('/dashboard');
+      // Map RoleID to role string
+      const roleID = user.roleid;
+      let roleString;
+      if (roleID === 1 || roleID === '1') {
+        roleString = 'manager';
+      } else if (roleID === 2 || roleID === '2') {
+        roleString = 'user';
+      } else if (roleID === 3 || roleID === '3') {
+        roleString = 'donor';
+      } else {
+        roleString = 'user'; // default
+      }
+
+      // Set proper session variables
+      req.session.userId = user.userid;
+      req.session.userEmail = user.useremail;
+      req.session.userRole = roleString;
+      req.session.userFirstName = user.userfirstname || '';
+      req.session.userLastName = user.userlastname || '';
+
+      // Clear temp session variables
+      delete req.session.tempUserId;
+      delete req.session.tempUserEmail;
+      delete req.session.tempUserFirstName;
+      delete req.session.tempUserLastName;
+
+      // Redirect to dashboard
+      return res.redirect('/dashboard');
+    }
   } catch (error) {
     console.error('Profile error:', error);
     res.render('profile', {
@@ -1424,6 +1489,357 @@ app.get('/participants', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Participants error:', error);
     res.redirect('/login');
+  }
+});
+
+// User Profile route (protected) - for viewing/editing own profile
+app.get('/profile', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    
+    if (!userId) {
+      return res.redirect('/login');
+    }
+
+    // Get user data from users table
+    const dbUser = await db('users')
+      .where('userid', userId)
+      .first();
+
+    if (!dbUser) {
+      return res.redirect('/login');
+    }
+
+    const userRole = req.session.userRole;
+    const isParticipant = dbUser.roleid === 2 || dbUser.roleid === '2';
+    const isDonor = dbUser.roleid === 3 || dbUser.roleid === '3';
+    
+    // Get profile data if user is a participant
+    let profileData = null;
+    if (isParticipant) {
+      profileData = await db('profile')
+        .where('userid', userId)
+        .first();
+    }
+
+    // Determine active tab (default to 'profile' for participants, 'account' for donors)
+    const activeTab = req.query.tab || (isParticipant ? 'profile' : 'account');
+    const requireProfile = req.query.requireProfile === 'true';
+
+    const user = {
+      email: req.session.userEmail,
+      role: userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
+    };
+
+    res.render('user-profile', {
+      user,
+      dbUser,
+      profileData,
+      activeTab,
+      isParticipant,
+      isDonor,
+      requireProfile,
+      query: req.query
+    });
+  } catch (error) {
+    console.error('Profile error:', error);
+    res.redirect('/login');
+  }
+});
+
+// Profile Edit Route - GET
+app.get('/profile/edit', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const editType = req.query.type; // 'profile' or 'account'
+    
+    if (!userId) {
+      return res.redirect('/login');
+    }
+
+    if (!editType || (editType !== 'profile' && editType !== 'account')) {
+      return res.redirect('/profile?error=invalid_type');
+    }
+
+    // Get user data
+    const dbUser = await db('users')
+      .where('userid', userId)
+      .first();
+
+    if (!dbUser) {
+      return res.redirect('/login');
+    }
+
+    const isParticipant = dbUser.roleid === 2 || dbUser.roleid === '2';
+    const isDonor = dbUser.roleid === 3 || dbUser.roleid === '3';
+
+    // If trying to edit profile but not a participant, redirect
+    if (editType === 'profile' && !isParticipant) {
+      return res.redirect('/profile?error=not_participant');
+    }
+
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
+    };
+
+    if (editType === 'profile') {
+      // Get profile data
+      const profileData = await db('profile')
+        .where('userid', userId)
+        .first();
+
+      res.render('profile-edit-profile', {
+        user,
+        profileData,
+        dbUser,
+        query: req.query
+      });
+    } else {
+      // Account edit
+      res.render('profile-edit-account', {
+        user,
+        dbUser,
+        query: req.query
+      });
+    }
+  } catch (error) {
+    console.error('Profile edit error:', error);
+    res.redirect('/profile?error=edit_failed');
+  }
+});
+
+// Profile Edit Route - POST
+app.post('/profile/edit', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const editType = req.query.type || req.body.type; // 'profile' or 'account'
+    
+    if (!userId) {
+      return res.redirect('/login');
+    }
+
+    if (!editType || (editType !== 'profile' && editType !== 'account')) {
+      return res.redirect('/profile?error=invalid_type');
+    }
+
+    // Get user data to verify role
+    const dbUser = await db('users')
+      .where('userid', userId)
+      .first();
+
+    if (!dbUser) {
+      return res.redirect('/login');
+    }
+
+    const isParticipant = dbUser.roleid === 2 || dbUser.roleid === '2';
+
+    if (editType === 'profile') {
+      // Update profile data
+      if (!isParticipant) {
+        return res.redirect('/profile?error=not_participant');
+      }
+
+      const {
+        profiledob,
+        dob_month,
+        dob_day,
+        dob_year,
+        profilephone,
+        profilecity,
+        profilestate,
+        profilezip,
+        profileschooloremployer,
+        profilefieldofinterest
+      } = req.body;
+
+      // Combine date fields into YYYY-MM-DD format
+      let dateOfBirth = null;
+      if (dob_month && dob_day && dob_year) {
+        const year = parseInt(dob_year);
+        const month = parseInt(dob_month);
+        const day = parseInt(dob_day);
+        
+        if (year < 1900 || year > new Date().getFullYear() || month < 1 || month > 12 || day < 1 || day > 31) {
+          return res.redirect('/profile/edit?type=profile&error=invalid_date');
+        }
+        
+        const dateObj = new Date(Date.UTC(year, month - 1, day));
+        if (dateObj.getUTCFullYear() !== year || 
+            dateObj.getUTCMonth() + 1 !== month || 
+            dateObj.getUTCDate() !== day) {
+          return res.redirect('/profile/edit?type=profile&error=invalid_date');
+        }
+        
+        dateOfBirth = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      } else if (profiledob) {
+        dateOfBirth = profiledob;
+      }
+
+      // Validate required fields
+      if (!dateOfBirth || !profilephone || !profilecity || !profilestate || !profilezip || 
+          !profileschooloremployer || !profilefieldofinterest) {
+        return res.redirect('/profile/edit?type=profile&error=missing_fields');
+      }
+
+      // Clean phone number
+      const cleanPhone = profilephone.replace(/\D/g, '');
+
+      // Check if profile exists
+      const existingProfile = await db('profile')
+        .where('userid', userId)
+        .first();
+
+      if (existingProfile) {
+        // Update existing profile
+        await db('profile')
+          .where('userid', userId)
+          .update({
+            profiledob: dateOfBirth,
+            profilephone: cleanPhone,
+            profilecity: profilecity.trim(),
+            profilestate: profilestate.trim(),
+            profilezip: profilezip.trim(),
+            profileschooloremployer: profileschooloremployer.trim(),
+            profilefieldofinterest: profilefieldofinterest.trim()
+          });
+      } else {
+        // Insert new profile
+        await db('profile')
+          .insert({
+            userid: userId,
+            profiledob: dateOfBirth,
+            profilephone: cleanPhone,
+            profilecity: profilecity.trim(),
+            profilestate: profilestate.trim(),
+            profilezip: profilezip.trim(),
+            profileschooloremployer: profileschooloremployer.trim(),
+            profilefieldofinterest: profilefieldofinterest.trim()
+          });
+      }
+
+      return res.redirect('/profile?tab=profile&success=true');
+    } else {
+      // Update account data
+      const { useremail, userfirstname, userlastname, newPassword, confirmNewPassword } = req.body;
+
+      if (!useremail || !userfirstname || !userlastname) {
+        return res.redirect('/profile/edit?type=account&error=missing_fields');
+      }
+
+      // Validate password if provided
+      if (newPassword || confirmNewPassword) {
+        if (!newPassword || !confirmNewPassword) {
+          return res.redirect('/profile/edit?type=account&error=password_missing');
+        }
+        if (newPassword.length < 6) {
+          return res.redirect('/profile/edit?type=account&error=password_too_short');
+        }
+        if (newPassword !== confirmNewPassword) {
+          return res.redirect('/profile/edit?type=account&error=password_mismatch');
+        }
+      }
+
+      // Check if email is already taken by another user
+      const emailExists = await db('users')
+        .where('useremail', useremail.toLowerCase())
+        .where('userid', '!=', userId)
+        .first();
+
+      if (emailExists) {
+        return res.redirect('/profile/edit?type=account&error=email_taken');
+      }
+
+      // Prepare update data
+      const updateData = {
+        useremail: useremail.toLowerCase().trim(),
+        userfirstname: userfirstname.trim(),
+        userlastname: userlastname.trim()
+      };
+
+      // Hash and update password if provided
+      if (newPassword && newPassword.length >= 6) {
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+        updateData.userpassword = hashedPassword;
+      }
+
+      // Update user data
+      await db('users')
+        .where('userid', userId)
+        .update(updateData);
+
+      // Update session
+      req.session.userEmail = useremail.toLowerCase().trim();
+      req.session.userFirstName = userfirstname.trim();
+      req.session.userLastName = userlastname.trim();
+
+      return res.redirect('/profile?tab=account&success=true');
+    }
+  } catch (error) {
+    console.error('Profile edit error:', error);
+    res.redirect('/profile?error=edit_failed');
+  }
+});
+
+// Convert Donor to Participant Route
+app.post('/profile/convert-to-participant', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    
+    if (!userId) {
+      return res.redirect('/login');
+    }
+
+    // Get user data
+    const dbUser = await db('users')
+      .where('userid', userId)
+      .first();
+
+    if (!dbUser) {
+      return res.redirect('/login');
+    }
+
+    // Verify user is a donor
+    const isDonor = dbUser.roleid === 3 || dbUser.roleid === '3';
+    if (!isDonor) {
+      return res.redirect('/profile?error=not_donor');
+    }
+
+    // Update role to participant (roleid = 2)
+    await db('users')
+      .where('userid', userId)
+      .update({
+        roleid: 2
+      });
+
+    // Update session
+    req.session.userRole = 'user';
+
+    // Check if profile exists
+    const existingProfile = await db('profile')
+      .where('userid', userId)
+      .first();
+
+    if (!existingProfile) {
+      // Redirect to profile completion page (reuse signup profile form)
+      // Set temp session variables to reuse the profile completion flow
+      req.session.tempUserId = userId;
+      req.session.tempUserEmail = dbUser.useremail;
+      req.session.tempUserFirstName = dbUser.userfirstname || '';
+      req.session.tempUserLastName = dbUser.userlastname || '';
+      return res.redirect('/profile/complete');
+    } else {
+      // Profile exists, just redirect to profile page
+      return res.redirect('/profile?tab=profile&success=true');
+    }
+  } catch (error) {
+    console.error('Convert to participant error:', error);
+    res.redirect('/profile?error=conversion_failed');
   }
 });
 
