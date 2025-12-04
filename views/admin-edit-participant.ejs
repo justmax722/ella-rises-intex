@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Profile - Ella Rises CRM</title>
+    <title>Edit Participant - Ella Rises CRM</title>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body class="bg-background min-h-screen flex">
     <!-- Sidebar Navigation -->
-    <%- include('partials/sidebar', { user: user, currentPage: 'profile' }) %>
+    <%- include('partials/sidebar', { user: user, currentPage: 'participants' }) %>
 
     <!-- Main Content Area -->
     <main class="flex-1 p-6 overflow-auto">
@@ -16,10 +16,10 @@
             <!-- Page Header -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 class="text-3xl font-serif font-bold text-primary">Edit Profile Information</h1>
-                    <p class="text-muted-foreground mt-1">Update your profile details</p>
+                    <h1 class="text-3xl font-serif font-bold text-primary">Edit Participant Profile</h1>
+                    <p class="text-muted-foreground mt-1">Update participant profile details</p>
                 </div>
-                <a href="/profile?tab=profile" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                <a href="/participants" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
                     Cancel
                 </a>
             </div>
@@ -29,7 +29,7 @@
             <div class="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
                 <p class="text-sm text-destructive">
                     <% if (query.error === 'missing_fields') { %>
-                        Please fill in all fields.
+                        Please fill in all required fields.
                     <% } else if (query.error === 'invalid_date') { %>
                         Invalid date selected. Please check your date of birth.
                     <% } else { %>
@@ -42,7 +42,7 @@
             <!-- Edit Form -->
             <div class="rounded-lg border bg-card text-card-foreground shadow-sm">
                 <div class="p-6">
-                    <form action="/profile/edit?type=profile" method="POST" class="space-y-4">
+                    <form action="/participants/edit/<%= participant.userid %>" method="POST" class="space-y-4">
                         <!-- Date of Birth -->
                         <div class="space-y-2">
                             <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Date of Birth</label>
@@ -178,7 +178,7 @@
                             <button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
                                 Save Changes
                             </button>
-                            <a href="/profile?tab=profile" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                            <a href="/participants" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
                                 Cancel
                             </a>
                         </div>

@@ -90,44 +90,48 @@
             </div>
             <% } %>
 
-            <!-- Filter Controls (Manager Only) -->
-            <% if (user.role === 'manager') { %>
+            <!-- Filter Controls -->
             <div class="bg-card rounded-lg p-6 shadow-sm mb-8">
                 <h3 class="text-lg font-semibold text-card-foreground mb-4">Filter Milestones</h3>
-                <form method="GET" action="/milestones" class="flex flex-wrap items-end gap-4">
+                <form id="filterForm" method="GET" action="/milestones" class="flex flex-wrap items-end gap-4">
+                    <% if (user.role === 'manager') { %>
                     <div class="flex-1 min-w-[200px]">
                         <label class="block text-xs font-medium text-card-foreground/70 mb-1">Search Participant</label>
-                        <input type="text" name="participantSearch" value="<%= filters.participantSearch %>" 
+                        <input type="text" id="participantSearch" name="participantSearch" value="<%= filters.participantSearch %>" 
                                class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                                placeholder="Name...">
                     </div>
+                    <% } else { %>
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-medium text-card-foreground/70 mb-1">Search Milestones</label>
+                        <input type="text" id="milestoneSearch" name="milestoneSearch" value="<%= filters.milestoneSearch %>" 
+                               class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                               placeholder="Search milestone type...">
+                    </div>
+                    <% } %>
                     <div class="min-w-[200px]">
                         <label class="block text-xs font-medium text-card-foreground/70 mb-1">Milestone Type</label>
-                        <select name="milestoneType" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                        <select id="milestoneType" name="milestoneType" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
                             <option value="">All Types</option>
                             <% milestoneTypes.forEach(mt => { %>
                             <option value="<%= mt.milestoneid %>" <%= filters.milestoneType == mt.milestoneid ? 'selected' : '' %>><%= mt.milestonetitle %></option>
                             <% }); %>
                         </select>
                     </div>
-                    <button type="submit" class="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
-                        Apply Filters
-                    </button>
                     <a href="/milestones" class="px-6 py-2 border border-border rounded-lg hover:bg-muted transition-colors text-sm font-medium text-card-foreground">
                         Reset
                     </a>
                 </form>
             </div>
-            <% } %>
 
             <!-- Achievement History -->
             <div class="bg-card rounded-lg shadow-sm overflow-hidden">
                 <div class="p-6 border-b border-border">
                     <h3 class="text-lg font-semibold text-card-foreground">Achievement History</h3>
-                    <p class="text-sm text-card-foreground/70 mt-1">
+                    <p class="text-sm text-card-foreground/70 mt-1 achievement-history-count">
                         <% if (typeof userMilestones !== 'undefined') { %>
                             <%= userMilestones.length %> milestone<%= userMilestones.length !== 1 ? 's' : '' %>
-                            <% if (filters.participantSearch || filters.milestoneType) { %>
+                            <% if (filters.participantSearch || filters.milestoneSearch || filters.milestoneType) { %>
                                 (filtered)
                             <% } %>
                         <% } %>
@@ -145,10 +149,14 @@
                                 <th class="px-6 py-3 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-border">
+                        <tbody id="milestonesTableBody" class="divide-y divide-border">
                             <% if (typeof userMilestones !== 'undefined' && userMilestones.length > 0) { %>
                                 <% userMilestones.forEach(milestone => { %>
-                                <tr class="hover:bg-muted/30 transition-colors">
+                                <tr class="milestone-row hover:bg-muted/30 transition-colors"
+                                    data-participant-name="<%= (milestone.userfirstname + ' ' + milestone.userlastname).toLowerCase() %>"
+                                    data-participant-email="<%= (milestone.useremail || '').toLowerCase() %>"
+                                    data-milestone-title="<%= (milestone.milestonetitle || '').toLowerCase() %>"
+                                    data-milestone-id="<%= milestone.milestoneid %>">
                                     <% if (user.role === 'manager') { %>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-card-foreground"><%= milestone.userfirstname %> <%= milestone.userlastname %></div>
@@ -192,10 +200,9 @@
     </main>
 
     <!-- Add Milestone Modal -->
-    <div id="addModal" class="fixed inset-0 z-50 hidden">
+    <div id="addModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
         <div class="absolute inset-0 bg-black/50" onclick="closeAddModal()"></div>
-        <div class="absolute inset-4 md:inset-10 flex items-center justify-center">
-            <div class="bg-card rounded-lg shadow-xl w-full max-w-md">
+        <div class="relative bg-card rounded-lg shadow-xl w-full max-w-md mx-4">
                 <div class="p-6 border-b border-border flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-card-foreground">Add Milestone</h3>
                     <button onclick="closeAddModal()" class="text-card-foreground/50 hover:text-card-foreground">
@@ -248,10 +255,9 @@
     </div>
 
     <!-- Edit Milestone Modal -->
-    <div id="editModal" class="fixed inset-0 z-50 hidden">
+    <div id="editModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
         <div class="absolute inset-0 bg-black/50" onclick="closeEditModal()"></div>
-        <div class="absolute inset-4 md:inset-10 flex items-center justify-center">
-            <div class="bg-card rounded-lg shadow-xl w-full max-w-md">
+        <div class="relative bg-card rounded-lg shadow-xl w-full max-w-md mx-4">
                 <div class="p-6 border-b border-border flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-card-foreground">Edit Milestone</h3>
                     <button onclick="closeEditModal()" class="text-card-foreground/50 hover:text-card-foreground">
@@ -269,10 +275,10 @@
                     <% if (user.role === 'manager') { %>
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-card-foreground mb-2">Participant</label>
-                        <select id="editUserIdSelect" onchange="document.getElementById('editUserId').value = this.value" class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                        <select id="editUserIdSelect" name="newUserId" onchange="document.getElementById('editUserId').value = this.value" class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
                             <% if (typeof participants !== 'undefined') { %>
                                 <% participants.forEach(p => { %>
-                                <option value="<%= p.userid %>"><%= p.userfirstname %> <%= p.userlastname %></option>
+                                <option value="<%= p.userid %>"><%= p.userfirstname %> <%= p.userlastname %> (<%= p.useremail %>)</option>
                                 <% }); %>
                             <% } %>
                         </select>
@@ -320,6 +326,11 @@
         }
 
         function closeAddModal() {
+            // Clear all form data
+            const addForm = document.querySelector('#addModal form');
+            if (addForm) {
+                addForm.reset();
+            }
             document.getElementById('addModal').classList.add('hidden');
             document.body.style.overflow = '';
         }
@@ -364,6 +375,71 @@
                 closeEditModal();
             }
         });
+
+        // Client-side filtering for milestones table (no page reload)
+        function filterMilestonesTable() {
+            const searchInput = document.getElementById('participantSearch') || document.getElementById('milestoneSearch');
+            const milestoneTypeSelect = document.getElementById('milestoneType');
+            const rows = document.querySelectorAll('.milestone-row');
+            
+            const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const selectedType = milestoneTypeSelect ? milestoneTypeSelect.value : '';
+            
+            rows.forEach(row => {
+                let matchesSearch = true;
+                let matchesType = true;
+                
+                // Check search filter
+                if (searchTerm) {
+                    <% if (user.role === 'manager') { %>
+                    const participantName = row.getAttribute('data-participant-name') || '';
+                    const participantEmail = row.getAttribute('data-participant-email') || '';
+                    matchesSearch = participantName.includes(searchTerm) || participantEmail.includes(searchTerm);
+                    <% } else { %>
+                    const milestoneTitle = row.getAttribute('data-milestone-title') || '';
+                    matchesSearch = milestoneTitle.includes(searchTerm);
+                    <% } %>
+                }
+                
+                // Check type filter
+                if (selectedType) {
+                    const milestoneId = row.getAttribute('data-milestone-id');
+                    matchesType = milestoneId === selectedType;
+                }
+                
+                // Show/hide row based on filters
+                if (matchesSearch && matchesType) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Update count display
+            const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+            const countText = document.querySelector('.achievement-history-count');
+            if (countText) {
+                const count = visibleRows.length;
+                countText.textContent = count + ' milestone' + (count !== 1 ? 's' : '') + (searchTerm || selectedType ? ' (filtered)' : '');
+            }
+        }
+
+        // Set up filter event listeners
+        const searchInput = document.getElementById('participantSearch') || document.getElementById('milestoneSearch');
+        const milestoneTypeSelect = document.getElementById('milestoneType');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                filterMilestonesTable();
+            });
+        }
+
+        if (milestoneTypeSelect) {
+            milestoneTypeSelect.addEventListener('change', function() {
+                filterMilestonesTable();
+            });
+        }
+
     </script>
 </body>
 </html>

@@ -20,9 +20,9 @@
                     <p class="text-base text-card-foreground/70">Manage system users and permissions</p>
                 </div>
                 <% if (user.role === 'manager') { %>
-                <button class="px-4 py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
+                <a href="/users/add" class="inline-flex items-center px-4 py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
                     + Add User
-                </button>
+                </a>
                 <% } %>
             </div>
 
@@ -167,7 +167,14 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <a href="/users/edit/<%= user.userid %>" class="text-accent hover:text-accent/80 mr-3">Edit</a>
-                                            <button class="text-destructive hover:text-destructive/80">Delete</button>
+                                            <button 
+                                                class="text-destructive hover:text-destructive/80 delete-user-btn"
+                                                data-userid="<%= user.userid %>"
+                                                data-name="<%= user.fullName %>"
+                                                data-email="<%= user.email %>"
+                                            >
+                                                Delete
+                                            </button>
                                         </td>
                                     </tr>
                                 <% }); %>
@@ -182,6 +189,33 @@
             </div>
         </div>
     </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-card rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-lg font-semibold text-card-foreground mb-4">Delete User?</h3>
+            <p class="text-sm text-card-foreground/70 mb-6">
+                Are you sure? This will permanently delete the user's login and profile. Their donation history will be anonymized and cannot be recovered.
+            </p>
+            <div class="flex gap-3 justify-end">
+                <button 
+                    id="cancelDeleteBtn"
+                    class="px-4 py-2 border border-input rounded-md text-sm font-medium text-card-foreground hover:bg-muted transition-colors"
+                >
+                    Cancel
+                </button>
+                <form id="deleteForm" method="POST" action="/users/delete" class="inline">
+                    <input type="hidden" id="deleteUserId" name="userid" value="" />
+                    <button 
+                        type="submit"
+                        class="px-4 py-2 bg-destructive text-destructive-foreground rounded-md text-sm font-medium hover:bg-destructive/90 transition-colors"
+                    >
+                        Yes, Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Debounce function for search
@@ -270,6 +304,41 @@
                 
                 // Re-filter to show all users
                 filterUsers();
+            });
+        }
+
+        // Delete modal functionality
+        const deleteModal = document.getElementById('deleteModal');
+        const deleteForm = document.getElementById('deleteForm');
+        const deleteUserIdInput = document.getElementById('deleteUserId');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const deleteButtons = document.querySelectorAll('.delete-user-btn');
+
+        if (deleteButtons.length > 0) {
+            deleteButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-userid');
+                    const userName = this.getAttribute('data-name');
+                    const userEmail = this.getAttribute('data-email');
+                    
+                    deleteUserIdInput.value = userId;
+                    deleteModal.classList.remove('hidden');
+                });
+            });
+        }
+
+        if (cancelDeleteBtn) {
+            cancelDeleteBtn.addEventListener('click', function() {
+                deleteModal.classList.add('hidden');
+            });
+        }
+
+        // Close modal when clicking outside
+        if (deleteModal) {
+            deleteModal.addEventListener('click', function(e) {
+                if (e.target === deleteModal) {
+                    deleteModal.classList.add('hidden');
+                }
             });
         }
     </script>

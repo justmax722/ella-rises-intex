@@ -30,6 +30,38 @@
                 <% } %>
             </div>
 
+            <!-- Success/Error Messages -->
+            <% if (typeof query !== 'undefined' && query.success) { %>
+            <div class="mb-6 p-4 bg-secondary/20 border border-secondary rounded-md">
+                <p class="text-sm text-card-foreground text-center">
+                    <% if (query.success === 'participant_updated') { %>
+                        Participant profile updated successfully.
+                    <% } else if (query.success === 'participant_deleted') { %>
+                        Participant deleted successfully.
+                    <% } %>
+                </p>
+            </div>
+            <% } %>
+            <% if (typeof query !== 'undefined' && query.error) { %>
+            <div class="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+                <p class="text-sm text-destructive text-center">
+                    <% if (query.error === 'demo_accounts_cannot_be_deleted') { %>
+                        Demo accounts cannot be deleted.
+                    <% } else if (query.error === 'cannot_delete_yourself') { %>
+                        You cannot delete your own account.
+                    <% } else if (query.error === 'update_failed') { %>
+                        Failed to update participant. Please try again.
+                    <% } else if (query.error === 'delete_failed') { %>
+                        Failed to delete participant. Please try again.
+                    <% } else if (query.error === 'participant_not_found') { %>
+                        Participant not found.
+                    <% } else if (query.error === 'not_participant') { %>
+                        User is not a participant.
+                    <% } %>
+                </p>
+            </div>
+            <% } %>
+
             <!-- Participants Card -->
             <div class="rounded-lg border bg-card text-card-foreground shadow-sm">
                 <!-- Search Section -->
@@ -59,41 +91,74 @@
                                     <tr class="border-b transition-colors hover:bg-muted/50">
                                         <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Name</th>
                                         <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Email</th>
-                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">School</th>
-                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Grade</th>
-                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Programs</th>
-                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Enrolled</th>
+                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Date of Birth</th>
+                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Phone</th>
+                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">City</th>
+                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">State</th>
+                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">ZIP</th>
+                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">School/Employer</th>
+                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Field of Interest</th>
+                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="participantsTable" class="[&_tr:last-child]:border-0">
-                                    <!-- Maria Garcia -->
-                                    <tr class="participant-row border-b transition-colors hover:bg-muted/50">
-                                        <td class="p-4 align-middle font-medium">Maria Garcia</td>
-                                        <td class="p-4 align-middle">maria.garcia@email.com</td>
-                                        <td class="p-4 align-middle">Phoenix High School</td>
-                                        <td class="p-4 align-middle">10th Grade</td>
-                                        <td class="p-4 align-middle">
-                                            <div class="flex flex-wrap gap-1">
-                                                <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 text-xs">STEAM Program</div>
-                                                <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 text-xs">Leadership</div>
-                                            </div>
-                                        </td>
-                                        <td class="p-4 align-middle text-muted-foreground">1/14/2024</td>
-                                    </tr>
-                                    <!-- Sofia Rodriguez -->
-                                    <tr class="participant-row border-b transition-colors hover:bg-muted/50">
-                                        <td class="p-4 align-middle font-medium">Sofia Rodriguez</td>
-                                        <td class="p-4 align-middle">sofia.rodriguez@email.com</td>
-                                        <td class="p-4 align-middle">Desert Vista High</td>
-                                        <td class="p-4 align-middle">9th Grade</td>
-                                        <td class="p-4 align-middle">
-                                            <div class="flex flex-wrap gap-1">
-                                                <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 text-xs">Mariachi</div>
-                                                <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 text-xs">Workshop</div>
-                                            </div>
-                                        </td>
-                                        <td class="p-4 align-middle text-muted-foreground">1/31/2024</td>
-                                    </tr>
+                                    <% if (typeof participants !== 'undefined' && participants.length > 0) { %>
+                                        <% participants.forEach(function(participant) { %>
+                                            <tr 
+                                                class="participant-row border-b transition-colors hover:bg-muted/50"
+                                                data-userid="<%= participant.userid %>"
+                                                data-name="<%= (participant.firstName + ' ' + participant.lastName).toLowerCase() %>"
+                                                data-email="<%= participant.email.toLowerCase() %>"
+                                                data-city="<%= (participant.profileCity || '').toLowerCase() %>"
+                                                data-school="<%= (participant.profileSchoolOrEmployer || '').toLowerCase() %>"
+                                                data-field="<%= (participant.profileFieldOfInterest || '').toLowerCase() %>"
+                                            >
+                                                <td class="p-4 align-middle font-medium"><%= participant.fullName %></td>
+                                                <td class="p-4 align-middle"><%= participant.email %></td>
+                                                <td class="p-4 align-middle">
+                                                    <% if (participant.profileDOB) { %>
+                                                        <% const dob = new Date(participant.profileDOB); %>
+                                                        <%= (dob.getMonth() + 1) + '/' + dob.getDate() + '/' + dob.getFullYear() %>
+                                                    <% } else { %>
+                                                        <span class="text-muted-foreground">—</span>
+                                                    <% } %>
+                                                </td>
+                                                <td class="p-4 align-middle">
+                                                    <%= participant.profilePhone || '<span class="text-muted-foreground">—</span>' %>
+                                                </td>
+                                                <td class="p-4 align-middle">
+                                                    <%= participant.profileCity || '<span class="text-muted-foreground">—</span>' %>
+                                                </td>
+                                                <td class="p-4 align-middle">
+                                                    <%= participant.profileState || '<span class="text-muted-foreground">—</span>' %>
+                                                </td>
+                                                <td class="p-4 align-middle">
+                                                    <%= participant.profileZip || '<span class="text-muted-foreground">—</span>' %>
+                                                </td>
+                                                <td class="p-4 align-middle">
+                                                    <%= participant.profileSchoolOrEmployer || '<span class="text-muted-foreground">—</span>' %>
+                                                </td>
+                                                <td class="p-4 align-middle">
+                                                    <%= participant.profileFieldOfInterest || '<span class="text-muted-foreground">—</span>' %>
+                                                </td>
+                                                <td class="p-4 align-middle text-sm">
+                                                    <a href="/participants/edit/<%= participant.userid %>" class="text-accent hover:text-accent/80 mr-3">Edit</a>
+                                                    <button 
+                                                        class="text-destructive hover:text-destructive/80 delete-participant-btn"
+                                                        data-userid="<%= participant.userid %>"
+                                                        data-name="<%= participant.fullName %>"
+                                                        data-email="<%= participant.email %>"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <tr>
+                                            <td colspan="10" class="px-6 py-4 text-center text-sm text-card-foreground/70">No participants found</td>
+                                        </tr>
+                                    <% } %>
                                 </tbody>
                             </table>
                         </div>
@@ -103,20 +168,85 @@
         </div>
     </main>
 
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-card rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-lg font-semibold text-card-foreground mb-4">Delete Participant?</h3>
+            <p class="text-sm text-card-foreground/70 mb-6">
+                Are you sure? This will permanently delete the participant's login and profile. Their donation history will be anonymized and cannot be recovered.
+            </p>
+            <div class="flex gap-3 justify-end">
+                <button 
+                    id="cancelDeleteBtn"
+                    class="px-4 py-2 border border-input rounded-md text-sm font-medium text-card-foreground hover:bg-muted transition-colors"
+                >
+                    Cancel
+                </button>
+                <form id="deleteForm" method="POST" action="/participants/delete" class="inline">
+                    <input type="hidden" id="deleteUserId" name="userid" value="" />
+                    <button 
+                        type="submit"
+                        class="px-4 py-2 bg-destructive text-destructive-foreground rounded-md text-sm font-medium hover:bg-destructive/90 transition-colors"
+                    >
+                        Yes, Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Search functionality
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
+        function filterParticipants() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
             const rows = document.querySelectorAll('.participant-row');
             
             rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                if (text.includes(searchTerm)) {
+                const name = row.getAttribute('data-name') || '';
+                const email = row.getAttribute('data-email') || '';
+                const city = row.getAttribute('data-city') || '';
+                const school = row.getAttribute('data-school') || '';
+                const field = row.getAttribute('data-field') || '';
+                
+                const searchableText = `${name} ${email} ${city} ${school} ${field}`.toLowerCase();
+                
+                if (searchableText.includes(searchTerm)) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
                 }
             });
+        }
+
+        document.getElementById('searchInput').addEventListener('input', filterParticipants);
+
+        // Delete modal functionality
+        const deleteModal = document.getElementById('deleteModal');
+        const deleteForm = document.getElementById('deleteForm');
+        const deleteUserIdInput = document.getElementById('deleteUserId');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const deleteButtons = document.querySelectorAll('.delete-participant-btn');
+
+        deleteButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const userId = this.getAttribute('data-userid');
+                const userName = this.getAttribute('data-name');
+                const userEmail = this.getAttribute('data-email');
+                
+                deleteUserIdInput.value = userId;
+                deleteModal.classList.remove('hidden');
+            });
+        });
+
+        cancelDeleteBtn.addEventListener('click', function() {
+            deleteModal.classList.add('hidden');
+        });
+
+        // Close modal when clicking outside
+        deleteModal.addEventListener('click', function(e) {
+            if (e.target === deleteModal) {
+                deleteModal.classList.add('hidden');
+            }
         });
     </script>
 </body>
