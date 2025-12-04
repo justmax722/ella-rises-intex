@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Portal - Ella Rises</title>
+    <title>Portal - Ella Rises</title>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body class="min-h-screen bg-cream flex items-center justify-center p-4">
@@ -23,8 +23,8 @@
         <div class="rounded-lg border text-card-foreground shadow-sm bg-background">
             <!-- Title Section -->
             <div class="flex flex-col space-y-1.5 p-6 text-center">
-                <h3 class="tracking-tight text-3xl font-serif font-bold text-primary">Staff Portal</h3>
-                <p class="text-sm text-muted-foreground">Access the Ella Rises CRM to manage programs and participants.</p>
+                <h3 class="tracking-tight text-3xl font-serif font-bold text-primary">Ella Rises Portal</h3>
+                <p class="text-sm text-muted-foreground">Access your account to manage your profile and donations.</p>
             </div>
 
             <!-- Forms Container -->
@@ -94,6 +94,7 @@
                                 name="password" 
                                 required
                                 value="<%= typeof loginPassword !== 'undefined' && loginPassword ? loginPassword : '' %>"
+                                placeholder="••••••••"
                                 class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                             />
                             <button 

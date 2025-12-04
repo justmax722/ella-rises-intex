@@ -45,9 +45,7 @@
             <% if (typeof query !== 'undefined' && query.error) { %>
             <div class="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-md">
                 <p class="text-sm text-destructive text-center">
-                    <% if (query.error === 'demo_accounts_cannot_be_deleted') { %>
-                        Demo accounts cannot be deleted.
-                    <% } else if (query.error === 'cannot_delete_yourself') { %>
+                    <% if (query.error === 'cannot_delete_yourself') { %>
                         You cannot delete your own account.
                     <% } else if (query.error === 'update_failed') { %>
                         Failed to update participant. Please try again.

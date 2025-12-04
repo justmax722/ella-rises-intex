@@ -6,6 +6,7 @@ const session = require('express-session');
 const knex = require('knex');
 const knexConfig = require('./knexfile');
 const bcrypt = require('bcrypt');
+const PDFDocument = require('pdfkit');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -76,9 +77,17 @@ const requireAuth = (req, res, next) => {
 // Middleware to restrict routes for donor role
 const restrictDonor = (req, res, next) => {
   if (req.session.userRole === 'donor') {
-    return res.redirect('/home');
+    return res.redirect('/donations');
   }
   next();
+};
+
+// Helper function to get the default redirect destination based on user role
+const getDefaultRedirect = (userRole) => {
+  if (userRole === 'donor') {
+    return '/donations';
+  }
+  return '/home';
 };
 
 // Landing page route
@@ -385,7 +394,7 @@ app.post('/donate/claim', async (req, res) => {
     req.session.userRole = 'donor';
 
     // Redirect to dashboard
-    res.redirect('/home');
+    res.redirect(getDefaultRedirect(req.session.userRole));
   } catch (error) {
     console.error('Claim account error:', error);
     res.redirect('/donate?error=claim_failed');
@@ -394,9 +403,19 @@ app.post('/donate/claim', async (req, res) => {
 
 // Login page route
 app.get('/login', (req, res) => {
-  // If already logged in, redirect to dashboard
+  // If already logged in, check for redirect or go to dashboard
   if (req.session.userId) {
-    return res.redirect('/home');
+    const redirect = req.query.redirect || req.session.loginRedirect;
+    if (redirect) {
+      delete req.session.loginRedirect;
+      return res.redirect(redirect);
+    }
+    return res.redirect(getDefaultRedirect(req.session.userRole));
+  }
+  
+  // Store redirect in session if provided
+  if (req.query.redirect) {
+    req.session.loginRedirect = req.query.redirect;
   }
   
   // Check if redirecting from login with non-existent email
@@ -404,6 +423,9 @@ app.get('/login', (req, res) => {
   const signupEmail = req.session.signupEmail || null;
   const signupPassword = req.session.signupPassword || null;
   const signupMessage = req.session.signupMessage || null;
+  
+  // Get email from query parameter for pre-fill
+  const loginEmail = req.query.email || '';
   
   // Clear signup session data after passing to view
   if (req.session.signupEmail) {
@@ -422,7 +444,8 @@ app.get('/login', (req, res) => {
     showSignUp: showSignUp,
     signupEmail: signupEmail,
     signupPassword: signupPassword,
-    signupMessage: signupMessage
+    signupMessage: signupMessage,
+    loginEmail: loginEmail
   });
 });
 
@@ -826,7 +849,7 @@ app.post('/profile', async (req, res) => {
       delete req.session.tempUserLastName;
 
       // Redirect to dashboard
-      return res.redirect('/home');
+      return res.redirect(getDefaultRedirect(req.session.userRole));
     }
   } catch (error) {
     console.error('Profile error:', error);
@@ -989,7 +1012,7 @@ app.get('/set-password', (req, res) => {
 // Change Password route (GET) - for users with admin-set passwords
 app.get('/change-password', requireAuth, (req, res) => {
   if (!req.session.passwordChangeRequired || !req.session.userId) {
-    return res.redirect('/home');
+    return res.redirect(getDefaultRedirect(req.session.userRole));
   }
   
   res.render('change-password', {
@@ -1002,7 +1025,7 @@ app.get('/change-password', requireAuth, (req, res) => {
 app.post('/change-password', requireAuth, async (req, res) => {
   try {
     if (!req.session.passwordChangeRequired || !req.session.userId) {
-      return res.redirect('/home');
+      return res.redirect(getDefaultRedirect(req.session.userRole));
     }
     
     const { password, confirm_password } = req.body;
@@ -1069,8 +1092,15 @@ app.post('/change-password', requireAuth, async (req, res) => {
       }
     }
     
+    // Check for redirect in session
+    const redirect = req.session.loginRedirect;
+    if (redirect) {
+      delete req.session.loginRedirect;
+      return res.redirect(redirect);
+    }
+    
     // Redirect to dashboard
-    res.redirect('/home');
+    res.redirect(getDefaultRedirect(req.session.userRole));
   } catch (error) {
     console.error('Change password error:', error);
     return res.render('change-password', {
@@ -1157,7 +1187,7 @@ app.post('/set-password', async (req, res) => {
     delete req.session.claimAttempts;
     
     // Redirect to dashboard
-    res.redirect('/home');
+    res.redirect(getDefaultRedirect(req.session.userRole));
   } catch (error) {
     console.error('Set password error:', error);
     return res.render('set-password', {
@@ -1291,7 +1321,7 @@ app.post('/verify-claim', async (req, res) => {
     req.session.userRole = 'donor';
 
     // Redirect to dashboard
-    res.redirect('/home');
+    res.redirect(getDefaultRedirect(req.session.userRole));
   } catch (error) {
     console.error('Verify claim error:', error);
     res.redirect('/login?error=verification_failed');
@@ -1311,42 +1341,6 @@ app.post('/login', async (req, res) => {
         loginEmail: email || '',
         loginPassword: password || ''
       });
-    }
-
-    // Hardcoded demo accounts
-    const demoAccounts = {
-      'manager@ellarises.org': {
-        password: 'password123',
-        role: 'manager',
-        id: 'demo-manager'
-      },
-      'user@ellarises.org': {
-        password: 'password123',
-        role: 'user',
-        id: 'demo-user'
-      }
-    };
-
-    // Check if it's a demo account
-    if (demoAccounts[email.toLowerCase()]) {
-      const demoAccount = demoAccounts[email.toLowerCase()];
-      if (password === demoAccount.password) {
-        // Set session for demo account
-        req.session.userId = demoAccount.id;
-        req.session.userEmail = email.toLowerCase();
-        req.session.userRole = demoAccount.role;
-        req.session.userFirstName = demoAccount.role === 'manager' ? 'Demo' : 'Demo';
-        req.session.userLastName = demoAccount.role === 'manager' ? 'Manager' : 'User';
-        return res.redirect('/home');
-      } else {
-        return res.render('login', {
-          error: 'Invalid email or password',
-          success: null,
-          showSignUp: false,
-          loginEmail: email,
-          loginPassword: password
-        });
-      }
     }
 
     // Check if email exists in users table
@@ -1483,7 +1477,14 @@ app.post('/login', async (req, res) => {
       }
     }
 
-    res.redirect('/home');
+    // Check for redirect in session (from query parameter)
+    const redirect = req.session.loginRedirect;
+    if (redirect) {
+      delete req.session.loginRedirect;
+      return res.redirect(redirect);
+    }
+
+    res.redirect(getDefaultRedirect(req.session.userRole));
   } catch (error) {
     console.error('Login error:', error);
     res.render('login', {
@@ -1497,19 +1498,11 @@ app.post('/login', async (req, res) => {
 // Home route (protected) - renamed from dashboard
 app.get('/home', requireAuth, async (req, res) => {
   try {
-    // Handle demo accounts (they don't exist in database)
-    if (req.session.userId === 'demo-manager' || req.session.userId === 'demo-user') {
-      return res.render('home', {
-        user: {
-          email: req.session.userEmail,
-          role: req.session.userRole,
-          firstName: req.session.userRole === 'manager' ? 'Demo' : 'Demo',
-          lastName: req.session.userRole === 'manager' ? 'Manager' : 'User'
-        }
-      });
+    // Redirect donors to donations page
+    if (req.session.userRole === 'donor') {
+      return res.redirect('/donations');
     }
-
-    // Handle regular database users
+    
     // We already have user info in session from login, no need to query again
     // But if we did, we'd use userid (lowercase), not id
     res.render('home', {
@@ -1531,22 +1524,9 @@ app.get('/dashboard', requireAuth, async (req, res) => {
   try {
     // Only managers can access the dashboard
     if (req.session.userRole !== 'manager') {
-      return res.redirect('/home');
+      return res.redirect(getDefaultRedirect(req.session.userRole));
     }
 
-    // Handle demo accounts (they don't exist in database)
-    if (req.session.userId === 'demo-manager') {
-      return res.render('dashboard', {
-        user: {
-          email: req.session.userEmail,
-          role: req.session.userRole,
-          firstName: 'Demo',
-          lastName: 'Manager'
-        }
-      });
-    }
-
-    // Handle regular database users
     res.render('dashboard', {
       user: {
         email: req.session.userEmail,
@@ -1566,7 +1546,7 @@ app.get('/participants', requireAuth, restrictDonor, async (req, res) => {
   try {
     // Check if user is manager
     if (req.session.userRole !== 'manager') {
-      return res.redirect('/home');
+      return res.redirect(getDefaultRedirect(req.session.userRole));
     }
 
     // Query all participants (users with roleid = 2) with LEFT JOIN to profile table
@@ -1626,7 +1606,7 @@ app.get('/participants/edit/:userid', requireAuth, restrictDonor, async (req, re
   try {
     // Check if user is manager
     if (req.session.userRole !== 'manager') {
-      return res.redirect('/home');
+      return res.redirect(getDefaultRedirect(req.session.userRole));
     }
 
     const userId = parseInt(req.params.userid);
@@ -1800,11 +1780,6 @@ app.post('/participants/delete', requireAuth, restrictDonor, async (req, res) =>
 
     if (!userData) {
       return res.redirect('/participants?error=participant_not_found');
-    }
-
-    // Don't allow deleting demo accounts
-    if (userData.useremail === 'manager@ellarises.org' || userData.useremail === 'user@ellarises.org') {
-      return res.redirect('/participants?error=demo_accounts_cannot_be_deleted');
     }
 
     // Don't allow deleting yourself
@@ -2634,7 +2609,7 @@ app.get('/events/:sessionId', requireAuth, async (req, res) => {
 
     // Donors should not access event details
     if (userRole === 'donor') {
-      return res.redirect('/home');
+      return res.redirect('/donations');
     }
 
     const sessionId = parseInt(req.params.sessionId);
@@ -3658,12 +3633,145 @@ app.get('/donations', requireAuth, async (req, res) => {
   }
 });
 
+// Donation Receipt PDF Export route (protected)
+app.get('/donations/receipt', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const donationUserId = parseInt(req.query.userId);
+    const donationNo = parseInt(req.query.donationNo);
+    const userRole = req.session.userRole;
+
+    if (!userId) {
+      return res.redirect('/login');
+    }
+
+    if (isNaN(donationUserId) || isNaN(donationNo)) {
+      return res.status(400).send('Invalid donation parameters');
+    }
+
+    // Check permissions: donors and participants can only export their own receipts, managers can export any
+    if ((userRole === 'donor' || userRole === 'user') && donationUserId !== userId) {
+      return res.status(403).send('You do not have permission to export this receipt');
+    }
+
+    // Get donation data
+    const donation = await db('donation')
+      .leftJoin('users', 'donation.userid', 'users.userid')
+      .where('donation.userid', donationUserId)
+      .where('donation.donationno', donationNo)
+      .select(
+        'donation.*',
+        'users.userfirstname',
+        'users.userlastname',
+        'users.useremail'
+      )
+      .first();
+
+    if (!donation) {
+      return res.status(404).send('Donation not found');
+    }
+
+    // Create PDF
+    const doc = new PDFDocument({ margin: 50, size: 'LETTER' });
+    
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="donation-receipt-${donationUserId}-${donationNo}.pdf"`);
+    
+    // Pipe PDF to response
+    doc.pipe(res);
+
+    // Header
+    const pageWidth = doc.page.width;
+    const centerX = pageWidth / 2;
+    
+    doc.fontSize(24)
+       .font('Helvetica-Bold')
+       .text('Ella Rises', centerX, 50, { align: 'center' });
+    
+    doc.fontSize(14)
+       .font('Helvetica')
+       .text('DONATION RECEIPT', centerX, 85, { align: 'center' });
+
+    // Receipt details
+    const receiptY = 130;
+    doc.fontSize(10)
+       .font('Helvetica')
+       .text('Receipt Number:', 50, receiptY)
+       .font('Helvetica-Bold')
+       .text(`${donationUserId}-${donationNo}`, 180, receiptY);
+
+    doc.font('Helvetica')
+       .text('Date:', 50, receiptY + 20)
+       .font('Helvetica-Bold')
+       .text(new Date(donation.donationdate).toLocaleDateString('en-US', { 
+         year: 'numeric', 
+         month: 'long', 
+         day: 'numeric' 
+       }), 180, receiptY + 20);
+
+    // Donor Information
+    doc.fontSize(12)
+       .font('Helvetica-Bold')
+       .text('Donor Information:', 50, receiptY + 60);
+    
+    doc.fontSize(10)
+       .font('Helvetica')
+       .text('Name:', 50, receiptY + 85)
+       .font('Helvetica-Bold')
+       .text(`${donation.userfirstname || ''} ${donation.userlastname || ''}`.trim() || 'N/A', 180, receiptY + 85);
+    
+    doc.font('Helvetica')
+       .text('Email:', 50, receiptY + 105)
+       .font('Helvetica-Bold')
+       .text(donation.useremail || 'N/A', 180, receiptY + 105);
+
+    // Donation Amount
+    const amountY = receiptY + 160;
+    doc.fontSize(12)
+       .font('Helvetica-Bold')
+       .text('Donation Amount:', 50, amountY);
+    
+    doc.fontSize(20)
+       .font('Helvetica-Bold')
+       .text(`$${parseFloat(donation.donationamount).toLocaleString('en-US', { 
+         minimumFractionDigits: 2, 
+         maximumFractionDigits: 2 
+       })}`, 50, amountY + 25);
+
+    // Thank you message
+    const thankYouY = amountY + 80;
+    doc.fontSize(11)
+       .font('Helvetica')
+       .text('Thank you for your generous donation to Ella Rises. Your contribution helps us continue our mission.', 
+             50, thankYouY, { 
+               width: 500,
+               align: 'left'
+             });
+
+    // Footer
+    const footerY = 700;
+    doc.fontSize(9)
+       .font('Helvetica')
+       .text('This is an official receipt for tax purposes.', centerX, footerY, { align: 'center' })
+       .text('Ella Rises is a registered 501(c)(3) nonprofit organization.', centerX, footerY + 15, { align: 'center' })
+       .text('For questions, please contact us at info@ellarises.org', centerX, footerY + 30, { align: 'center' });
+
+    // Finalize PDF
+    doc.end();
+
+  } catch (error) {
+    console.error('Receipt PDF error:', error);
+    res.status(500).send('Error generating receipt');
+  }
+});
+
 // Users route (protected, manager only)
 app.get('/users', requireAuth, async (req, res) => {
   try {
     // Check if user is manager
     if (req.session.userRole !== 'manager') {
-      return res.redirect('/home');
+      return res.redirect(getDefaultRedirect(req.session.userRole));
     }
     
     // Query all users from database
@@ -3710,7 +3818,7 @@ app.get('/users/add', requireAuth, async (req, res) => {
   try {
     // Check if user is manager
     if (req.session.userRole !== 'manager') {
-      return res.redirect('/home');
+      return res.redirect(getDefaultRedirect(req.session.userRole));
     }
 
     const user = {
@@ -3818,7 +3926,7 @@ app.get('/users/edit/:userid', requireAuth, async (req, res) => {
   try {
     // Check if user is manager
     if (req.session.userRole !== 'manager') {
-      return res.redirect('/home');
+      return res.redirect(getDefaultRedirect(req.session.userRole));
     }
 
     const userId = parseInt(req.params.userid);
@@ -3943,11 +4051,6 @@ app.post('/users/delete', requireAuth, async (req, res) => {
 
     if (!userData) {
       return res.redirect('/users?error=user_not_found');
-    }
-
-    // Don't allow deleting demo accounts
-    if (userData.useremail === 'manager@ellarises.org' || userData.useremail === 'user@ellarises.org') {
-      return res.redirect('/users?error=demo_accounts_cannot_be_deleted');
     }
 
     // Don't allow deleting yourself
