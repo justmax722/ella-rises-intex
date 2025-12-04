@@ -12,13 +12,14 @@
 
     <!-- Main Content Area -->
     <main class="flex-1 p-6 md:p-8">
-        <div class="max-w-7xl mx-auto">
+        <div class="max-w-full mx-auto">
             <!-- Page Header -->
             <div class="mb-8">
                 <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">Post-Event Surveys</h1>
                 <p class="text-base text-card-foreground/70">Participant feedback and satisfaction.</p>
             </div>
 
+            <% if (typeof stats !== 'undefined') { %>
             <!-- Key Metrics Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <!-- Total Responses -->
@@ -29,37 +30,20 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                         </svg>
                     </div>
-                    <p class="text-3xl font-semibold text-card-foreground">1</p>
-                    <p class="text-xs text-card-foreground/70 mt-1">5.0% response rate</p>
+                    <p class="text-3xl font-semibold text-card-foreground"><%= stats.totalResponses %></p>
+                    <p class="text-xs text-card-foreground/70 mt-1">survey responses</p>
                 </div>
 
                 <!-- Avg Satisfaction -->
                 <div class="bg-card rounded-lg p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-sm font-medium text-card-foreground/70">Avg Satisfaction</h3>
+                        <h3 class="text-sm font-medium text-card-foreground/70">Avg Score</h3>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
                         </svg>
                     </div>
-                    <p class="text-3xl font-semibold text-accent">5.0</p>
-                    <div class="flex gap-1 mt-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-accent" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-accent" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-accent" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-accent" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-accent" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                    </div>
-                    <p class="text-xs text-card-foreground/70 mt-1">Out of 5 stars</p>
+                    <p class="text-3xl font-semibold text-accent"><%= stats.avgSatisfaction %></p>
+                    <p class="text-xs text-card-foreground/70 mt-1">out of 10</p>
                 </div>
 
                 <!-- Net Promoter Score -->
@@ -70,111 +54,215 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                     </div>
-                    <p class="text-3xl font-semibold text-secondary">100</p>
-                    <p class="text-xs text-card-foreground/70 mt-1">Excellent</p>
+                    <p class="text-3xl font-semibold <%= stats.nps >= 50 ? 'text-secondary' : stats.nps >= 0 ? 'text-accent' : 'text-destructive' %>"><%= stats.nps %></p>
+                    <p class="text-xs text-card-foreground/70 mt-1">
+                        <% if (stats.nps >= 70) { %>Excellent
+                        <% } else if (stats.nps >= 50) { %>Great
+                        <% } else if (stats.nps >= 0) { %>Good
+                        <% } else { %>Needs Improvement<% } %>
+                    </p>
                 </div>
 
-                <!-- Would Return -->
+                <!-- Promoters -->
                 <div class="bg-card rounded-lg p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-sm font-medium text-card-foreground/70">Would Return</h3>
+                        <h3 class="text-sm font-medium text-card-foreground/70">NPS Breakdown</h3>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                     </div>
-                    <p class="text-3xl font-semibold text-secondary">100.0%</p>
-                    <p class="text-xs text-card-foreground/70 mt-1">Would participate again</p>
+                    <div class="flex gap-4 text-sm">
+                        <div>
+                            <span class="text-secondary font-semibold"><%= stats.promoters %></span>
+                            <span class="text-card-foreground/70">Promoters</span>
+                        </div>
+                        <div>
+                            <span class="text-accent font-semibold"><%= stats.passives %></span>
+                            <span class="text-card-foreground/70">Passives</span>
+                        </div>
+                        <div>
+                            <span class="text-destructive font-semibold"><%= stats.detractors %></span>
+                            <span class="text-card-foreground/70">Detractors</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Recommendation Score Distribution -->
+            <!-- Score Distribution Chart -->
             <div class="bg-card rounded-lg p-6 shadow-sm mb-8">
-                <h3 class="text-lg font-semibold text-card-foreground mb-4">Recommendation Score Distribution</h3>
+                <h3 class="text-lg font-semibold text-card-foreground mb-4">Score Distribution</h3>
                 <div class="h-48 flex items-end justify-center gap-4 mb-4">
+                    <% const maxScore = Math.max(stats.scoreDistribution['0-3'], stats.scoreDistribution['4-6'], stats.scoreDistribution['7-8'], stats.scoreDistribution['9-10'], 1); %>
                     <div class="flex flex-col items-center">
-                        <div class="w-16 bg-secondary h-4 rounded-t mb-1"></div>
-                        <span class="text-xs text-card-foreground/70">Score 0-3</span>
-                        <span class="text-sm font-medium text-card-foreground">0</span>
+                        <div class="w-16 bg-destructive rounded-t mb-1" style="height: <%= Math.max(4, (stats.scoreDistribution['0-3'] / maxScore) * 180) %>px;"></div>
+                        <span class="text-xs text-card-foreground/70">0-3</span>
+                        <span class="text-sm font-medium text-card-foreground"><%= stats.scoreDistribution['0-3'] %></span>
                     </div>
                     <div class="flex flex-col items-center">
-                        <div class="w-16 bg-secondary h-4 rounded-t mb-1"></div>
-                        <span class="text-xs text-card-foreground/70">Score 4-6</span>
-                        <span class="text-sm font-medium text-card-foreground">0</span>
+                        <div class="w-16 bg-accent rounded-t mb-1" style="height: <%= Math.max(4, (stats.scoreDistribution['4-6'] / maxScore) * 180) %>px;"></div>
+                        <span class="text-xs text-card-foreground/70">4-6</span>
+                        <span class="text-sm font-medium text-card-foreground"><%= stats.scoreDistribution['4-6'] %></span>
                     </div>
                     <div class="flex flex-col items-center">
-                        <div class="w-16 bg-secondary h-4 rounded-t mb-1"></div>
-                        <span class="text-xs text-card-foreground/70">Score 7-8</span>
-                        <span class="text-sm font-medium text-card-foreground">0</span>
+                        <div class="w-16 bg-secondary/70 rounded-t mb-1" style="height: <%= Math.max(4, (stats.scoreDistribution['7-8'] / maxScore) * 180) %>px;"></div>
+                        <span class="text-xs text-card-foreground/70">7-8</span>
+                        <span class="text-sm font-medium text-card-foreground"><%= stats.scoreDistribution['7-8'] %></span>
                     </div>
                     <div class="flex flex-col items-center">
-                        <div class="w-16 bg-foreground h-48 rounded-t mb-1"></div>
-                        <span class="text-xs text-card-foreground/70">Score 9-10</span>
-                        <span class="text-sm font-medium text-card-foreground">1</span>
+                        <div class="w-16 bg-secondary rounded-t mb-1" style="height: <%= Math.max(4, (stats.scoreDistribution['9-10'] / maxScore) * 180) %>px;"></div>
+                        <span class="text-xs text-card-foreground/70">9-10</span>
+                        <span class="text-sm font-medium text-card-foreground"><%= stats.scoreDistribution['9-10'] %></span>
                     </div>
-                </div>
-                <div class="text-sm text-card-foreground/70 text-center">
-                    <p>NPS Breakdown: <span class="font-medium text-card-foreground">Promoters (9-10): 1</span> | <span class="font-medium text-card-foreground">Passives (7-8): 0</span> | <span class="font-medium text-card-foreground">Detractors (0-6): 0</span></p>
                 </div>
             </div>
+            <% } %>
 
-            <!-- Survey Responses Table -->
+            <!-- Survey Responses Pivot Table -->
             <div class="bg-card rounded-lg shadow-sm overflow-hidden">
                 <div class="p-6 border-b border-border">
                     <h3 class="text-lg font-semibold text-card-foreground">Survey Responses</h3>
+                    <p class="text-sm text-card-foreground/70 mt-1">
+                        <% if (typeof surveyResponses !== 'undefined') { %>
+                            <%= surveyResponses.length %> responses with individual metric scores (pivot table)
+                        <% } %>
+                    </p>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full">
+                    <table class="w-full min-w-max">
                         <thead class="bg-muted/50 border-b border-border">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Participant</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Event</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Date</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Satisfaction</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">NPS</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Participate Again</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Participant</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Event</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Event Date</th>
+                                <!-- Dynamic metric columns (pivot) -->
+                                <% if (typeof surveyMetrics !== 'undefined') { %>
+                                    <% surveyMetrics.forEach(metric => { %>
+                                    <th class="px-4 py-3 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap" title="<%= metric.surveymetric %>">
+                                        <%= metric.surveymetric.length > 12 ? metric.surveymetric.substring(0, 12) + '...' : metric.surveymetric %>
+                                    </th>
+                                    <% }); %>
+                                <% } %>
+                                <th class="px-4 py-3 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap bg-primary/10">Overall</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Comments</th>
+                                <th class="px-4 py-3 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">NPS Bucket</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Submitted</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-border">
-                            <tr class="hover:bg-muted/30 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-card-foreground">Maria Garcia</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-card-foreground/70">STEAM Workshop</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-card-foreground/70">12/15/2024</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex gap-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-accent" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            <% if (typeof surveyResponses !== 'undefined' && surveyResponses.length > 0) { %>
+                                <% surveyResponses.forEach(response => { %>
+                                <tr class="hover:bg-muted/30 transition-colors">
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-card-foreground"><%= response.participantName || 'Unknown' %></div>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div class="text-sm text-card-foreground/70"><%= response.eventName || 'N/A' %></div>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div class="text-sm text-card-foreground/70">
+                                            <%= response.eventDate ? new Date(response.eventDate).toLocaleDateString() : 'N/A' %>
+                                        </div>
+                                    </td>
+                                    <!-- Dynamic metric score columns (pivot values) -->
+                                    <% if (typeof surveyMetrics !== 'undefined') { %>
+                                        <% surveyMetrics.forEach(metric => { %>
+                                        <td class="px-4 py-3 whitespace-nowrap text-center">
+                                            <% const score = response.metricScores[metric.metricid]; %>
+                                            <% if (score !== null && score !== undefined) { %>
+                                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium
+                                                    <%= score >= 9 ? 'bg-secondary/20 text-secondary' : 
+                                                        score >= 7 ? 'bg-accent/20 text-accent' : 
+                                                        score >= 4 ? 'bg-yellow-500/20 text-yellow-600' : 
+                                                        'bg-destructive/20 text-destructive' %>">
+                                                    <%= score %>
+                                                </span>
+                                            <% } else { %>
+                                                <span class="text-card-foreground/30">-</span>
+                                            <% } %>
+                                        </td>
+                                        <% }); %>
+                                    <% } %>
+                                    <!-- Overall Score -->
+                                    <td class="px-4 py-3 whitespace-nowrap text-center bg-primary/5">
+                                        <% if (response.overallScore !== null && response.overallScore !== undefined) { %>
+                                            <span class="inline-flex items-center justify-center px-2 py-1 rounded text-sm font-bold
+                                                <%= parseFloat(response.overallScore) >= 9 ? 'bg-secondary text-secondary-foreground' : 
+                                                    parseFloat(response.overallScore) >= 7 ? 'bg-accent text-accent-foreground' : 
+                                                    parseFloat(response.overallScore) >= 4 ? 'bg-yellow-500 text-white' : 
+                                                    'bg-destructive text-destructive-foreground' %>">
+                                                <%= parseFloat(response.overallScore).toFixed(1) %>
+                                            </span>
+                                        <% } else { %>
+                                            <span class="text-card-foreground/30">-</span>
+                                        <% } %>
+                                    </td>
+                                    <!-- Comments -->
+                                    <td class="px-4 py-3 max-w-xs">
+                                        <% if (response.surveyComments) { %>
+                                            <div class="text-sm text-card-foreground/70 truncate" title="<%= response.surveyComments %>">
+                                                <%= response.surveyComments.length > 40 ? response.surveyComments.substring(0, 40) + '...' : response.surveyComments %>
+                                            </div>
+                                        <% } else { %>
+                                            <span class="text-card-foreground/30 text-sm">-</span>
+                                        <% } %>
+                                    </td>
+                                    <!-- NPS Bucket -->
+                                    <td class="px-4 py-3 whitespace-nowrap text-center">
+                                        <% if (response.npsBucket) { %>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                <%= response.npsBucket === 'Promoter' ? 'bg-secondary text-secondary-foreground' : 
+                                                    response.npsBucket === 'Passive' ? 'bg-accent text-accent-foreground' : 
+                                                    'bg-destructive text-destructive-foreground' %>">
+                                                <%= response.npsBucket %>
+                                            </span>
+                                        <% } else { %>
+                                            <span class="text-card-foreground/30">-</span>
+                                        <% } %>
+                                    </td>
+                                    <!-- Submitted Date/Time -->
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <% if (response.submittedAt) { %>
+                                            <div class="text-sm text-card-foreground/70">
+                                                <%= new Date(response.submittedAt).toLocaleDateString() %>
+                                            </div>
+                                            <div class="text-xs text-card-foreground/50">
+                                                <%= new Date(response.submittedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %>
+                                            </div>
+                                        <% } else { %>
+                                            <span class="text-card-foreground/30 text-sm">-</span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="20" class="px-6 py-8 text-center text-card-foreground/70">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 text-card-foreground/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-accent" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                        </svg>
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-accent" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                        </svg>
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-accent" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                        </svg>
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-accent" viewBox="0 0 20 20" fill="currentColor">
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                        </svg>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-card-foreground">10</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">Yes</span>
-                                </td>
-                            </tr>
+                                        <p>No survey responses found.</p>
+                                    </td>
+                                </tr>
+                            <% } %>
                         </tbody>
                     </table>
                 </div>
             </div>
+
+            <!-- Survey Metrics Legend -->
+            <% if (typeof surveyMetrics !== 'undefined' && surveyMetrics.length > 0) { %>
+            <div class="mt-6 bg-card rounded-lg p-6 shadow-sm">
+                <h4 class="text-sm font-semibold text-card-foreground mb-3">Survey Metrics Legend</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <% surveyMetrics.forEach((metric, index) => { %>
+                    <div class="flex items-start gap-2 text-sm">
+                        <span class="flex-shrink-0 w-6 h-6 rounded bg-primary/10 text-primary text-xs flex items-center justify-center font-medium"><%= index + 1 %></span>
+                        <span class="text-card-foreground/70"><%= metric.surveymetric %></span>
+                    </div>
+                    <% }); %>
+                </div>
+            </div>
+            <% } %>
         </div>
     </main>
 </body>

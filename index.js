@@ -788,6 +788,8 @@ app.post('/login', async (req, res) => {
         req.session.userId = demoAccount.id;
         req.session.userEmail = email.toLowerCase();
         req.session.userRole = demoAccount.role;
+        req.session.userFirstName = demoAccount.role === 'manager' ? 'Demo' : 'Demo';
+        req.session.userLastName = demoAccount.role === 'manager' ? 'Manager' : 'User';
         return res.redirect('/dashboard');
       } else {
         return res.render('login', {
@@ -901,6 +903,8 @@ app.post('/login', async (req, res) => {
     req.session.userId = user.userid;
     req.session.userEmail = user.useremail;
     req.session.userRole = roleString;
+    req.session.userFirstName = user.userfirstname || '';
+    req.session.userLastName = user.userlastname || '';
 
     res.redirect('/dashboard');
   } catch (error) {
@@ -921,7 +925,9 @@ app.get('/dashboard', requireAuth, async (req, res) => {
       return res.render('dashboard', {
         user: {
           email: req.session.userEmail,
-          role: req.session.userRole
+          role: req.session.userRole,
+          firstName: req.session.userRole === 'manager' ? 'Demo' : 'Demo',
+          lastName: req.session.userRole === 'manager' ? 'Manager' : 'User'
         }
       });
     }
@@ -932,7 +938,9 @@ app.get('/dashboard', requireAuth, async (req, res) => {
     res.render('dashboard', {
       user: {
         email: req.session.userEmail,
-        role: req.session.userRole
+        role: req.session.userRole,
+        firstName: req.session.userFirstName || '',
+        lastName: req.session.userLastName || ''
       }
     });
   } catch (error) {
@@ -946,7 +954,9 @@ app.get('/participants', requireAuth, async (req, res) => {
   try {
     const user = {
       email: req.session.userEmail,
-      role: req.session.userRole
+      role: req.session.userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
     };
     res.render('participants', { user });
   } catch (error) {
@@ -960,7 +970,9 @@ app.get('/events', requireAuth, restrictDonor, async (req, res) => {
   try {
     const user = {
       email: req.session.userEmail,
-      role: req.session.userRole
+      role: req.session.userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
     };
     res.render('events', { user });
   } catch (error) {
@@ -974,9 +986,129 @@ app.get('/surveys', requireAuth, restrictDonor, async (req, res) => {
   try {
     const user = {
       email: req.session.userEmail,
-      role: req.session.userRole
+      role: req.session.userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
     };
-    res.render('surveys', { user });
+
+    // Get all survey metrics (these will be the dynamic columns)
+    const surveyMetrics = await db('surveymetric')
+      .select('metricid', 'surveymetric')
+      .orderBy('metricid');
+
+    // Get all survey data - start from survey table since that has the metric scores
+    const rawSurveyData = await db('survey as sv')
+      .join('users as u', 'sv.userid', 'u.userid')
+      .join('session as s', 'sv.sessionid', 's.sessionid')
+      .join('event as e', 's.eventid', 'e.eventid')
+      .leftJoin('registration as r', function() {
+        this.on('sv.userid', '=', 'r.userid')
+            .andOn('sv.sessionid', '=', 'r.sessionid');
+      })
+      .select(
+        'sv.userid',
+        'sv.sessionid',
+        'sv.metricid',
+        'sv.surveyscore',
+        'u.userfirstname',
+        'u.userlastname',
+        'e.eventname',
+        's.eventdatetimestart',
+        'r.surveycomments',
+        'r.surveynpsbucket',
+        'r.surveysubmissiondate',
+        'r.overallsurveryscore'
+      )
+      .orderBy('sv.userid')
+      .orderBy('sv.sessionid');
+
+    // Pivot the data: group by userid+sessionid, with metric scores as columns
+    const pivotedData = {};
+    for (const row of rawSurveyData) {
+      const key = `${row.userid}-${row.sessionid}`;
+      if (!pivotedData[key]) {
+        pivotedData[key] = {
+          userid: row.userid,
+          sessionid: row.sessionid,
+          participantName: `${row.userfirstname || ''} ${row.userlastname || ''}`.trim(),
+          eventName: row.eventname,
+          eventDate: row.eventdatetimestart,
+          overallScore: row.overallsurveryscore,
+          surveyComments: row.surveycomments,
+          npsBucket: row.surveynpsbucket,
+          submittedAt: row.surveysubmissiondate,
+          metricScores: {}
+        };
+      }
+      // Add the metric score to this row (pivot)
+      if (row.metricid !== null) {
+        pivotedData[key].metricScores[row.metricid] = row.surveyscore;
+      }
+    }
+
+    // Convert to array and sort by submission date (most recent first)
+    const surveyResponses = Object.values(pivotedData).sort((a, b) => {
+      if (!a.submittedAt) return 1;
+      if (!b.submittedAt) return -1;
+      return new Date(b.submittedAt) - new Date(a.submittedAt);
+    });
+
+    // Calculate stats for the cards
+    const totalResponses = surveyResponses.length;
+    
+    // Calculate average of all metric scores
+    let totalScore = 0;
+    let scoreCount = 0;
+    for (const response of surveyResponses) {
+      for (const score of Object.values(response.metricScores)) {
+        if (score !== null && score !== undefined) {
+          totalScore += parseFloat(score);
+          scoreCount++;
+        }
+      }
+    }
+    const avgSatisfaction = scoreCount > 0 ? (totalScore / scoreCount).toFixed(1) : 0;
+
+    // Calculate NPS (Promoters - Detractors as percentage)
+    let promoters = 0, passives = 0, detractors = 0;
+    for (const response of surveyResponses) {
+      if (response.npsBucket === 'Promoter') promoters++;
+      else if (response.npsBucket === 'Passive') passives++;
+      else if (response.npsBucket === 'Detractor') detractors++;
+    }
+    const nps = totalResponses > 0 ? Math.round(((promoters - detractors) / totalResponses) * 100) : 0;
+
+    // Calculate response rate
+    const responseRate = totalResponses > 0 ? ((totalResponses / totalResponses) * 100).toFixed(1) : 0;
+
+    // Score distribution for chart based on average metric score per response
+    const scoreDistribution = { '0-3': 0, '4-6': 0, '7-8': 0, '9-10': 0 };
+    for (const response of surveyResponses) {
+      const scores = Object.values(response.metricScores);
+      if (scores.length > 0) {
+        const avgScore = scores.reduce((a, b) => a + (parseFloat(b) || 0), 0) / scores.length;
+        if (avgScore <= 3) scoreDistribution['0-3']++;
+        else if (avgScore <= 6) scoreDistribution['4-6']++;
+        else if (avgScore <= 8) scoreDistribution['7-8']++;
+        else scoreDistribution['9-10']++;
+      }
+    }
+
+    res.render('surveys', { 
+      user,
+      surveyMetrics,
+      surveyResponses,
+      stats: {
+        totalResponses,
+        responseRate,
+        avgSatisfaction,
+        nps,
+        promoters,
+        passives,
+        detractors,
+        scoreDistribution
+      }
+    });
   } catch (error) {
     console.error('Surveys error:', error);
     res.redirect('/login');
@@ -988,7 +1120,9 @@ app.get('/milestones', requireAuth, restrictDonor, async (req, res) => {
   try {
     const user = {
       email: req.session.userEmail,
-      role: req.session.userRole
+      role: req.session.userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
     };
     res.render('milestones', { user });
   } catch (error) {
@@ -1002,7 +1136,9 @@ app.get('/donations', requireAuth, async (req, res) => {
   try {
     const user = {
       email: req.session.userEmail,
-      role: req.session.userRole
+      role: req.session.userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
     };
     res.render('donations', { user });
   } catch (error) {
@@ -1021,7 +1157,9 @@ app.get('/users', requireAuth, async (req, res) => {
     
     const user = {
       email: req.session.userEmail,
-      role: req.session.userRole
+      role: req.session.userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
     };
     res.render('users', { user, query: req.query });
   } catch (error) {
