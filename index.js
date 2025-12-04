@@ -1471,19 +1471,95 @@ app.get('/users', requireAuth, async (req, res) => {
       return res.redirect('/dashboard');
     }
     
+    // Query all users from database
+    const usersData = await db('users')
+      .select('userid', 'useremail', 'userfirstname', 'userlastname', 'roleid', 'accountactive', 'totaldonations')
+      .orderBy('userid', 'asc');
+    
+    // Map users data with role names and status
+    const users = usersData.map(user => {
+      let roleName = 'user';
+      if (user.roleid === 1) roleName = 'manager';
+      else if (user.roleid === 2) roleName = 'user';
+      else if (user.roleid === 3) roleName = 'donor';
+      
+      return {
+        userid: user.userid,
+        email: user.useremail,
+        firstName: user.userfirstname || '',
+        lastName: user.userlastname || '',
+        fullName: `${user.userfirstname || ''} ${user.userlastname || ''}`.trim() || 'No Name',
+        role: roleName,
+        roleid: user.roleid,
+        status: user.accountactive ? 'active' : 'inactive',
+        accountactive: user.accountactive,
+        totaldonations: user.totaldonations
+      };
+    });
+    
     const user = {
       email: req.session.userEmail,
       role: req.session.userRole
     };
-    res.render('users', { user, query: req.query });
+    res.render('users', { user, users, query: req.query });
   } catch (error) {
     console.error('Users error:', error);
     res.redirect('/login');
   }
 });
 
-// Update user role route (protected, manager only)
-app.post('/users/update', requireAuth, async (req, res) => {
+// Edit user page route (protected, manager only)
+app.get('/users/edit/:userid', requireAuth, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.redirect('/dashboard');
+    }
+
+    const userId = parseInt(req.params.userid);
+    if (isNaN(userId)) {
+      return res.redirect('/users?error=invalid_user_id');
+    }
+
+    // Fetch user from database
+    const userData = await db('users')
+      .where('userid', userId)
+      .first();
+
+    if (!userData) {
+      return res.redirect('/users?error=user_not_found');
+    }
+
+    // Map roleid to role name
+    let roleName = 'user';
+    if (userData.roleid === 1) roleName = 'manager';
+    else if (userData.roleid === 2) roleName = 'user';
+    else if (userData.roleid === 3) roleName = 'donor';
+
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole
+    };
+
+    const editUser = {
+      userid: userData.userid,
+      email: userData.useremail,
+      firstName: userData.userfirstname || '',
+      lastName: userData.userlastname || '',
+      role: roleName,
+      roleid: userData.roleid,
+      accountactive: userData.accountactive
+    };
+
+    res.render('edit-user', { user, editUser, query: req.query });
+  } catch (error) {
+    console.error('Edit user page error:', error);
+    res.redirect('/users?error=page_error');
+  }
+});
+
+// Update user route (protected, manager only)
+app.post('/users/update/:userid', requireAuth, async (req, res) => {
   try {
     // Check if user is manager
     if (req.session.userRole !== 'manager') {
