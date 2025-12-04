@@ -189,6 +189,19 @@ app.post('/signup', async (req, res) => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
+    // Get roleid for "user" role (assuming it's roleid 2 based on login code)
+    const userRole = await db('roletype')
+      .where('roleid', 2)
+      .first();
+
+    if (!userRole) {
+      return res.render('login', {
+        error: 'System error: User role not found',
+        success: null,
+        showSignUp: true
+      });
+    }
+
     let userId;
     
     // If user exists but is inactive and has no profile, update the user
@@ -1038,58 +1051,50 @@ app.post('/users/update', requireAuth, async (req, res) => {
       return res.status(403).send('Forbidden');
     }
 
-    const { email, role, password } = req.body;
-
-    if (!email || !role || !['manager', 'user', 'donor'].includes(role)) {
-      return res.status(400).send('Invalid request');
+    const userId = parseInt(req.params.userid);
+    if (isNaN(userId)) {
+      return res.redirect('/users?error=invalid_user_id');
     }
 
-    // Don't allow updating demo accounts
-    if (email === 'manager@ellarises.org' || email === 'user@ellarises.org') {
-      return res.redirect('/users?error=demo_accounts_cannot_be_modified');
+    const { useremail, userfirstname, userlastname, roleid, accountactive, password } = req.body;
+
+    // Validate required fields
+    if (!useremail || !userfirstname || !userlastname || !roleid) {
+      return res.redirect(`/users/edit/${userId}?error=missing_fields`);
     }
 
-    // Map role string to roleid
-    let roleid;
-    if (role === 'manager') {
-      roleid = 1;
-    } else if (role === 'user') {
-      roleid = 2;
-    } else if (role === 'donor') {
-      roleid = 3;
-    } else {
-      return res.status(400).send('Invalid role');
+    // Check if user exists
+    const existingUser = await db('users').where('userid', userId).first();
+    if (!existingUser) {
+      return res.redirect('/users?error=user_not_found');
     }
 
-    // Build update object
+    // Prepare update object
+    // Handle checkbox: if checked, value is 'on', if unchecked, it's undefined
+    // Note: totaldonations is not included as it's financial data that cannot be changed
     const updateData = {
-      roleid: roleid
+      useremail: useremail.toLowerCase(),
+      userfirstname: userfirstname,
+      userlastname: userlastname,
+      roleid: parseInt(roleid),
+      accountactive: !!(accountactive === 'on' || accountactive === true || accountactive === 'true')
     };
 
-    // If password is provided, hash it and set password (but keep account inactive)
-    // User will be forced to change password on first login
+    // Only update password if provided
     if (password && password.trim() !== '') {
       if (password.length < 6) {
-        return res.redirect('/users?error=password_too_short');
+        return res.redirect(`/users/edit/${userId}?error=password_too_short`);
       }
-      
       const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
-      updateData.userpassword = hashedPassword;
-      // Keep account inactive - user must change password to activate
-      updateData.accountactive = false;
+      updateData.userpassword = await bcrypt.hash(password, saltRounds);
     }
 
-    // Update user in database (using lowercase column names)
+    // Update user in database
     await db('users')
-      .where('useremail', email.toLowerCase())
+      .where('userid', userId)
       .update(updateData);
 
-    if (password && password.trim() !== '') {
-      res.redirect('/users?success=user_updated_with_password');
-    } else {
-      res.redirect('/users?success=role_updated');
-    }
+    res.redirect('/users?success=user_updated');
   } catch (error) {
     console.error('Update user error:', error);
     res.redirect('/users?error=update_failed');
