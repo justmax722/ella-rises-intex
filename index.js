@@ -84,10 +84,237 @@ app.get('/donate', (req, res) => {
 });
 
 // Donation form submission route
-app.post('/donate', (req, res) => {
-  // TODO: Process donation payment
-  // For now, redirect back with success message
-  res.redirect('/donate?success=true');
+app.post('/donate', async (req, res) => {
+  try {
+    const { donationAmount, paymentMethod, creditEmail, debitEmail, paypalEmail, bankEmail, message } = req.body;
+
+    // Validate required fields
+    if (!donationAmount || !paymentMethod) {
+      return res.redirect('/donate?error=missing_fields');
+    }
+
+    // Extract email based on payment method
+    let email = null;
+    if (paymentMethod === 'credit' && creditEmail) {
+      email = creditEmail.toLowerCase().trim();
+    } else if (paymentMethod === 'debit' && debitEmail) {
+      email = debitEmail.toLowerCase().trim();
+    } else if (paymentMethod === 'paypal' && paypalEmail) {
+      email = paypalEmail.toLowerCase().trim();
+    } else if (paymentMethod === 'bank' && bankEmail) {
+      email = bankEmail.toLowerCase().trim();
+    }
+
+    if (!email) {
+      return res.redirect('/donate?error=email_required');
+    }
+
+    const donationAmountNum = parseFloat(donationAmount);
+    if (isNaN(donationAmountNum) || donationAmountNum <= 0) {
+      return res.redirect('/donate?error=invalid_amount');
+    }
+
+    // Look up user by email
+    const existingUser = await db('users')
+      .where('useremail', email)
+      .first();
+
+    let userId;
+    let isNewShadowUser = false;
+
+    if (existingUser) {
+      // User exists
+      userId = existingUser.userid;
+
+      if (existingUser.accountactive) {
+        // User is active - just record donation
+        // Get next donation number for this user
+        const maxDonation = await db('donation')
+          .where('userid', userId)
+          .max('donationno as maxno')
+          .first();
+
+        const nextDonationNo = (maxDonation?.maxno || 0) + 1;
+
+        // Insert donation
+        await db('donation').insert({
+          userid: userId,
+          donationno: nextDonationNo,
+          donationamount: donationAmountNum,
+          donationdate: new Date()
+        });
+
+        // Update total donations
+        await db('users')
+          .where('userid', userId)
+          .increment('totaldonations', donationAmountNum);
+
+        // Redirect to success (active user flow)
+        return res.redirect(`/donate/success?userId=${userId}&amount=${donationAmountNum}&active=true`);
+      } else {
+        // Shadow account exists - record donation and redirect to claim
+        const maxDonation = await db('donation')
+          .where('userid', userId)
+          .max('donationno as maxno')
+          .first();
+
+        const nextDonationNo = (maxDonation?.maxno || 0) + 1;
+
+        await db('donation').insert({
+          userid: userId,
+          donationno: nextDonationNo,
+          donationamount: donationAmountNum,
+          donationdate: new Date()
+        });
+
+        await db('users')
+          .where('userid', userId)
+          .increment('totaldonations', donationAmountNum);
+
+        return res.redirect(`/donate/success?userId=${userId}&amount=${donationAmountNum}`);
+      }
+    } else {
+      // User doesn't exist - create shadow user
+      // Get RoleID 3 for donor
+      const donorRole = await db('roletype')
+        .where('roleid', 3)
+        .first();
+
+      if (!donorRole) {
+        return res.redirect('/donate?error=role_not_found');
+      }
+
+      // Create shadow user (accountactive = false, userpassword = NULL)
+      // Use empty strings for first/last name since database has NOT NULL constraints
+      const [newUser] = await db('users')
+        .insert({
+          useremail: email,
+          userfirstname: '',
+          userlastname: '',
+          userpassword: null,
+          roleid: 3,
+          accountactive: false,
+          totaldonations: donationAmountNum
+        })
+        .returning('userid');
+
+      userId = newUser.userid;
+      isNewShadowUser = true;
+
+      // Insert donation (donationno = 1 for first donation)
+      await db('donation').insert({
+        userid: userId,
+        donationno: 1,
+        donationamount: donationAmountNum,
+        donationdate: new Date()
+      });
+
+      // Redirect to success page for account claiming
+      return res.redirect(`/donate/success?userId=${userId}&amount=${donationAmountNum}`);
+    }
+  } catch (error) {
+    console.error('Donation submission error:', error);
+    res.redirect('/donate?error=submission_failed');
+  }
+});
+
+// Donation success page route
+app.get('/donate/success', async (req, res) => {
+  try {
+    const userId = parseInt(req.query.userId);
+    const amount = parseFloat(req.query.amount);
+    const isActive = req.query.active === 'true';
+
+    if (isNaN(userId) || isNaN(amount)) {
+      return res.redirect('/donate?error=invalid_parameters');
+    }
+
+    // Fetch user data
+    const user = await db('users')
+      .where('userid', userId)
+      .first();
+
+    if (!user) {
+      return res.redirect('/donate?error=user_not_found');
+    }
+
+    res.render('donate-success', {
+      userId: userId,
+      amount: amount,
+      email: user.useremail,
+      isActive: isActive,
+      query: req.query
+    });
+  } catch (error) {
+    console.error('Donation success page error:', error);
+    res.redirect('/donate?error=page_error');
+  }
+});
+
+// Claim account route (activate shadow account with password)
+app.post('/donate/claim', async (req, res) => {
+  try {
+    const { userId, firstName, lastName, password, confirmPassword } = req.body;
+
+    const userIdNum = parseInt(userId);
+    if (isNaN(userIdNum)) {
+      return res.redirect('/donate?error=invalid_user_id');
+    }
+
+    // Validate name fields
+    if (!firstName || !lastName) {
+      return res.redirect(`/donate/success?userId=${userIdNum}&error=missing_name`);
+    }
+
+    // Validate password
+    if (!password || !confirmPassword) {
+      return res.redirect(`/donate/success?userId=${userIdNum}&error=missing_password`);
+    }
+
+    if (password !== confirmPassword) {
+      return res.redirect(`/donate/success?userId=${userIdNum}&error=password_mismatch`);
+    }
+
+    if (password.length < 6) {
+      return res.redirect(`/donate/success?userId=${userIdNum}&error=password_too_short`);
+    }
+
+    // Check if user exists and is a shadow account
+    const user = await db('users')
+      .where('userid', userIdNum)
+      .where('accountactive', false)
+      .first();
+
+    if (!user) {
+      return res.redirect('/donate?error=account_already_active');
+    }
+
+    // Hash password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Activate account and update name
+    await db('users')
+      .where('userid', userIdNum)
+      .where('accountactive', false)
+      .update({
+        userfirstname: firstName.trim(),
+        userlastname: lastName.trim(),
+        userpassword: hashedPassword,
+        accountactive: true
+      });
+
+    // Set session (auto-login)
+    req.session.userId = userIdNum;
+    req.session.userEmail = user.useremail;
+    req.session.userRole = 'donor';
+
+    // Redirect to dashboard
+    res.redirect('/dashboard');
+  } catch (error) {
+    console.error('Claim account error:', error);
+    res.redirect('/donate?error=claim_failed');
+  }
 });
 
 // Login page route
@@ -170,8 +397,14 @@ app.post('/signup', async (req, res) => {
       });
     }
 
-    // Check if user exists but is inactive and has a profile
+    // Check if user exists but is inactive
     if (existingUser && existingUser.accountactive === false) {
+      // Check if it's a shadow donor account (roleid 3) - redirect to verify-claim
+      if (existingUser.roleid === 3) {
+        return res.redirect(`/verify-claim?email=${encodeURIComponent(email.toLowerCase())}`);
+      }
+      
+      // Otherwise check if it has a profile (pending participant account)
       const existingProfile = await db('profile')
         .where('userid', existingUser.userid)
         .first();
@@ -766,6 +999,137 @@ app.post('/set-password', async (req, res) => {
   }
 });
 
+// Verify claim page route (for shadow account verification)
+app.get('/verify-claim', async (req, res) => {
+  try {
+    const email = req.query.email;
+
+    if (!email) {
+      return res.redirect('/login?error=email_required');
+    }
+
+    // Fetch user data
+    const user = await db('users')
+      .where('useremail', email.toLowerCase())
+      .where('accountactive', false)
+      .first();
+
+    if (!user) {
+      return res.redirect('/login?error=account_not_found');
+    }
+
+    res.render('verify-claim', {
+      email: user.useremail,
+      query: req.query
+    });
+  } catch (error) {
+    console.error('Verify claim page error:', error);
+    res.redirect('/login?error=page_error');
+  }
+});
+
+// Verify claim submission route
+app.post('/verify-claim', async (req, res) => {
+  try {
+    const { email, firstName, lastName, donationDate, lastDonationAmount, password, confirmPassword } = req.body;
+
+    if (!email || !firstName || !lastName || !donationDate || !lastDonationAmount || !password || !confirmPassword) {
+      return res.redirect(`/verify-claim?email=${encodeURIComponent(email)}&error=missing_fields`);
+    }
+
+    // Validate name fields
+    if (!firstName.trim() || !lastName.trim()) {
+      return res.redirect(`/verify-claim?email=${encodeURIComponent(email)}&error=missing_name`);
+    }
+
+    // Validate password
+    if (password !== confirmPassword) {
+      return res.redirect(`/verify-claim?email=${encodeURIComponent(email)}&error=password_mismatch`);
+    }
+
+    if (password.length < 6) {
+      return res.redirect(`/verify-claim?email=${encodeURIComponent(email)}&error=password_too_short`);
+    }
+
+    // Fetch user and donation data
+    const user = await db('users')
+      .where('useremail', email.toLowerCase())
+      .where('accountactive', false)
+      .first();
+
+    if (!user) {
+      return res.redirect('/login?error=account_not_found');
+    }
+
+    // Get last donation
+    const lastDonation = await db('donation')
+      .where('userid', user.userid)
+      .orderBy('donationdate', 'desc')
+      .orderBy('donationno', 'desc')
+      .first();
+
+    if (!lastDonation) {
+      return res.redirect(`/verify-claim?email=${encodeURIComponent(email)}&error=no_donations`);
+    }
+
+    // Verify donation date (compare dates, ignoring time)
+    // Handle both string dates from database and Date objects
+    const inputDate = new Date(donationDate);
+    const dbDate = lastDonation.donationdate;
+    const donationDateObj = dbDate instanceof Date ? dbDate : new Date(dbDate);
+    
+    // Normalize to UTC dates for comparison (avoid timezone issues)
+    const inputYear = inputDate.getUTCFullYear();
+    const inputMonth = inputDate.getUTCMonth();
+    const inputDay = inputDate.getUTCDate();
+    
+    const dbYear = donationDateObj.getUTCFullYear();
+    const dbMonth = donationDateObj.getUTCMonth();
+    const dbDay = donationDateObj.getUTCDate();
+    
+    // Compare year, month, and day only
+    const dateMatch = inputYear === dbYear &&
+      inputMonth === dbMonth &&
+      inputDay === dbDay;
+
+    // Verify donation amount (allow small rounding differences, e.g., 0.01)
+    const donationAmountNum = parseFloat(lastDonationAmount);
+    const lastDonationAmountNum = parseFloat(lastDonation.donationamount);
+    const amountMatch = !isNaN(donationAmountNum) && 
+      !isNaN(lastDonationAmountNum) &&
+      Math.abs(donationAmountNum - lastDonationAmountNum) < 0.01;
+
+    if (!dateMatch || !amountMatch) {
+      return res.redirect(`/verify-claim?email=${encodeURIComponent(email)}&error=verification_failed`);
+    }
+
+    // Verification passed - hash password and activate account
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    await db('users')
+      .where('userid', user.userid)
+      .where('accountactive', false)
+      .update({
+        userfirstname: firstName.trim(),
+        userlastname: lastName.trim(),
+        userpassword: hashedPassword,
+        accountactive: true
+      });
+
+    // Set session (auto-login)
+    req.session.userId = user.userid;
+    req.session.userEmail = user.useremail;
+    req.session.userRole = 'donor';
+
+    // Redirect to dashboard
+    res.redirect('/dashboard');
+  } catch (error) {
+    console.error('Verify claim error:', error);
+    res.redirect('/login?error=verification_failed');
+  }
+});
+
 // Login route (POST)
 app.post('/login', async (req, res) => {
   try {
@@ -825,6 +1189,11 @@ app.post('/login', async (req, res) => {
       return res.redirect('/login?signup=true');
     }
 
+    // Check if it's a shadow donor account (inactive, no password, roleid 3) - redirect directly to verify-claim
+    if (!user.accountactive && !user.userpassword && user.roleid === 3) {
+      return res.redirect(`/verify-claim?email=${encodeURIComponent(email.toLowerCase())}&error=unclaimed_account`);
+    }
+
     // Check password first - note: if passwords are stored plain text, use direct comparison
     // If they're hashed, use bcrypt.compare
     // Column names are lowercase: userpassword
@@ -845,6 +1214,11 @@ app.post('/login', async (req, res) => {
     if (!passwordMatch) {
       // Check if account is inactive
       if (!user.accountactive) {
+        // Check if it's a shadow donor account (roleid 3) - redirect to verify-claim
+        if (user.roleid === 3) {
+          return res.redirect(`/verify-claim?email=${encodeURIComponent(email.toLowerCase())}&error=unclaimed_account`);
+        }
+        
         // No password set or wrong password - check if user has a profile (pending account)
         const profile = await db('profile')
           .where('userid', user.userid)
@@ -1013,11 +1387,76 @@ app.get('/milestones', requireAuth, restrictDonor, async (req, res) => {
 // Donations route (protected)
 app.get('/donations', requireAuth, async (req, res) => {
   try {
+    const userId = req.session.userId;
+    
+    if (!userId) {
+      return res.redirect('/login');
+    }
+
+    // Get user info
+    const dbUser = await db('users')
+      .where('userid', userId)
+      .first();
+
+    if (!dbUser) {
+      return res.redirect('/login');
+    }
+
+    // Get all donations for this user with user info joined
+    const donations = await db('donation')
+      .leftJoin('users', 'donation.userid', 'users.userid')
+      .where('donation.userid', userId)
+      .select(
+        'donation.*',
+        'users.userfirstname',
+        'users.userlastname',
+        'users.useremail'
+      )
+      .orderBy('donation.donationdate', 'desc')
+      .orderBy('donation.donationno', 'desc');
+
+    // Calculate stats
+    const totalDonations = parseFloat(dbUser.totaldonations) || 0;
+
+    // Get current month start and end
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    // Calculate this month's donations
+    const thisMonthDonations = donations
+      .filter(d => {
+        const donationDate = new Date(d.donationdate);
+        return donationDate.getMonth() === currentMonth && donationDate.getFullYear() === currentYear;
+      })
+      .reduce((sum, d) => sum + parseFloat(d.donationamount || 0), 0);
+
+    // Calculate average donation
+    const averageDonation = donations.length > 0
+      ? donations.reduce((sum, d) => sum + parseFloat(d.donationamount || 0), 0) / donations.length
+      : 0;
+
     const user = {
       email: req.session.userEmail,
-      role: req.session.userRole
+      role: req.session.userRole,
+      userId: userId,
+      firstName: dbUser.userfirstname || '',
+      lastName: dbUser.userlastname || ''
     };
-    res.render('donations', { user });
+
+    res.render('donations', {
+      user,
+      donations,
+      stats: {
+        totalDonations: totalDonations.toFixed(2),
+        thisMonthDonations: thisMonthDonations.toFixed(2),
+        thisMonthCount: donations.filter(d => {
+          const donationDate = new Date(d.donationdate);
+          return donationDate.getMonth() === currentMonth && donationDate.getFullYear() === currentYear;
+        }).length,
+        averageDonation: averageDonation.toFixed(2)
+      }
+    });
   } catch (error) {
     console.error('Donations error:', error);
     res.redirect('/login');
