@@ -65,14 +65,23 @@
                 <% } %>
             </div>
 
-            <!-- Tab Navigation -->
-            <div class="mb-6 flex gap-3">
-                <button id="upcomingTab" class="tab-button inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground shadow-sm">
-                    Upcoming Events
-                </button>
-                <button id="pastTab" class="tab-button inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-transparent bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground">
-                    Past Events
-                </button>
+            <!-- Tab Navigation and Sort -->
+            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex gap-3">
+                    <button id="upcomingTab" class="tab-button inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground shadow-sm">
+                        Upcoming Events
+                    </button>
+                    <button id="pastTab" class="tab-button inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-transparent bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground">
+                        Past Events
+                    </button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label for="sortOrder" class="text-sm text-muted-foreground">Sort by:</label>
+                    <select id="sortOrder" class="h-10 px-3 py-2 border border-input rounded-md bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent">
+                        <option value="asc">Soonest First</option>
+                        <option value="desc">Latest First</option>
+                    </select>
+                </div>
             </div>
 
             <!-- Success Messages -->
@@ -105,7 +114,8 @@
                                  data-description="<%= (session.eventdescription || '').toLowerCase() %>"
                                  data-location="<%= (session.eventlocation || '').toLowerCase() %>"
                                  data-type="<%= (session.eventtype || '').toLowerCase() %>"
-                                 data-recurrence="<%= (session.eventrecurrencepattern || '').toLowerCase() %>">
+                                 data-recurrence="<%= (session.eventrecurrencepattern || '').toLowerCase() %>"
+                                 data-start-date="<%= new Date(session.eventdatetimestart).getTime() %>">
                                 <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                                     <div class="flex-1">
                                         <div class="flex items-start gap-3 mb-2">
@@ -150,6 +160,7 @@
                                     <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
                                         <% 
                                             const isParticipant = user.role === 'user';
+                                            const isManager = user.role === 'manager';
                                             const deadlinePassed = session.registrationDeadlinePassed;
                                             const isRegistered = !!session.isRegistered;
                                             const isCancelled = session.registrationStatus === 'cancelled';
@@ -157,7 +168,26 @@
 
                                             const canRegister = isParticipant && !deadlinePassed && !isFull && (!isRegistered || isCancelled);
                                             const canCancel = isParticipant && !deadlinePassed && isRegistered && !isCancelled;
+
+                                            // Check if Take Attendance button should be shown (within 1 hour before start and up to 3 hours after end)
+                                            let showTakeAttendance = false;
+                                            if (isManager) {
+                                                const now = new Date();
+                                                const startDate = new Date(session.eventdatetimestart);
+                                                const endDate = new Date(session.eventdatetimeend);
+                                                const oneHourBeforeStart = new Date(startDate.getTime() - 60 * 60 * 1000);
+                                                const threeHoursAfterEnd = new Date(endDate.getTime() + 3 * 60 * 60 * 1000);
+                                                
+                                                // Show button from 1 hour before start until 3 hours after end
+                                                showTakeAttendance = (now >= oneHourBeforeStart && now <= threeHoursAfterEnd);
+                                            }
                                         %>
+
+                                        <% if (isManager && showTakeAttendance) { %>
+                                            <a href="/events/<%= session.sessionid %>/attendance" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                                                Take Attendance
+                                            </a>
+                                        <% } %>
 
                                         <% if (isParticipant) { %>
                                             <% if (deadlinePassed) { %>
@@ -237,7 +267,8 @@
                                  data-description="<%= (session.eventdescription || '').toLowerCase() %>"
                                  data-location="<%= (session.eventlocation || '').toLowerCase() %>"
                                  data-type="<%= (session.eventtype || '').toLowerCase() %>"
-                                 data-recurrence="<%= (session.eventrecurrencepattern || '').toLowerCase() %>">
+                                 data-recurrence="<%= (session.eventrecurrencepattern || '').toLowerCase() %>"
+                                 data-start-date="<%= new Date(session.eventdatetimestart).getTime() %>">
                                 <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                                     <div class="flex-1">
                                         <div class="flex items-start gap-3 mb-2">
@@ -370,6 +401,37 @@
         const recurrenceFilterEl = document.getElementById('recurrenceFilter');
         if (typeFilterEl) typeFilterEl.addEventListener('change', filterEvents);
         if (recurrenceFilterEl) recurrenceFilterEl.addEventListener('change', filterEvents);
+
+        // Sort functionality
+        function sortEvents() {
+            const sortOrder = document.getElementById('sortOrder').value;
+            const activeContainer = upcomingEvents.classList.contains('hidden') ? pastEvents : upcomingEvents;
+            const cards = Array.from(activeContainer.querySelectorAll('.event-card'));
+            
+            cards.sort((a, b) => {
+                const dateA = parseInt(a.getAttribute('data-start-date') || '0');
+                const dateB = parseInt(b.getAttribute('data-start-date') || '0');
+                
+                if (sortOrder === 'asc') {
+                    return dateA - dateB;
+                } else {
+                    return dateB - dateA;
+                }
+            });
+            
+            // Re-append sorted cards
+            cards.forEach(card => {
+                activeContainer.appendChild(card);
+            });
+            
+            // Re-apply filters after sorting
+            filterEvents();
+        }
+
+        const sortOrderEl = document.getElementById('sortOrder');
+        if (sortOrderEl) {
+            sortOrderEl.addEventListener('change', sortEvents);
+        }
 
         // Initialize tab based on URL parameter
         document.addEventListener('DOMContentLoaded', () => {
