@@ -4024,10 +4024,10 @@ app.get('/milestones', requireAuth, restrictDonor, async (req, res) => {
 
     const userMilestones = await milestonesQuery;
 
-    // Calculate milestone counts by type
+    // Calculate milestone counts by type (count distinct participants)
     const milestoneCounts = await db('usermilestone')
       .select('milestoneid')
-      .count('* as count')
+      .countDistinct('userid as count')
       .groupBy('milestoneid');
 
     const countsMap = {};
@@ -4041,6 +4041,92 @@ app.get('/milestones', requireAuth, restrictDonor, async (req, res) => {
       count: countsMap[mt.milestoneid] || 0
     }));
 
+    // Get specific milestone types for summary boxes (for managers only)
+    let summaryMilestoneTypes = [];
+    if (user.role === 'manager') {
+      const searchKeywords = ['internship', 'data analyst', 'lab assistant', 'product designer'];
+      
+      // Get all milestone types with their participant counts using a subquery
+      const allMilestonesWithCounts = await db.raw(`
+        SELECT 
+          mt.milestoneid,
+          mt.milestonetitle,
+          COALESCE(um_counts.participant_count, 0) as count
+        FROM milestonetype mt
+        LEFT JOIN (
+          SELECT 
+            milestoneid,
+            COUNT(DISTINCT userid) as participant_count
+          FROM usermilestone
+          GROUP BY milestoneid
+        ) um_counts ON mt.milestoneid = um_counts.milestoneid
+      `);
+      
+      // Extract rows from the raw query result
+      const milestones = allMilestonesWithCounts.rows || allMilestonesWithCounts;
+      
+      // Create a map of milestone titles (lowercase) to milestone objects
+      const milestoneMap = new Map();
+      milestones.forEach(mt => {
+        const key = mt.milestonetitle.toLowerCase().trim();
+        milestoneMap.set(key, mt);
+      });
+      
+      // Helper function to capitalize words
+      const capitalizeWords = (str) => {
+        return str.split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+      };
+      
+      // Always create 4 boxes in the specified order
+      summaryMilestoneTypes = searchKeywords.map(keyword => {
+        const keywordLower = keyword.toLowerCase().trim();
+        
+        // Find matching milestone - try multiple strategies
+        let found = null;
+        
+        // Strategy 1: Exact match (case-insensitive)
+        found = Array.from(milestoneMap.entries()).find(([key]) => 
+          key === keywordLower
+        );
+        
+        // Strategy 2: Contains match (either direction)
+        if (!found) {
+          found = Array.from(milestoneMap.entries()).find(([key]) => 
+            key.includes(keywordLower) || keywordLower.includes(key)
+          );
+        }
+        
+        // Strategy 3: Word-by-word match (handles "Data Analyst" vs "data analyst")
+        if (!found) {
+          const keywordWords = keywordLower.split(/\s+/);
+          found = Array.from(milestoneMap.entries()).find(([key]) => {
+            const keyWords = key.split(/\s+/);
+            return keywordWords.every(kw => keyWords.some(k => k.includes(kw) || kw.includes(k)));
+          });
+        }
+        
+        if (found) {
+          const mt = found[1];
+          return {
+            milestoneid: mt.milestoneid,
+            milestonetitle: capitalizeWords(mt.milestonetitle), // Capitalize for display
+            count: parseInt(mt.count) || 0
+          };
+        } else {
+          // If milestone doesn't exist, create a placeholder with 0 count
+          console.log('Milestone not found for keyword:', keyword);
+          console.log('Available milestones:', Array.from(milestoneMap.keys()));
+          return {
+            milestoneid: null,
+            milestonetitle: capitalizeWords(keyword), // Capitalize for display
+            count: 0
+          };
+        }
+      });
+    }
+
     // Get completed milestone IDs for the current user (for filtering in add modal)
     let completedMilestoneIds = [];
     if (user.role !== 'manager') {
@@ -4052,6 +4138,7 @@ app.get('/milestones', requireAuth, restrictDonor, async (req, res) => {
     res.render('milestones', { 
       user,
       milestoneTypes: milestoneTypesWithCounts,
+      summaryMilestoneTypes: summaryMilestoneTypes,
       participants,
       userMilestones,
       filters,
