@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>418 - I'm a Teapot | Ella Rises</title>
+    <link rel="icon" type="image/png" href="/images/favicon.png">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            color: white;
+            z-index: 10;
+        }
+
+        .teapot-container {
+            position: relative;
+            margin: 0 auto 2rem;
+            width: 200px;
+            height: 250px;
+        }
+
+        /* Teapot animation - gentle bounce and rotation */
+        .teapot {
+            animation: teapotBounce 3s ease-in-out infinite;
+            transform-origin: center bottom;
+        }
+
+        @keyframes teapotBounce {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-10px) rotate(-2deg);
+            }
+            50% {
+                transform: translateY(0) rotate(0deg);
+            }
+            75% {
+                transform: translateY(-10px) rotate(2deg);
+            }
+        }
+
+        /* Steam animation */
+        .steam {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 2px;
+            animation: steamRise 2s ease-in-out infinite;
+        }
+
+        .steam:nth-child(1) {
+            left: 45%;
+            animation-delay: 0s;
+            height: 50px;
+        }
+
+        .steam:nth-child(2) {
+            left: 50%;
+            animation-delay: 0.3s;
+            height: 60px;
+        }
+
+        .steam:nth-child(3) {
+            left: 55%;
+            animation-delay: 0.6s;
+            height: 45px;
+        }
+
+        @keyframes steamRise {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(0) scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: translateX(-50%) translateY(-30px) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-60px) scale(0.8);
+            }
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-code {
+            font-size: 6rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .message {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 2rem auto;
+            max-width: 500px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Floating particles in background */
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 15s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+            }
+            33% {
+                transform: translateY(-100px) translateX(50px);
+            }
+            66% {
+                transform: translateY(-50px) translateX(-50px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background particles -->
+    <div class="particle" style="width: 80px; height: 80px; top: 10%; left: 10%; animation-delay: 0s;"></div>
+    <div class="particle" style="width: 60px; height: 60px; top: 20%; right: 15%; animation-delay: 2s;"></div>
+    <div class="particle" style="width: 100px; height: 100px; bottom: 15%; left: 20%; animation-delay: 4s;"></div>
+    <div class="particle" style="width: 70px; height: 70px; bottom: 25%; right: 10%; animation-delay: 6s;"></div>
+
+    <div class="container">
+        <div class="status-code">418</div>
+        <h1>I'm a Teapot</h1>
+        
+        <div class="teapot-container">
+            <!-- Steam -->
+            <div class="steam"></div>
+            <div class="steam"></div>
+            <div class="steam"></div>
+            
+            <!-- Teapot SVG -->
+            <svg class="teapot" width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <!-- Teapot body -->
+                <ellipse cx="100" cy="140" rx="60" ry="50" fill="rgba(255, 255, 255, 0.9)" stroke="rgba(255, 255, 255, 0.5)" stroke-width="2"/>
+                
+                <!-- Teapot lid -->
+                <ellipse cx="100" cy="90" rx="55" ry="15" fill="rgba(255, 255, 255, 0.95)" stroke="rgba(255, 255, 255, 0.5)" stroke-width="2"/>
+                <ellipse cx="100" cy="85" rx="50" ry="8" fill="rgba(255, 255, 255, 0.8)"/>
+                
+                <!-- Teapot spout -->
+                <path d="M 160 120 Q 180 110 185 100 Q 190 90 185 80" 
+                      stroke="rgba(255, 255, 255, 0.9)" 
+                      stroke-width="8" 
+                      fill="none" 
+                      stroke-linecap="round"/>
+                
+                <!-- Teapot handle -->
+                <path d="M 40 120 Q 20 100 20 80 Q 20 60 40 50" 
+                      stroke="rgba(255, 255, 255, 0.9)" 
+                      stroke-width="6" 
+                      fill="none" 
+                      stroke-linecap="round"/>
+                
+                <!-- Teapot knob -->
+                <circle cx="100" cy="80" r="8" fill="rgba(255, 255, 255, 0.95)"/>
+                
+                <!-- Shine/highlight -->
+                <ellipse cx="85" cy="130" rx="15" ry="25" fill="rgba(255, 255, 255, 0.3)"/>
+            </svg>
+        </div>
+
+        <div class="message">
+            <p>☕ The server refuses to brew coffee because it is, permanently, a teapot.</p>
+            <p style="font-size: 1rem; margin-top: 1rem; opacity: 0.8;">
+                This is a reference to the Hyper Text Coffee Pot Control Protocol (HTCPCP/1.0) 
+                - an April Fools' joke from 1998 that became a real HTTP status code!
+            </p>
+        </div>
+
+        <a href="/" class="back-link">← Back to Home</a>
+    </div>
+</body>
+</html>
+

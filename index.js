@@ -5486,8 +5486,9 @@ app.get('/health', async (req, res) => {
 });
 
 // Teapot endpoint (418 I'm a teapot)
+// Fun animated page for the HTTP 418 status code (Hyper Text Coffee Pot Control Protocol)
 app.get('/teapot', (req, res) => {
-  res.status(418).send("I'm a teapot");
+  res.status(418).render('teapot');
 });
 
 // Error handling middleware
