@@ -1589,13 +1589,16 @@ app.get('/home', requireAuth, async (req, res) => {
       const userId = req.session.userId;
       const now = new Date();
 
-      // Get upcoming registered events
+      // Get upcoming registered events (status is null for active registrations, not 'registered')
       const registeredSessions = await db('registration as r')
         .join('session as s', 'r.sessionid', 's.sessionid')
         .join('event as e', 's.eventid', 'e.eventid')
         .join('eventtype as et', 'e.eventtypeid', 'et.eventtypeid')
         .where('r.userid', userId)
-        .where('r.registrationstatus', 'registered')
+        .where(function() {
+          this.whereNull('r.registrationstatus')
+            .orWhereNot('r.registrationstatus', 'cancelled');
+        })
         .where('s.eventdatetimestart', '>', now)
         .select(
           's.sessionid',

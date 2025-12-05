@@ -26,8 +26,8 @@
                     Donate
                 </a>
                 <% if (typeof isLoggedIn !== 'undefined' && isLoggedIn === true) { %>
-                <a href="/dashboard" class="px-4 py-2 md:px-6 md:py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
-                    Dashboard
+                <a href="/home" class="px-4 py-2 md:px-6 md:py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
+                    Go to Home
                 </a>
                 <% } else { %>
                 <a href="/login" class="px-4 py-2 md:px-6 md:py-2.5 border border-primary text-primary rounded-md font-medium hover:bg-primary/10 transition-colors">
@@ -123,7 +123,7 @@
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                 <!-- STEAM Programs Card -->
-                <div class="bg-card rounded-lg p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow">
+                <div class="bg-card rounded-lg p-6 md:p-8 shadow-lg">
                     <div class="flex justify-center mb-4">
                         <div class="w-16 h-16 rounded-full border-2 border-accent flex items-center justify-center bg-accent/10">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent" viewBox="0 0 20 20" fill="currentColor">
@@ -140,7 +140,7 @@
                 </div>
 
                 <!-- Mentorship Card -->
-                <div class="bg-card rounded-lg p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow">
+                <div class="bg-card rounded-lg p-6 md:p-8 shadow-lg">
                     <div class="flex justify-center mb-4">
                         <div class="w-16 h-16 rounded-full border-2 border-secondary flex items-center justify-center bg-secondary/10">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-secondary" viewBox="0 0 20 20" fill="currentColor">
@@ -157,7 +157,7 @@
                 </div>
 
                 <!-- Leadership Card -->
-                <div class="bg-card rounded-lg p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow">
+                <div class="bg-card rounded-lg p-6 md:p-8 shadow-lg">
                     <div class="flex justify-center mb-4">
                         <div class="w-16 h-16 rounded-full border-2 border-muted-foreground flex items-center justify-center bg-muted">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-muted-foreground" viewBox="0 0 20 20" fill="currentColor">
