@@ -2,6 +2,19 @@
 
 A comprehensive web application for managing events, participants, donations, surveys, and milestones for the Ella Rises organization. The system supports multiple user roles with different access levels and provides a full-featured admin dashboard for managers.
 
+### Login Information
+Admin Email: admin@gmail.com
+Admin Password: admin123
+
+Participant Email: user@gmail.com
+Participant Password: admin123
+
+### To Test the Participant Account Claiming Process:
+Email: noah.lee594@ellarises.org
+Password: (no password)
+Birthday: 1998-12-25
+ZipCode: 84536
+
 ## Table of Contents
 
 - [Overview](#overview)
