@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Page metadata -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Participant - Ella Rises CRM</title>
@@ -9,15 +8,15 @@
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body class="bg-background min-h-screen flex">
-    <!-- Sidebar navigation (manager only) -->
+    <!-- Sidebar Navigation -->
     <%- include('partials/sidebar', { user: user, currentPage: 'participants' }) %>
 
-    <!-- Main content area -->
+    <!-- Main Content Area -->
     <main class="flex-1 p-6 overflow-auto">
         <div class="space-y-6">
-            <!-- Page header with title and action buttons -->
+            <!-- Page Header -->
             <div class="space-y-4">
-                <!-- Title and action buttons (Add Milestone, Edit, Delete) -->
+                <!-- Title and Actions -->
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                         <h1 class="text-3xl font-serif font-bold text-primary">Participant Profile</h1>
@@ -40,7 +39,7 @@
                         </button>
                     </div>
                 </div>
-                <!-- Navigation: Back to participants list -->
+                <!-- Back Link -->
                 <div>
                     <a href="/participants" class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left h-4 w-4">
@@ -52,7 +51,7 @@
                 </div>
             </div>
 
-            <!-- Profile information display card -->
+            <!-- Profile Information Card -->
             <div class="rounded-lg border bg-card text-card-foreground shadow-sm">
                 <div class="p-6">
                     <h2 class="text-xl font-semibold mb-6 pb-2 border-b border-border">Profile Information</h2>

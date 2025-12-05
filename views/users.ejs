@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Page metadata -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Users - Ella Rises CRM</title>
@@ -9,13 +8,13 @@
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body class="bg-background min-h-screen flex">
-    <!-- Sidebar navigation (manager only) -->
+    <!-- Sidebar Navigation -->
     <%- include('partials/sidebar', { user: user, currentPage: 'users' }) %>
 
-    <!-- Main content area -->
+    <!-- Main Content Area -->
     <main class="flex-1 p-6 md:p-8">
         <div class="max-w-7xl mx-auto">
-            <!-- Page header with "Add User" button (managers only) -->
+            <!-- Page Header -->
             <div class="mb-8 flex items-center justify-between">
                 <div>
                     <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">Users</h1>
@@ -58,10 +57,10 @@
             </div>
             <% } %>
 
-            <!-- Search and filter controls -->
+            <!-- Search and Filters -->
             <div class="mb-6 bg-card rounded-lg shadow-sm p-6">
                 <div class="flex items-end gap-4 flex-wrap">
-                    <!-- Search input -->
+                    <!-- Search -->
                     <div class="flex-1 min-w-[200px]">
                         <label for="searchInput" class="block text-sm font-medium text-card-foreground mb-2">Search</label>
                         <input 

@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Page metadata -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Participant - Ella Rises CRM</title>
@@ -9,13 +8,13 @@
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body class="bg-background min-h-screen flex">
-    <!-- Sidebar navigation (manager only) -->
+    <!-- Sidebar Navigation -->
     <%- include('partials/sidebar', { user: user, currentPage: 'participants' }) %>
 
-    <!-- Main content area -->
+    <!-- Main Content Area -->
     <main class="flex-1 p-6 overflow-auto">
         <div class="space-y-6">
-            <!-- Page header with title and cancel button -->
+            <!-- Page Header -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 class="text-3xl font-serif font-bold text-primary">Edit Participant Profile</h1>
@@ -26,7 +25,7 @@
                 </a>
             </div>
 
-            <!-- Error message display -->
+            <!-- Error Message -->
             <% if (typeof query !== 'undefined' && query.error) { %>
             <div class="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
                 <p class="text-sm text-destructive">
@@ -41,12 +40,11 @@
             </div>
             <% } %>
 
-            <!-- Edit participant form -->
+            <!-- Edit Form -->
             <div class="rounded-lg border bg-card text-card-foreground shadow-sm">
                 <div class="p-6">
-                    <!-- Form for updating participant profile information -->
                     <form action="/participants/edit/<%= participant.userid %>" method="POST" class="space-y-4">
-                        <!-- Date of birth fields (month, day, year) -->
+                        <!-- Date of Birth -->
                         <div class="space-y-2">
                             <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Date of Birth</label>
                             <input type="hidden" id="profiledob" name="profiledob" />

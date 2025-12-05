@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en" class="overflow-x-hidden">
 <head>
-    <!-- Page metadata -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Ella Rises CRM</title>
     <link rel="icon" type="image/png" href="/images/favicon.png">
     <link rel="stylesheet" href="/css/styles.css">
-    <!-- Styles for Tableau dashboard embedding -->
     <style>
         html, body {
             overflow-x: hidden !important;
@@ -36,19 +34,19 @@
     </style>
 </head>
 <body class="bg-background min-h-screen flex overflow-x-hidden">
-    <!-- Sidebar navigation (manager only) -->
+    <!-- Sidebar Navigation -->
     <%- include('partials/sidebar', { user: user, currentPage: 'dashboard' }) %>
 
-    <!-- Main content area -->
+    <!-- Main Content Area -->
     <main class="flex-1 p-6 md:p-8 overflow-x-hidden">
         <div class="max-w-7xl mx-auto w-full overflow-x-hidden">
-            <!-- Page header -->
+            <!-- Page Header -->
             <div class="mb-8">
                 <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">Dashboard</h1>
                 <p class="text-card-foreground/70">Analytics and insights powered by Tableau</p>
             </div>
 
-            <!-- Embedded Tableau dashboard iframe -->
+            <!-- Tableau Dashboard -->
             <div class="bg-card rounded-lg p-6 shadow-sm overflow-hidden">
                 <div class='tableauPlaceholder tableauContainer' id='viz1764908505198'>
                     <noscript>

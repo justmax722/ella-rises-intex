@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Page metadata -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Participants - Ella Rises CRM</title>
@@ -9,13 +8,13 @@
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body class="bg-background min-h-screen flex">
-    <!-- Sidebar navigation (manager only) -->
+    <!-- Sidebar Navigation -->
     <%- include('partials/sidebar', { user: user, currentPage: 'participants' }) %>
 
-    <!-- Main content area -->
+    <!-- Main Content Area -->
     <main class="flex-1 p-6 overflow-auto">
         <div class="space-y-6">
-            <!-- Page header with "Add Participant" button (managers only) -->
+            <!-- Page Header -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 class="text-3xl font-serif font-bold text-primary">Participants</h1>
@@ -62,9 +61,9 @@
             </div>
             <% } %>
 
-            <!-- Participants list card -->
+            <!-- Participants Card -->
             <div class="rounded-lg border bg-card text-card-foreground shadow-sm">
-                <!-- Search input for filtering participants -->
+                <!-- Search Section -->
                 <div class="flex flex-col space-y-1.5 p-6">
                     <div class="flex items-center gap-4">
                         <div class="relative flex-1">

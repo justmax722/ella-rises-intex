@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Page metadata -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit User - Ella Rises CRM</title>
@@ -9,13 +8,13 @@
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body class="bg-background min-h-screen flex">
-    <!-- Sidebar navigation (manager only) -->
+    <!-- Sidebar Navigation -->
     <%- include('partials/sidebar', { user: user, currentPage: 'users' }) %>
 
-    <!-- Main content area -->
+    <!-- Main Content Area -->
     <main class="flex-1 p-6 md:p-8">
         <div class="max-w-4xl mx-auto">
-            <!-- Page header -->
+            <!-- Page Header -->
             <div class="mb-8">
                 <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">Edit User</h1>
                 <p class="text-base text-card-foreground/70">Update user information and permissions</p>
@@ -45,14 +44,13 @@
             </div>
             <% } %>
 
-            <!-- Edit user form -->
+            <!-- Edit User Form -->
             <div class="bg-card rounded-lg shadow-sm overflow-hidden">
                 <div class="p-6 border-b border-border">
                     <h3 class="text-lg font-semibold text-card-foreground">User Information</h3>
                 </div>
-                <!-- Form for updating user details (email, name, role, status, password) -->
                 <form method="POST" action="/users/update/<%= editUser.userid %>" class="p-6 space-y-6">
-                    <!-- Email field -->
+                    <!-- Email -->
                     <div>
                         <label for="useremail" class="block text-sm font-medium text-card-foreground mb-2">Email</label>
                         <input 

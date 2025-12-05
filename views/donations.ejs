@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Page metadata -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Donations - Ella Rises CRM</title>
@@ -9,13 +8,13 @@
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body class="bg-background min-h-screen flex">
-    <!-- Sidebar navigation -->
+    <!-- Sidebar Navigation -->
     <%- include('partials/sidebar', { user: user, currentPage: 'donations' }) %>
 
-    <!-- Main content area -->
+    <!-- Main Content Area -->
     <main class="flex-1 p-6 md:p-8">
         <div class="max-w-7xl mx-auto">
-            <!-- Page header with "Make a Donation" button -->
+            <!-- Page Header -->
             <div class="mb-8 flex items-start justify-between">
                 <div>
                     <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">Donations</h1>
@@ -35,7 +34,7 @@
             </div>
             <% } %>
 
-            <!-- Embedded donation form (toggleable) -->
+            <!-- Embedded Donation Form -->
             <div id="donationFormContainer" class="mb-8 hidden">
                 <div class="bg-card rounded-lg p-6 md:p-8 shadow-sm border border-border max-w-2xl mx-auto">
                     <div class="flex items-center justify-between mb-6">
@@ -47,10 +46,9 @@
                         </button>
                     </div>
 
-                    <!-- Donation form with amount, payment method, and email fields -->
                     <form id="embeddedDonationForm" action="/donate" method="POST" class="space-y-6">
 
-                        <!-- Donation amount selection (quick buttons + custom input) -->
+                        <!-- Donation Amount -->
                         <div>
                             <label class="block text-sm font-medium text-card-foreground mb-3">
                                 Donation Amount <span class="text-destructive">*</span>
