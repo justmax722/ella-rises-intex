@@ -1,34 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="overflow-x-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Ella Rises CRM</title>
     <link rel="icon" type="image/png" href="/images/favicon.png">
     <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        html, body {
+            overflow-x: hidden !important;
+            max-width: 100vw !important;
+        }
+        .tableauPlaceholder {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+        }
+        .tableauViz {
+            max-width: 100% !important;
+            width: 100% !important;
+        }
+        #tableauIframe {
+            transform: scale(0.83);
+            transform-origin: top left;
+            width: 117.65%; /* Compensate for 85% scale (100/0.85) */
+            height: 705px; /* Compensate for 85% scale (600/0.85) */
+        }
+        .tableauContainer {
+            overflow: hidden;
+            width: 100%;
+            height: 600px;
+        }
+    </style>
 </head>
-<body class="bg-background min-h-screen flex">
+<body class="bg-background min-h-screen flex overflow-x-hidden">
     <!-- Sidebar Navigation -->
     <%- include('partials/sidebar', { user: user, currentPage: 'dashboard' }) %>
 
     <!-- Main Content Area -->
-    <main class="flex-1 p-6 md:p-8">
-        <div class="max-w-7xl mx-auto">
+    <main class="flex-1 p-6 md:p-8 overflow-x-hidden">
+        <div class="max-w-7xl mx-auto w-full overflow-x-hidden">
             <!-- Page Header -->
             <div class="mb-8">
                 <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">Dashboard</h1>
                 <p class="text-card-foreground/70">Analytics and insights powered by Tableau</p>
             </div>
 
-            <!-- Tableau Dashboard Placeholder -->
-            <div class="bg-card rounded-lg p-6 shadow-sm">
-                <div class="border-2 border-dashed border-border rounded-lg p-12 text-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    <h3 class="text-xl font-semibold text-card-foreground mb-2">Tableau Dashboard</h3>
-                    <p class="text-card-foreground/70 mb-4">Tableau dashboard will be embedded here</p>
-                    <p class="text-sm text-muted-foreground">This area is reserved for future Tableau integration</p>
+            <!-- Tableau Dashboard -->
+            <div class="bg-card rounded-lg p-6 shadow-sm overflow-hidden">
+                <div class='tableauPlaceholder tableauContainer' id='viz1764908505198'>
+                    <noscript>
+                        <a href='https://public.tableau.com/views/INTEXfinal/EllaRises-Dashboard' target='_blank'>
+                            <img alt='Ella Rises - Dashboard ' src='https://public.tableau.com/static/images/IN/INTEXfinal/EllaRises-Dashboard/1_rss.png' style='border: none; max-width: 100%; height: auto;' />
+                        </a>
+                    </noscript>
+                    <iframe 
+                        id='tableauIframe'
+                        src='https://public.tableau.com/views/INTEXfinal/EllaRises-Dashboard?:showVizHome=no&:embed=true&:device=desktop&:toolbar=yes&:display_count=no'
+                        allowfullscreen
+                        title='Ella Rises Dashboard'
+                    ></iframe>
                 </div>
             </div>
         </div>
