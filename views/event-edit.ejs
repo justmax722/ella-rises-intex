@@ -26,12 +26,19 @@
 
             <!-- Error Message -->
             <% if (typeof query !== 'undefined' && query.error) { %>
-            <div class="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
-                <p class="text-sm text-destructive">
+            <div class="p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-destructive flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="text-sm text-destructive font-medium">
                     <% if (query.error === 'missing_fields') { %>
                         Please fill in all required fields.
                     <% } else if (query.error === 'invalid_date') { %>
                         Invalid date format. Please check your dates.
+                    <% } else if (query.error === 'start_after_end') { %>
+                        Event start date/time must be before the end date/time.
+                    <% } else if (query.error === 'deadline_after_end') { %>
+                        Registration deadline cannot be after the event end date/time.
                     <% } else { %>
                         An error occurred. Please try again.
                     <% } %>

@@ -2334,28 +2334,45 @@ app.get('/events', requireAuth, restrictDonor, async (req, res) => {
     let pastSessions = [];
 
     // Participant view needs registration data
-    let registrationsBySessionId = {};
+    let activeRegistrationsBySessionId = {};
+    let cancelledRegistrations = [];
 
     if (!isManager) {
-      // Get registrations for this participant, joined with session to determine end times
+      // Get ALL registrations for this participant
       const registrations = await db('registration as r')
         .join('session as s', 'r.sessionid', 's.sessionid')
+        .join('event as e', 's.eventid', 'e.eventid')
+        .join('eventtype as et', 'e.eventtypeid', 'et.eventtypeid')
         .where('r.userid', userId)
         .select(
           'r.sessionid',
           'r.registrationstatus',
           'r.registrationcreatedat',
-          's.eventdatetimeend'
-        );
+          's.eventdatetimeend',
+          's.eventdatetimestart',
+          's.eventlocation',
+          's.eventcapacity',
+          's.eventregistrationdeadline',
+          'e.eventid',
+          'e.eventname',
+          'e.eventdescription',
+          'e.eventrecurrencepattern',
+          'e.eventdefaultcapacity',
+          'et.eventtype'
+        )
+        .orderBy('r.registrationcreatedat', 'desc');
 
-      // Default no-show after event end if status is still null
+      // Process registrations
       for (const reg of registrations) {
         const endDate = new Date(reg.eventdatetimeend);
+        
+        // Default no-show after event end if status is still null
         if (!reg.registrationstatus && endDate < now) {
           try {
             await db('registration')
               .where('userid', userId)
               .andWhere('sessionid', reg.sessionid)
+              .andWhere('registrationcreatedat', reg.registrationcreatedat)
               .andWhereNull('registrationstatus')
               .update({ registrationstatus: 'no-show' });
             reg.registrationstatus = 'no-show';
@@ -2363,15 +2380,20 @@ app.get('/events', requireAuth, restrictDonor, async (req, res) => {
             console.error('Failed to default registrationstatus to no-show', updateError);
           }
         }
-      }
 
-      registrationsBySessionId = registrations.reduce((acc, reg) => {
-        acc[reg.sessionid] = {
-          registrationstatus: reg.registrationstatus,
-          registrationcreatedat: reg.registrationcreatedat
-        };
-        return acc;
-      }, {});
+        // Separate cancelled registrations (show in past events immediately)
+        if (reg.registrationstatus === 'cancelled') {
+          cancelledRegistrations.push(reg);
+        } else {
+          // Track active registrations by session (only the most recent active one)
+          if (!activeRegistrationsBySessionId[reg.sessionid]) {
+            activeRegistrationsBySessionId[reg.sessionid] = {
+              registrationstatus: reg.registrationstatus,
+              registrationcreatedat: reg.registrationcreatedat
+            };
+          }
+        }
+      }
     }
 
     // Separate sessions into current (upcoming) and past
@@ -2380,9 +2402,9 @@ app.get('/events', requireAuth, restrictDonor, async (req, res) => {
       const endDate = new Date(session.eventdatetimeend);
       const threeHoursAfterEnd = new Date(endDate.getTime() + 3 * 60 * 60 * 1000);
 
-      // For participant past events, only show sessions they registered for
+      // For participant past events, only show sessions they have ACTIVE registrations for
       if (!isManager && threeHoursAfterEnd < now) {
-        if (registrationsBySessionId[session.sessionid]) {
+        if (activeRegistrationsBySessionId[session.sessionid]) {
           pastSessions.push(session);
         }
       } else if (threeHoursAfterEnd < now) {
@@ -2402,7 +2424,7 @@ app.get('/events', requireAuth, restrictDonor, async (req, res) => {
 
       const decorate = (list) =>
         list.map(session => {
-          const reg = registrationsBySessionId[session.sessionid];
+          const reg = activeRegistrationsBySessionId[session.sessionid];
           const activeRegistration = reg || null;
 
           const capacityRaw = session.eventcapacity || session.eventdefaultcapacity;
@@ -2428,6 +2450,47 @@ app.get('/events', requireAuth, restrictDonor, async (req, res) => {
 
       currentSessions = decorate(currentSessions);
       pastSessions = decorate(pastSessions);
+
+      // Add cancelled registrations to past events with their session data
+      cancelledRegistrations.forEach(reg => {
+        const capacityRaw = reg.eventcapacity || reg.eventdefaultcapacity;
+        const capacity =
+          typeof capacityRaw === 'number'
+            ? capacityRaw
+            : capacityRaw
+            ? parseInt(capacityRaw, 10)
+            : null;
+
+        const currentRegCount = registrationCountsBySessionId[reg.sessionid] || 0;
+        const isFull = capacity !== null && !Number.isNaN(capacity) && currentRegCount >= capacity;
+
+        pastSessions.push({
+          sessionid: reg.sessionid,
+          eventid: reg.eventid,
+          eventdatetimestart: reg.eventdatetimestart,
+          eventdatetimeend: reg.eventdatetimeend,
+          eventlocation: reg.eventlocation,
+          eventcapacity: reg.eventcapacity,
+          eventregistrationdeadline: reg.eventregistrationdeadline,
+          eventname: reg.eventname,
+          eventdescription: reg.eventdescription,
+          eventrecurrencepattern: reg.eventrecurrencepattern,
+          eventdefaultcapacity: reg.eventdefaultcapacity,
+          eventtype: reg.eventtype,
+          isRegistered: true,
+          registrationStatus: 'cancelled',
+          registrationCreatedAt: reg.registrationcreatedat,
+          registrationDeadlinePassed: deadlinePassed(reg.eventregistrationdeadline),
+          currentRegistrationCount: currentRegCount,
+          isFull,
+          isCancelledRecord: true
+        });
+      });
+
+      // Sort past sessions by event date (most recent first)
+      pastSessions.sort((a, b) => {
+        return new Date(b.eventdatetimestart) - new Date(a.eventdatetimestart);
+      });
     }
 
     // Get search query parameter
@@ -2439,7 +2502,8 @@ app.get('/events', requireAuth, restrictDonor, async (req, res) => {
       pastSessions,
       searchQuery,
       eventTypes,
-      recurrencePatterns
+      recurrencePatterns,
+      query: req.query
     });
   } catch (error) {
     console.error('Events error:', error);
@@ -2619,6 +2683,16 @@ app.post('/events/create', requireAuth, async (req, res) => {
 
     if (regDeadline && isNaN(regDeadline.getTime())) {
       return res.redirect('/events/create?error=invalid_date');
+    }
+
+    // Validate start date is before end date
+    if (startDateTime >= endDateTime) {
+      return res.redirect('/events/create?error=start_after_end');
+    }
+
+    // Validate registration deadline is not after end date (if provided)
+    if (regDeadline && regDeadline > endDateTime) {
+      return res.redirect('/events/create?error=deadline_after_end');
     }
 
     // If EventCapacity is empty, fetch EventDefaultCapacity from Event table
@@ -2939,6 +3013,16 @@ app.post('/events/:sessionId/edit', requireAuth, async (req, res) => {
       return res.redirect(`/events/${sessionId}/edit?error=invalid_date`);
     }
 
+    // Validate start date is before end date
+    if (startDateTime >= endDateTime) {
+      return res.redirect(`/events/${sessionId}/edit?error=start_after_end`);
+    }
+
+    // Validate registration deadline is not after end date (if provided)
+    if (regDeadline && regDeadline > endDateTime) {
+      return res.redirect(`/events/${sessionId}/edit?error=deadline_after_end`);
+    }
+
     // Parse capacity - if empty, set to null (will use event default)
     let finalCapacity = null;
     if (eventcapacity && eventcapacity.trim() !== '') {
@@ -3215,13 +3299,25 @@ app.post('/events/:sessionId/register', requireAuth, restrictDonor, async (req, 
       }
     }
 
-    // Upsert registration
-    const existing = await db('registration')
+    // Check if user already has an ACTIVE (non-cancelled) registration
+    const activeRegistration = await db('registration')
       .where('userid', userId)
       .andWhere('sessionid', sessionId)
+      .andWhere(function() {
+        this.whereNull('registrationstatus')
+          .orWhereNot('registrationstatus', 'cancelled');
+      })
       .first();
 
-    const baseData = {
+    if (activeRegistration) {
+      // Already registered with an active registration
+      return res.redirect(`/events?tab=${encodeURIComponent(returnTab)}&error=already_registered`);
+    }
+
+    // Always create a NEW registration row (even if they have cancelled ones)
+    await db('registration').insert({
+      userid: userId,
+      sessionid: sessionId,
       registrationstatus: null,
       registrationattendedflag: null,
       registrationcheckintime: null,
@@ -3230,20 +3326,7 @@ app.post('/events/:sessionId/register', requireAuth, restrictDonor, async (req, 
       surveycomments: null,
       overallsurveyscore: null,
       surveysubmissiondate: null
-    };
-
-    if (existing) {
-      await db('registration')
-        .where('userid', userId)
-        .andWhere('sessionid', sessionId)
-        .update(baseData);
-    } else {
-      await db('registration').insert({
-        userid: userId,
-        sessionid: sessionId,
-        ...baseData
-      });
-    }
+    });
 
     return res.redirect(`/events?tab=${encodeURIComponent(returnTab)}&success=registered`);
   } catch (error) {
@@ -3262,18 +3345,26 @@ app.post('/events/:sessionId/cancel-registration', requireAuth, restrictDonor, a
       return res.redirect('/events');
     }
 
+    // Find the ACTIVE (non-cancelled) registration
     const existing = await db('registration')
       .where('userid', userId)
       .andWhere('sessionid', sessionId)
+      .andWhere(function() {
+        this.whereNull('registrationstatus')
+          .orWhereNot('registrationstatus', 'cancelled');
+      })
+      .orderBy('registrationcreatedat', 'desc')
       .first();
 
     if (!existing) {
       return res.redirect(`/events?tab=${encodeURIComponent(returnTab)}&error=not_registered`);
     }
 
+    // Cancel only this specific registration (by created date)
     await db('registration')
       .where('userid', userId)
       .andWhere('sessionid', sessionId)
+      .andWhere('registrationcreatedat', existing.registrationcreatedat)
       .update({ registrationstatus: 'cancelled' });
 
     return res.redirect(`/events?tab=${encodeURIComponent(returnTab)}&success=cancelled`);
