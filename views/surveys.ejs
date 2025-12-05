@@ -353,41 +353,24 @@
                                 <% } %>
                             </p>
                         </div>
-                        <button onclick="openQuestionsModal()" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            Edit Questions
-                        </button>
+        
                     </div>
                     
                     <% if (typeof filters !== 'undefined') { %>
                     <!-- Search Bar -->
                     <div class="mb-4">
-                        <form method="GET" action="/surveys" class="flex gap-4">
+                        <div class="flex gap-4">
                             <div class="flex-1">
                                 <input 
                                     type="text" 
+                                    id="participantSearchInput"
                                     name="participantSearch" 
                                     value="<%= filters.participantSearch || '' %>" 
                                     placeholder="Search participant name..." 
                                     class="w-full px-4 py-2.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                                 />
                             </div>
-                            <button type="submit" class="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
-                                Search
-                            </button>
-                            <!-- Preserve active filters when searching -->
-                            <% if (filters.surveyDateFrom) { %><input type="hidden" name="surveyDateFrom" value="<%= filters.surveyDateFrom %>"><% } %>
-                            <% if (filters.surveyDateTo) { %><input type="hidden" name="surveyDateTo" value="<%= filters.surveyDateTo %>"><% } %>
-                            <% if (filters.sessionDateFrom) { %><input type="hidden" name="sessionDateFrom" value="<%= filters.sessionDateFrom %>"><% } %>
-                            <% if (filters.sessionDateTo) { %><input type="hidden" name="sessionDateTo" value="<%= filters.sessionDateTo %>"><% } %>
-                            <% if (filters.minScore) { %><input type="hidden" name="minScore" value="<%= filters.minScore %>"><% } %>
-                            <% if (filters.maxScore) { %><input type="hidden" name="maxScore" value="<%= filters.maxScore %>"><% } %>
-                            <% if (filters.eventId) { %><input type="hidden" name="eventId" value="<%= filters.eventId %>"><% } %>
-                            <% if (filters.sortBy) { %><input type="hidden" name="sortBy" value="<%= filters.sortBy %>"><% } %>
-                            <% if (filters.sortOrder) { %><input type="hidden" name="sortOrder" value="<%= filters.sortOrder %>"><% } %>
-                        </form>
+                        </div>
                     </div>
 
                     <!-- Filter & Sort Dropdown -->
@@ -399,7 +382,7 @@
                             onclick="toggleFilterDropdown()"
                         >
                             <div class="flex items-center gap-2">
-                                <h3 class="text-lg font-semibold text-card-foreground">Filter & Sort</h3>
+                                <h3 class="text-base font-semibold text-card-foreground">Filter & Sort</h3>
                                 <% const hasFilters = filters.surveyDateFrom || filters.surveyDateTo || filters.sessionDateFrom || filters.sessionDateTo || filters.minScore || filters.maxScore || filters.eventId || filters.sessionId; %>
                                 <% if (hasFilters) { %>
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
@@ -506,16 +489,28 @@
                             <tr>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Participant</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Event</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Event Date</th>
-                                <!-- Dynamic metric columns (pivot) - show as Q1, Q2, etc. -->
-                                <% if (typeof surveyMetrics !== 'undefined') { %>
-                                    <% surveyMetrics.forEach((metric, idx) => { %>
-                                    <th class="px-2 py-2 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap" title="<%= metric.surveymetric %>">
-                                        Q<%= idx + 1 %>
-                                    </th>
-                                    <% }); %>
-                                <% } %>
-                                <th class="px-4 py-3 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap bg-primary/10">Overall</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">
+                                    <div class="flex items-center gap-2">
+                                        <span>Event Date</span>
+                                        <button onclick="sortSurveyTable('eventDate')" class="flex items-center text-card-foreground/60 hover:text-card-foreground transition-colors focus:outline-none" id="sortEventDateBtn" title="Sort by Event Date">
+                                            <svg id="sortEventDateIcon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="m7 15 5 5 5-5"></path>
+                                                <path d="m7 9 5-5 5 5"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </th>
+                                <th class="px-4 py-3 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap bg-primary/10">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <span>Overall</span>
+                                        <button onclick="sortSurveyTable('overall')" class="flex items-center text-card-foreground/60 hover:text-card-foreground transition-colors focus:outline-none" id="sortOverallBtn" title="Sort by Overall Score">
+                                            <svg id="sortOverallIcon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="m7 15 5 5 5-5"></path>
+                                                <path d="m7 9 5-5 5 5"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </th>
                                 <th class="px-2 py-2 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Info</th>
                                 <th class="px-4 py-3 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">NPS Bucket</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Submitted</th>
@@ -537,25 +532,6 @@
                                             <%= response.eventDate ? new Date(response.eventDate).toLocaleDateString() : 'N/A' %>
                                         </div>
                                     </td>
-                                    <!-- Dynamic metric score columns (pivot values) -->
-                                    <% if (typeof surveyMetrics !== 'undefined') { %>
-                                        <% surveyMetrics.forEach(metric => { %>
-                                        <td class="px-4 py-3 whitespace-nowrap text-center">
-                                            <% const score = response.metricScores[metric.metricid]; %>
-                                            <% if (score !== null && score !== undefined) { %>
-                                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium
-                                                    <%= score >= 9 ? 'bg-secondary/20 text-secondary' : 
-                                                        score >= 7 ? 'bg-accent/20 text-accent' : 
-                                                        score >= 4 ? 'bg-yellow-500/20 text-yellow-600' : 
-                                                        'bg-destructive/20 text-destructive' %>">
-                                                    <%= score %>
-                                                </span>
-                                            <% } else { %>
-                                                <span class="text-card-foreground/30">-</span>
-                                            <% } %>
-                                        </td>
-                                        <% }); %>
-                                    <% } %>
                                     <!-- Overall Score -->
                                     <td class="px-4 py-3 whitespace-nowrap text-center bg-primary/5">
                                         <% if (response.overallScore !== null && response.overallScore !== undefined) { %>
@@ -572,7 +548,8 @@
                                     </td>
                                     <!-- Info Button -->
                                     <td class="px-2 py-2 text-center">
-                                        <button onclick="showSurveyInfo('<%= response.participantName.replace(/'/g, "\\'") %>', '<%= response.eventName.replace(/'/g, "\\'") %>', '<%= response.eventDate ? new Date(response.eventDate).toLocaleDateString() : "N/A" %>', '<%= response.npsBucket || "N/A" %>', '<%= response.overallScore ? parseFloat(response.overallScore).toFixed(1) : "N/A" %>', `<%= response.surveyComments ? response.surveyComments.replace(/`/g, '\\`').replace(/\\/g, '\\\\').replace(/\n/g, '<br>') : 'No comments provided.' %>`)" 
+                                        <button onclick="showManagerSurveyDetails(<%= response.userid %>, <%= response.sessionid %>)" 
+                                            data-response='<%- JSON.stringify(response).replace(/'/g, "&#39;") %>'
                                             class="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:text-primary/80 hover:bg-primary/10 rounded transition-colors">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -618,7 +595,7 @@
                                 <% }); %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="20" class="px-6 py-8 text-center text-card-foreground/70">
+                                    <td colspan="8" class="px-6 py-8 text-center text-card-foreground/70">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 text-card-foreground/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
@@ -803,21 +780,22 @@
     </div>
     <% } %>
 
-    <!-- Survey Info Modal Popup -->
-    <div id="surveyInfoModal" class="fixed inset-0 z-50 hidden">
+    <!-- Manager Survey Details Modal (Managers Only) -->
+    <% if (user.role === 'manager') { %>
+    <div id="managerSurveyModal" class="fixed inset-0 z-50 hidden">
         <!-- Backdrop -->
-        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" onclick="closeSurveyInfo()"></div>
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" onclick="closeManagerSurveyModal()"></div>
         
         <!-- Modal Content -->
         <div class="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
-            <div class="bg-card rounded-lg shadow-xl max-w-lg w-full max-h-[80vh] overflow-hidden pointer-events-auto">
+            <div class="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden pointer-events-auto" onclick="event.stopPropagation()">
                 <!-- Modal Header -->
                 <div class="px-6 py-4 border-b border-border flex items-center justify-between">
                     <div>
-                        <h3 class="text-lg font-semibold text-card-foreground" id="modalTitle">Survey Details</h3>
-                        <p class="text-sm text-card-foreground/70" id="modalSubtitle"></p>
+                        <h3 class="text-lg font-semibold text-card-foreground" id="managerModalTitle">Survey Responses</h3>
+                        <p class="text-sm text-card-foreground/70" id="managerModalSubtitle"></p>
                     </div>
-                    <button onclick="closeSurveyInfo()" class="p-2 hover:bg-muted rounded-lg transition-colors">
+                    <button onclick="closeManagerSurveyModal()" class="p-2 hover:bg-muted rounded-lg transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-card-foreground/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -825,42 +803,59 @@
                 </div>
                 
                 <!-- Modal Body -->
-                <div class="px-6 py-4 overflow-y-auto max-h-[60vh]">
-                    <div class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4 text-sm">
+                <div class="px-6 py-4 overflow-y-auto max-h-[70vh]">
+                    <div class="space-y-6">
+                        <!-- Event Info -->
+                        <div class="grid grid-cols-2 gap-4 pb-4 border-b border-border">
                             <div>
-                                <span class="text-card-foreground/70">Event:</span>
-                                <p class="font-medium text-card-foreground" id="modalEvent"></p>
+                                <span class="text-sm text-card-foreground/70">Participant:</span>
+                                <p class="font-medium text-card-foreground" id="managerModalParticipant"></p>
                             </div>
                             <div>
-                                <span class="text-card-foreground/70">Date:</span>
-                                <p class="font-medium text-card-foreground" id="modalDate"></p>
+                                <span class="text-sm text-card-foreground/70">Event:</span>
+                                <p class="font-medium text-card-foreground" id="managerModalEvent"></p>
                             </div>
                             <div>
-                                <span class="text-card-foreground/70">NPS:</span>
-                                <p class="font-medium text-card-foreground" id="modalNPS"></p>
+                                <span class="text-sm text-card-foreground/70">Event Date:</span>
+                                <p class="font-medium text-card-foreground" id="managerModalEventDate"></p>
                             </div>
                             <div>
-                                <span class="text-card-foreground/70">Overall Score:</span>
-                                <p class="font-medium text-card-foreground" id="modalScore"></p>
+                                <span class="text-sm text-card-foreground/70">Submitted:</span>
+                                <p class="font-medium text-card-foreground" id="managerModalSubmitted"></p>
+                            </div>
+                            <div>
+                                <span class="text-sm text-card-foreground/70">Overall Score:</span>
+                                <p class="font-medium text-card-foreground" id="managerModalOverallScore"></p>
+                            </div>
+                            <div>
+                                <span class="text-sm text-card-foreground/70">NPS Bucket:</span>
+                                <p class="font-medium text-card-foreground" id="managerModalNPS"></p>
                             </div>
                         </div>
-                        <div class="border-t border-border pt-4">
-                            <span class="text-card-foreground/70 text-sm">Comments:</span>
-                            <p class="mt-2 text-card-foreground whitespace-pre-wrap" id="modalComments"></p>
+
+                        <!-- Metric Scores -->
+                        <div id="managerModalMetrics" class="space-y-3">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+
+                        <!-- Comments -->
+                        <div class="pt-4 border-t border-border">
+                            <span class="text-sm text-card-foreground/70">Comments:</span>
+                            <p class="mt-2 text-card-foreground whitespace-pre-wrap" id="managerModalComments"></p>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Modal Footer -->
                 <div class="px-6 py-4 border-t border-border bg-muted/30">
-                    <button onclick="closeSurveyInfo()" class="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+                    <button onclick="closeManagerSurveyModal()" class="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
                         Close
                     </button>
                 </div>
             </div>
         </div>
     </div>
+    <% } %>
 
     <!-- Take Survey Modal (Participants Only) -->
     <% if (user.role !== 'manager') { %>
@@ -944,9 +939,9 @@
     <!-- Questions Management Modal (Managers Only) -->
     <% if (user.role === 'manager') { %>
     <div id="questionsModal" class="fixed inset-0 z-50 hidden">
-        <div class="absolute inset-0 bg-black/50" onclick="closeQuestionsModal()"></div>
-        <div class="absolute inset-4 md:inset-10 lg:inset-20 flex items-center justify-center">
-            <div class="bg-card rounded-lg shadow-xl w-full max-w-2xl max-h-full overflow-hidden flex flex-col">
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" onclick="closeQuestionsModal()"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
+            <div class="bg-card rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col pointer-events-auto" onclick="event.stopPropagation()">
                 <!-- Modal Header -->
                 <div class="p-6 border-b border-border flex items-center justify-between">
                     <div>
@@ -1097,10 +1092,10 @@
     </script>
     <script>
         // Store survey metrics for participant modal
-        <% if (user.role !== 'manager' && typeof surveyMetrics !== 'undefined') { %>
+        <% if (typeof surveyMetrics !== 'undefined') { %>
         const surveyMetricsData = [
             <% surveyMetrics.forEach((metric, index) => { %>
-            { id: <%= metric.metricid %>, name: '<%= (metric.metricquestion || 'Question ' + (index + 1)).replace(/'/g, "\\'") %>', index: <%= index %> }<%= index < surveyMetrics.length - 1 ? ',' : '' %>
+            { id: <%= metric.metricid %>, name: '<%= (metric.metricquestion || metric.surveymetric || 'Question ' + (index + 1)).replace(/'/g, "\\'") %>', index: <%= index %> }<%= index < surveyMetrics.length - 1 ? ',' : '' %>
             <% }); %>
         ];
         <% } else { %>
@@ -1121,22 +1116,98 @@
             }
         }
 
-        function showSurveyInfo(participant, event, date, nps, score, comments) {
-            document.getElementById('modalTitle').textContent = participant || 'Survey Details';
-            document.getElementById('modalSubtitle').textContent = 'Survey Response Details';
-            document.getElementById('modalEvent').textContent = event;
-            document.getElementById('modalDate').textContent = date;
-            document.getElementById('modalNPS').textContent = nps;
-            document.getElementById('modalScore').textContent = score;
-            document.getElementById('modalComments').innerHTML = comments;
-            document.getElementById('surveyInfoModal').classList.remove('hidden');
+        // Manager Survey Details Modal
+        <% if (user.role === 'manager') { %>
+        function showManagerSurveyDetails(userId, sessionId) {
+            // Find the button that was clicked and get its data
+            const buttons = document.querySelectorAll('[data-response]');
+            let responseData = null;
+            
+            buttons.forEach(button => {
+                try {
+                    const data = JSON.parse(button.getAttribute('data-response').replace(/&#39;/g, "'"));
+                    if (data.userid === userId && data.sessionid === sessionId) {
+                        responseData = data;
+                    }
+                } catch (e) {
+                    console.error('Error parsing response data:', e);
+                }
+            });
+
+            if (!responseData) {
+                console.error('Survey response data not found');
+                return;
+            }
+
+            // Populate modal with data
+            document.getElementById('managerModalTitle').textContent = responseData.participantName || 'Survey Responses';
+            document.getElementById('managerModalSubtitle').textContent = 'Survey response details';
+            document.getElementById('managerModalParticipant').textContent = responseData.participantName || 'N/A';
+            document.getElementById('managerModalEvent').textContent = responseData.eventName || 'N/A';
+            document.getElementById('managerModalEventDate').textContent = responseData.eventDate 
+                ? new Date(responseData.eventDate).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
+                : 'N/A';
+            document.getElementById('managerModalSubmitted').textContent = responseData.submittedAt 
+                ? new Date(responseData.submittedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+                : 'N/A';
+            
+            // Overall Score
+            const overallScore = responseData.overallScore !== null && responseData.overallScore !== undefined 
+                ? parseFloat(responseData.overallScore).toFixed(1) 
+                : 'N/A';
+            document.getElementById('managerModalOverallScore').textContent = overallScore;
+
+            // NPS Bucket
+            const npsBucket = responseData.npsBucket || 'N/A';
+            document.getElementById('managerModalNPS').textContent = npsBucket;
+
+            // Metric Scores
+            const metricsContainer = document.getElementById('managerModalMetrics');
+            metricsContainer.innerHTML = '';
+            
+            if (surveyMetricsData && surveyMetricsData.length > 0) {
+                surveyMetricsData.forEach(metric => {
+                    const score = responseData.metricScores && responseData.metricScores[metric.id];
+                    const scoreValue = score !== null && score !== undefined ? score : 'N/A';
+                    
+                    const metricDiv = document.createElement('div');
+                    metricDiv.className = 'flex items-center justify-between p-3 bg-muted/30 rounded-lg';
+                    metricDiv.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">Q${metric.index + 1}</span>
+                            <span class="text-sm text-card-foreground">${metric.name}</span>
+                        </div>
+                        <span class="inline-flex items-center justify-center w-10 h-10 rounded-full text-sm font-medium ${
+                            scoreValue === 'N/A' ? 'text-card-foreground/30' :
+                            scoreValue >= 4.5 ? 'bg-secondary/20 text-secondary' :
+                            scoreValue >= 3.5 ? 'bg-accent/20 text-accent' :
+                            scoreValue >= 2.5 ? 'bg-yellow-500/20 text-yellow-600' :
+                            'bg-destructive/20 text-destructive'
+                        }">${scoreValue}</span>
+                    `;
+                    metricsContainer.appendChild(metricDiv);
+                });
+            } else {
+                const noMetricsDiv = document.createElement('div');
+                noMetricsDiv.className = 'text-sm text-card-foreground/70 text-center py-4';
+                noMetricsDiv.textContent = 'No metric scores available.';
+                metricsContainer.appendChild(noMetricsDiv);
+            }
+
+            // Comments
+            const comments = responseData.surveyComments || 'No comments provided.';
+            document.getElementById('managerModalComments').textContent = comments;
+
+            // Show modal
+            document.getElementById('managerSurveyModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
 
-        function closeSurveyInfo() {
-            document.getElementById('surveyInfoModal').classList.add('hidden');
+        function closeManagerSurveyModal() {
+            document.getElementById('managerSurveyModal').classList.add('hidden');
             document.body.style.overflow = '';
         }
+        <% } %>
 
         // Survey Form Functions (Participant only)
         <% if (user.role !== 'manager') { %>
@@ -1326,8 +1397,8 @@
         // Close modal on Escape key
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
-                closeSurveyInfo();
                 <% if (user.role === 'manager') { %>
+                closeManagerSurveyModal();
                 closeQuestionsModal();
                 closeDeleteSurveyModal();
                 <% } else { %>
@@ -1336,6 +1407,149 @@
                 <% } %>
             }
         });
+
+        // Real-time search and sorting functionality (Managers Only)
+        <% if (user.role === 'manager') { %>
+        // Real-time search filtering
+        const participantSearchInput = document.getElementById('participantSearchInput');
+        if (participantSearchInput) {
+            let searchTimeout;
+            participantSearchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(filterSurveyTable, 300);
+            });
+        }
+
+        function filterSurveyTable() {
+            const searchTerm = participantSearchInput ? participantSearchInput.value.toLowerCase().trim() : '';
+            const tbody = document.querySelector('tbody');
+            if (!tbody) return;
+
+            const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => !row.querySelector('td[colspan]'));
+            
+            rows.forEach(row => {
+                const participantCell = row.querySelector('td:first-child');
+                if (!participantCell) return;
+                
+                const participantName = participantCell.textContent.toLowerCase().trim();
+                const matches = !searchTerm || participantName.includes(searchTerm);
+                
+                row.style.display = matches ? '' : 'none';
+            });
+        }
+
+        // Sorting functionality
+        let currentSurveySort = { column: null, direction: null };
+
+        function sortSurveyTable(column) {
+            const tbody = document.querySelector('tbody');
+            if (!tbody) return;
+            
+            const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => !row.querySelector('td[colspan]') && row.style.display !== 'none');
+            
+            // Determine sort direction
+            if (currentSurveySort.column === column) {
+                // Toggle direction if same column
+                currentSurveySort.direction = currentSurveySort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                // New column, start with ascending
+                currentSurveySort.column = column;
+                currentSurveySort.direction = 'asc';
+            }
+
+            // Sort rows
+            rows.sort((a, b) => {
+                const aCells = a.querySelectorAll('td');
+                const bCells = b.querySelectorAll('td');
+                
+                let aValue, bValue;
+                
+                if (column === 'eventDate') {
+                    // Event Date is in the 3rd column (index 2)
+                    const aDateText = aCells[2]?.textContent?.trim();
+                    const bDateText = bCells[2]?.textContent?.trim();
+                    
+                    // Parse MM/DD/YYYY format
+                    const parseDate = (dateStr) => {
+                        if (!dateStr || dateStr === 'N/A') return 0;
+                        const parts = dateStr.split('/');
+                        if (parts.length === 3) {
+                            const month = parseInt(parts[0], 10) - 1;
+                            const day = parseInt(parts[1], 10);
+                            const year = parseInt(parts[2], 10);
+                            return new Date(year, month, day).getTime();
+                        }
+                        return new Date(dateStr).getTime() || 0;
+                    };
+                    
+                    aValue = parseDate(aDateText);
+                    bValue = parseDate(bDateText);
+                } else if (column === 'overall') {
+                    // Overall Score is in the 4th column (index 3)
+                    const aScoreCell = aCells[3];
+                    const bScoreCell = bCells[3];
+                    
+                    // Extract numeric value from span or text (handle "N/A" or "-")
+                    const aScoreText = aScoreCell?.textContent?.trim() || '';
+                    const bScoreText = bScoreCell?.textContent?.trim() || '';
+                    
+                    // Try to parse as float, default to 0 if not a number
+                    aValue = parseFloat(aScoreText) || 0;
+                    bValue = parseFloat(bScoreText) || 0;
+                }
+                
+                if (currentSurveySort.direction === 'asc') {
+                    return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+                } else {
+                    return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+                }
+            });
+
+            // Clear tbody and re-append sorted rows
+            const noDataRow = Array.from(tbody.querySelectorAll('tr')).find(row => row.querySelector('td[colspan]'));
+            rows.forEach(row => tbody.removeChild(row));
+            rows.forEach(row => tbody.appendChild(row));
+            if (noDataRow) {
+                tbody.appendChild(noDataRow);
+            }
+
+            // Update arrow icons
+            updateSurveySortIcons();
+        }
+
+        function updateSurveySortIcons() {
+            // Reset all icons to neutral state (both up and down)
+            const eventDateIcon = document.getElementById('sortEventDateIcon');
+            const overallIcon = document.getElementById('sortOverallIcon');
+            
+            if (eventDateIcon) {
+                eventDateIcon.innerHTML = '<path d="m7 15 5 5 5-5"></path><path d="m7 9 5-5 5 5"></path>';
+            }
+            if (overallIcon) {
+                overallIcon.innerHTML = '<path d="m7 15 5 5 5-5"></path><path d="m7 9 5-5 5 5"></path>';
+            }
+
+            // Update active column icon (show only up or down arrow)
+            if (currentSurveySort.column === 'eventDate' && eventDateIcon) {
+                if (currentSurveySort.direction === 'asc') {
+                    eventDateIcon.innerHTML = '<path d="m7 15 5 5 5-5"></path>';
+                } else {
+                    eventDateIcon.innerHTML = '<path d="m7 9 5-5 5 5"></path>';
+                }
+            } else if (currentSurveySort.column === 'overall' && overallIcon) {
+                if (currentSurveySort.direction === 'asc') {
+                    overallIcon.innerHTML = '<path d="m7 15 5 5 5-5"></path>';
+                } else {
+                    overallIcon.innerHTML = '<path d="m7 9 5-5 5 5"></path>';
+                }
+            }
+        }
+
+        // Initialize: filter table on page load if there's a search term
+        if (participantSearchInput && participantSearchInput.value.trim()) {
+            filterSurveyTable();
+        }
+        <% } %>
 
     </script>
 </body>
