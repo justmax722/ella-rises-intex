@@ -138,7 +138,7 @@
                                 name="donationAmount" 
                                 required
                                 min="1"
-                                step="0.01"
+                                step="0.50"
                                 placeholder="Other amount"
                                 value="<%= typeof query !== 'undefined' && query.amount ? query.amount : '' %>"
                                 class="w-full pl-8 pr-4 py-2.5 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
@@ -479,6 +479,16 @@
     </footer>
 
     <script>
+        // Format donation amount to always show 2 decimal places
+        function formatDonationAmount(input) {
+            if (input.value && input.value !== '') {
+                const value = parseFloat(input.value);
+                if (!isNaN(value)) {
+                    input.value = value.toFixed(2);
+                }
+            }
+        }
+        
         // Handle donation amount button clicks
         document.querySelectorAll('.donation-amount-btn').forEach(btn => {
             btn.addEventListener('click', function() {
@@ -492,9 +502,10 @@
                 this.classList.remove('bg-background', 'text-foreground', 'border-input');
                 this.classList.add('bg-accent', 'text-accent-foreground', 'border-accent');
                 
-                // Set the amount in the input field
+                // Set the amount in the input field (formatted to 2 decimals)
                 const amount = this.getAttribute('data-amount');
-                document.getElementById('donationAmount').value = amount;
+                const amountInput = document.getElementById('donationAmount');
+                amountInput.value = parseFloat(amount).toFixed(2);
             });
         });
 
@@ -510,6 +521,14 @@
                     b.classList.add('bg-background', 'text-foreground', 'border-input');
                 });
             }
+        });
+
+        // Format donation amount on blur/change to always show 2 decimal places
+        document.getElementById('donationAmount').addEventListener('blur', function() {
+            formatDonationAmount(this);
+        });
+        document.getElementById('donationAmount').addEventListener('change', function() {
+            formatDonationAmount(this);
         });
 
         // Check if user is logged in (email fields are hidden)
