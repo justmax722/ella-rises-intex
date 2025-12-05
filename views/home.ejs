@@ -176,7 +176,7 @@
 
             <% if (user.role === 'manager') { %>
             <!-- Quick Actions Section -->
-            <div class="mb-8">
+            <div class="mb-8 animate-fade-in" style="animation-delay: 0.1s;">
                 <h2 class="text-2xl font-semibold text-card-foreground mb-6">Quick Actions</h2>
                 <div class="flex flex-wrap gap-6 justify-center">
                 <a href="/events/create" class="flex items-center justify-center rounded-md text-sm font-medium px-10 py-3 gap-2 transition-colors" style="background-color: hsl(var(--primary)) !important; color: white !important; width: 240px !important; min-width: 240px !important; flex-shrink: 0 !important;" onmouseover="this.style.backgroundColor='hsl(126, 21%, 62%)'" onmouseout="this.style.backgroundColor='hsl(var(--primary))'">
@@ -185,7 +185,7 @@
                     </svg>
                     Create Event
                 </a>
-                <a href="/signup?role=user" class="flex items-center justify-center rounded-md text-sm font-medium px-10 py-3 gap-2 transition-colors" style="background-color: hsl(var(--primary)) !important; color: white !important; width: 240px !important; min-width: 240px !important; flex-shrink: 0 !important;" onmouseover="this.style.backgroundColor='hsl(126, 21%, 62%)'" onmouseout="this.style.backgroundColor='hsl(var(--primary))'">
+                <a href="/users/add" class="flex items-center justify-center rounded-md text-sm font-medium px-10 py-3 gap-2 transition-colors" style="background-color: hsl(var(--primary)) !important; color: white !important; width: 240px !important; min-width: 240px !important; flex-shrink: 0 !important;" onmouseover="this.style.backgroundColor='hsl(126, 21%, 62%)'" onmouseout="this.style.backgroundColor='hsl(var(--primary))'">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: white !important;">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
@@ -207,11 +207,11 @@
             </div>
 
             <!-- Key Metrics Section -->
-            <div class="mb-8">
+            <div class="mb-8 animate-fade-in" style="animation-delay: 0.2s;">
                 <h2 class="text-2xl font-semibold text-card-foreground mb-6">Key Metrics & Performance Overviews</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Active Participants -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
+                <div class="bg-card rounded-lg p-6 shadow-sm animate-fade-in" style="animation-delay: 0.3s;">
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="text-sm font-medium text-card-foreground/70">Active Participants</h3>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-secondary flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
@@ -223,7 +223,7 @@
                 </div>
 
                 <!-- Upcoming Events -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
+                <div class="bg-card rounded-lg p-6 shadow-sm animate-fade-in" style="animation-delay: 0.4s;">
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="text-sm font-medium text-card-foreground/70">Upcoming Events</h3>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
@@ -235,7 +235,7 @@
                 </div>
 
                 <!-- Milestones Achieved -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
+                <div class="bg-card rounded-lg p-6 shadow-sm animate-fade-in" style="animation-delay: 0.5s;">
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="text-sm font-medium text-card-foreground/70">Milestones Achieved</h3>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-secondary flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
@@ -247,7 +247,7 @@
                 </div>
 
                 <!-- Donations This Month -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
+                <div class="bg-card rounded-lg p-6 shadow-sm animate-fade-in" style="animation-delay: 0.6s;">
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="text-sm font-medium text-card-foreground/70">Donations This Month</h3>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -259,7 +259,7 @@
                 </div>
 
                 <!-- Net Promoter Score -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
+                <div class="bg-card rounded-lg p-6 shadow-sm animate-fade-in" style="animation-delay: 0.7s;">
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="text-sm font-medium text-card-foreground/70">Net Promoter Score</h3>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-secondary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -276,7 +276,7 @@
                 </div>
 
                 <!-- Survey Response Rate -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
+                <div class="bg-card rounded-lg p-6 shadow-sm animate-fade-in" style="animation-delay: 0.8s;">
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="text-sm font-medium text-card-foreground/70">Survey Response Rate</h3>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
@@ -292,7 +292,7 @@
             <!-- Charts Section -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Low Registrations -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
+                <div class="bg-card rounded-lg p-6 shadow-sm animate-fade-in" style="animation-delay: 0.9s;">
                     <h3 class="text-lg font-semibold text-card-foreground mb-4">Low Registrations</h3>
                     <% if (typeof lowRegistrationEvents !== 'undefined' && lowRegistrationEvents.length > 0) { %>
                     <div class="space-y-2">
@@ -323,7 +323,7 @@
                 </div>
 
                 <!-- Milestone Achievements -->
-                <div class="bg-card rounded-lg p-6 shadow-sm">
+                <div class="bg-card rounded-lg p-6 shadow-sm animate-fade-in" style="animation-delay: 1.0s;">
                     <h3 class="text-lg font-semibold text-card-foreground mb-6">Milestone Achievements</h3>
                     <% if (typeof milestonesThisMonth !== 'undefined') { %>
                     <div class="mb-6 pb-6 border-b border-border">

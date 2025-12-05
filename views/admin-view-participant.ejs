@@ -15,25 +15,38 @@
     <main class="flex-1 p-6 overflow-auto">
         <div class="space-y-6">
             <!-- Page Header -->
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 class="text-3xl font-serif font-bold text-primary">Participant Profile</h1>
-                    <p class="text-muted-foreground mt-1">View participant profile details</p>
+            <div class="space-y-4">
+                <!-- Title and Actions -->
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-serif font-bold text-primary">Participant Profile</h1>
+                        <p class="text-muted-foreground mt-1">View participant profile details</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="openAddMilestoneModal()" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                            Add Milestone
+                        </button>
+                        <a href="/participants/edit/<%= participant.userid %>" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                            Edit
+                        </a>
+                        <button 
+                            class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground h-10 px-4 py-2 delete-participant-btn"
+                            data-userid="<%= participant.userid %>"
+                            data-name="<%= (participant.userfirstname || '') + ' ' + (participant.userlastname || '') %>"
+                            data-email="<%= participant.useremail %>"
+                        >
+                            Delete
+                        </button>
+                    </div>
                 </div>
-                <div class="flex gap-3">
-                    <a href="/participants/edit/<%= participant.userid %>" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
-                        Edit
-                    </a>
-                    <button 
-                        class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground h-10 px-4 py-2 delete-participant-btn"
-                        data-userid="<%= participant.userid %>"
-                        data-name="<%= (participant.userfirstname || '') + ' ' + (participant.userlastname || '') %>"
-                        data-email="<%= participant.useremail %>"
-                    >
-                        Delete
-                    </button>
-                    <a href="/participants" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
-                        Back
+                <!-- Back Link -->
+                <div>
+                    <a href="/participants" class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left h-4 w-4">
+                            <path d="m12 19-7-7 7-7"></path>
+                            <path d="M19 12H5"></path>
+                        </svg>
+                        <span>Back to Participants</span>
                     </a>
                 </div>
             </div>
@@ -123,6 +136,60 @@
         </div>
     </main>
 
+    <!-- Add Milestone Modal -->
+    <div id="addMilestoneModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/50" onclick="closeAddMilestoneModal()"></div>
+        <div class="relative bg-card rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="p-6 border-b border-border flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-card-foreground">Add Milestone</h3>
+                <button onclick="closeAddMilestoneModal()" class="text-card-foreground/50 hover:text-card-foreground">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form method="POST" action="/milestones/add" class="p-6">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-card-foreground mb-2">Participant</label>
+                    <select name="userId" id="milestoneUserId" required class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option value="">Select participant...</option>
+                        <% if (typeof participants !== 'undefined') { %>
+                            <% participants.forEach(p => { %>
+                            <option value="<%= p.userid %>" <%= p.userid === participant.userid ? 'selected' : '' %>><%= p.userfirstname %> <%= p.userlastname %> (<%= p.useremail %>)</option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-card-foreground mb-2">Milestone Type</label>
+                    <select name="milestoneId" id="addMilestoneId" required class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option value="">Select milestone...</option>
+                        <% if (typeof milestoneTypes !== 'undefined') { %>
+                            <% milestoneTypes.forEach(mt => { %>
+                            <option value="<%= mt.milestoneid %>"><%= mt.milestonetitle %></option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-card-foreground mb-2">Date Achieved</label>
+                    <input type="date" name="milestoneDate" id="addMilestoneDate" required 
+                           max="<%= new Date().toISOString().split('T')[0] %>"
+                           class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                    <p class="text-xs text-destructive mt-1 hidden" id="dateError">Date cannot be in the future.</p>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeAddMilestoneModal()" class="flex-1 px-4 py-2 border border-border text-card-foreground rounded-lg hover:bg-muted/50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium">
+                        Add Milestone
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Delete Confirmation Modal -->
     <div id="deleteModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
         <div class="bg-card rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
@@ -151,6 +218,51 @@
     </div>
 
     <script>
+        // Add Milestone Modal functionality
+        function openAddMilestoneModal() {
+            document.getElementById('addMilestoneModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAddMilestoneModal() {
+            const addForm = document.querySelector('#addMilestoneModal form');
+            if (addForm) {
+                addForm.reset();
+                // Re-select the current participant
+                const userIdSelect = document.getElementById('milestoneUserId');
+                if (userIdSelect) {
+                    userIdSelect.value = '<%= participant.userid %>';
+                }
+            }
+            document.getElementById('addMilestoneModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        // Date validation for add milestone form
+        document.addEventListener('DOMContentLoaded', function() {
+            const addDateInput = document.getElementById('addMilestoneDate');
+            const addDateError = document.getElementById('dateError');
+            const addForm = document.querySelector('#addMilestoneModal form');
+            
+            if (addDateInput && addForm) {
+                addDateInput.addEventListener('change', function() {
+                    const selectedDate = new Date(this.value);
+                    const today = new Date();
+                    today.setHours(23, 59, 59, 999); // End of today
+                    
+                    if (selectedDate > today) {
+                        this.classList.add('border-destructive');
+                        addDateError.classList.remove('hidden');
+                        addForm.querySelector('button[type="submit"]').disabled = true;
+                    } else {
+                        this.classList.remove('border-destructive');
+                        addDateError.classList.add('hidden');
+                        addForm.querySelector('button[type="submit"]').disabled = false;
+                    }
+                });
+            }
+        });
+
         // Delete modal functionality
         const deleteModal = document.getElementById('deleteModal');
         const deleteForm = document.getElementById('deleteForm');
