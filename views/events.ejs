@@ -71,6 +71,11 @@
                     <button id="upcomingTab" class="tab-button inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium bg-primary text-primary-foreground shadow-sm">
                         Upcoming Events
                     </button>
+                    <% if (user.role === 'user') { %>
+                    <button id="myEventsTab" class="tab-button inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-transparent bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground">
+                        My Upcoming Events
+                    </button>
+                    <% } %>
                     <button id="pastTab" class="tab-button inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium border border-transparent bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground">
                         Past Events
                     </button>
@@ -86,12 +91,18 @@
 
             <!-- Success Messages -->
             <% if (typeof query !== 'undefined' && query.success === 'registered') { %>
-            <div id="eventsSuccessMessage" class="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
-                <p class="text-sm text-green-800">You have successfully registered for the event.</p>
+            <div id="eventsSuccessMessage" class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="text-sm text-green-800 font-medium">You have successfully registered for the event!</p>
             </div>
             <% } else if (typeof query !== 'undefined' && query.success === 'cancelled') { %>
-            <div id="eventsSuccessMessage" class="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
-                <p class="text-sm text-green-800">Your registration has been cancelled.</p>
+            <div id="eventsSuccessMessage" class="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p class="text-sm text-amber-800 font-medium">Your registration has been cancelled.</p>
             </div>
             <% } %>
 
@@ -250,10 +261,15 @@
                     <% } %>
                 </div>
 
-                <!-- Past Events -->
-                <div id="pastEvents" class="events-container hidden space-y-6">
-                    <% if (typeof pastSessions !== 'undefined' && pastSessions.length > 0) { %>
-                        <% pastSessions.forEach(session => { %>
+                <!-- My Upcoming Events (Participant Only - Registered Events) -->
+                <% if (user.role === 'user') { %>
+                <div id="myEvents" class="events-container hidden space-y-6">
+                    <% 
+                        const myRegisteredSessions = (typeof currentSessions !== 'undefined' ? currentSessions : [])
+                            .filter(s => s.isRegistered && s.registrationStatus !== 'cancelled');
+                    %>
+                    <% if (myRegisteredSessions.length > 0) { %>
+                        <% myRegisteredSessions.forEach(session => { %>
                             <% 
                                 const startDate = new Date(session.eventdatetimestart);
                                 const endDate = new Date(session.eventdatetimeend);
@@ -274,6 +290,121 @@
                                         <div class="flex items-start gap-3 mb-2">
                                             <h3 class="text-xl font-semibold text-card-foreground"><%= session.eventname %></h3>
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground"><%= session.eventtype %></span>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Registered</span>
+                                        </div>
+                                        <% if (session.eventdescription) { %>
+                                        <p class="text-sm text-card-foreground/70 mb-4"><%= session.eventdescription %></p>
+                                        <% } %>
+                                        <div class="flex flex-wrap gap-4 text-sm text-card-foreground/70">
+                                            <div class="flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span><%= formattedStartDate %> at <%= formattedStartTime %></span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                </svg>
+                                                <span>Capacity: <%= capacity %></span>
+                                            </div>
+                                            <% if (session.eventlocation) { %>
+                                            <div class="flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                                <span><%= session.eventlocation %></span>
+                                            </div>
+                                            <% } %>
+                                            <% if (regDeadline) { %>
+                                            <div class="flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span>Registration Deadline: <%= regDeadline.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) %> <%= regDeadline.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %></span>
+                                            </div>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                                        <% const deadlinePassed = session.registrationDeadlinePassed; %>
+                                        <% if (!deadlinePassed) { %>
+                                        <button 
+                                            type="button"
+                                            class="register-btn inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                            data-session-id="<%= session.sessionid %>"
+                                            data-session-name="<%= session.eventname %>"
+                                            data-action="cancel"
+                                            data-return-tab="myevents"
+                                        >
+                                            Cancel Registration
+                                        </button>
+                                        <% } %>
+                                        <a href="/events/<%= session.sessionid %>?from=myevents" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                                            View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="bg-card rounded-lg p-8 text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-muted-foreground mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <p class="text-muted-foreground mb-4">You haven't registered for any upcoming events yet.</p>
+                            <button onclick="switchTab('upcoming')" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                                Browse Upcoming Events
+                            </button>
+                        </div>
+                    <% } %>
+                </div>
+                <% } %>
+
+                <!-- Past Events -->
+                <div id="pastEvents" class="events-container hidden space-y-6">
+                    <% if (typeof pastSessions !== 'undefined' && pastSessions.length > 0) { %>
+                        <% pastSessions.forEach(session => { %>
+                            <% 
+                                const startDate = new Date(session.eventdatetimestart);
+                                const endDate = new Date(session.eventdatetimeend);
+                                const regDeadline = session.eventregistrationdeadline ? new Date(session.eventregistrationdeadline) : null;
+                                const capacity = session.eventcapacity || session.eventdefaultcapacity || 'N/A';
+                                const formattedStartDate = startDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+                                const formattedStartTime = startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                                const isCancelled = session.registrationStatus === 'cancelled';
+                                const isNoShow = session.registrationStatus === 'no-show';
+                                const isAttended = session.registrationStatus === 'attended';
+                            %>
+                            <div class="event-card bg-card rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow <%= isCancelled ? 'border-l-4 border-red-400' : '' %>" 
+                                 data-name="<%= session.eventname.toLowerCase() %>"
+                                 data-description="<%= (session.eventdescription || '').toLowerCase() %>"
+                                 data-location="<%= (session.eventlocation || '').toLowerCase() %>"
+                                 data-type="<%= (session.eventtype || '').toLowerCase() %>"
+                                 data-recurrence="<%= (session.eventrecurrencepattern || '').toLowerCase() %>"
+                                 data-start-date="<%= new Date(session.eventdatetimestart).getTime() %>">
+                                <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                                    <div class="flex-1">
+                                        <div class="flex items-start gap-3 mb-2 flex-wrap">
+                                            <h3 class="text-xl font-semibold text-card-foreground"><%= session.eventname %></h3>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-accent-foreground"><%= session.eventtype %></span>
+                                            <% if (user.role === 'user') { %>
+                                                <% if (isCancelled) { %>
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                    Cancelled
+                                                </span>
+                                                <% } else if (isNoShow) { %>
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">No-Show</span>
+                                                <% } else if (isAttended) { %>
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Attended</span>
+                                                <% } else if (session.isRegistered) { %>
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Completed</span>
+                                                <% } %>
+                                            <% } %>
                                         </div>
                                         <% if (session.eventdescription) { %>
                                         <p class="text-sm text-card-foreground/70 mb-4"><%= session.eventdescription %></p>
@@ -320,7 +451,13 @@
                         <% }); %>
                     <% } else { %>
                         <div class="bg-card rounded-lg p-8 text-center">
-                            <p class="text-muted-foreground">No past events found.</p>
+                            <p class="text-muted-foreground">
+                                <% if (user.role === 'user') { %>
+                                    No past event history found.
+                                <% } else { %>
+                                    No past events found.
+                                <% } %>
+                            </p>
                         </div>
                     <% } %>
                 </div>
@@ -332,35 +469,55 @@
         // Tab switching functionality
         const upcomingTab = document.getElementById('upcomingTab');
         const pastTab = document.getElementById('pastTab');
+        const myEventsTab = document.getElementById('myEventsTab');
         const upcomingEvents = document.getElementById('upcomingEvents');
         const pastEvents = document.getElementById('pastEvents');
+        const myEvents = document.getElementById('myEvents');
+
+        function setTabInactive(tab) {
+            if (tab) {
+                tab.classList.remove('bg-primary', 'text-primary-foreground', 'shadow-sm');
+                tab.classList.add('bg-transparent', 'text-muted-foreground', 'border', 'border-transparent');
+            }
+        }
+
+        function setTabActive(tab) {
+            if (tab) {
+                tab.classList.add('bg-primary', 'text-primary-foreground', 'shadow-sm');
+                tab.classList.remove('bg-transparent', 'text-muted-foreground', 'border', 'border-transparent');
+            }
+        }
 
         function switchTab(activeTab) {
+            // Reset all tabs to inactive
+            setTabInactive(upcomingTab);
+            setTabInactive(pastTab);
+            setTabInactive(myEventsTab);
+
+            // Hide all containers
+            if (upcomingEvents) upcomingEvents.classList.add('hidden');
+            if (pastEvents) pastEvents.classList.add('hidden');
+            if (myEvents) myEvents.classList.add('hidden');
+
+            // Activate the selected tab and show its container
             if (activeTab === 'upcoming') {
-                upcomingTab.classList.add('bg-primary', 'text-primary-foreground', 'shadow-sm');
-                upcomingTab.classList.remove('bg-transparent', 'text-muted-foreground', 'border', 'border-transparent');
-
-                pastTab.classList.remove('bg-primary', 'text-primary-foreground', 'shadow-sm');
-                pastTab.classList.add('bg-transparent', 'text-muted-foreground', 'border', 'border-transparent');
-
-                upcomingEvents.classList.remove('hidden');
-                pastEvents.classList.add('hidden');
-            } else {
-                pastTab.classList.add('bg-primary', 'text-primary-foreground', 'shadow-sm');
-                pastTab.classList.remove('bg-transparent', 'text-muted-foreground', 'border', 'border-transparent');
-
-                upcomingTab.classList.remove('bg-primary', 'text-primary-foreground', 'shadow-sm');
-                upcomingTab.classList.add('bg-transparent', 'text-muted-foreground', 'border', 'border-transparent');
-
-                pastEvents.classList.remove('hidden');
-                upcomingEvents.classList.add('hidden');
+                setTabActive(upcomingTab);
+                if (upcomingEvents) upcomingEvents.classList.remove('hidden');
+            } else if (activeTab === 'myevents') {
+                setTabActive(myEventsTab);
+                if (myEvents) myEvents.classList.remove('hidden');
+            } else if (activeTab === 'past') {
+                setTabActive(pastTab);
+                if (pastEvents) pastEvents.classList.remove('hidden');
             }
+
             // Re-filter after switching tabs
             filterEvents();
         }
 
         upcomingTab.addEventListener('click', () => switchTab('upcoming'));
         pastTab.addEventListener('click', () => switchTab('past'));
+        if (myEventsTab) myEventsTab.addEventListener('click', () => switchTab('myevents'));
 
         // Search & filter functionality
         function filterEvents() {
@@ -370,7 +527,17 @@
             const selectedType = typeFilter ? typeFilter.value.toLowerCase() : '';
             const selectedRecurrence = recurrenceFilter ? recurrenceFilter.value.toLowerCase() : '';
 
-            const activeContainer = upcomingEvents.classList.contains('hidden') ? pastEvents : upcomingEvents;
+            // Determine active container
+            let activeContainer = upcomingEvents;
+            if (upcomingEvents && !upcomingEvents.classList.contains('hidden')) {
+                activeContainer = upcomingEvents;
+            } else if (myEvents && !myEvents.classList.contains('hidden')) {
+                activeContainer = myEvents;
+            } else if (pastEvents && !pastEvents.classList.contains('hidden')) {
+                activeContainer = pastEvents;
+            }
+            
+            if (!activeContainer) return;
             const cards = activeContainer.querySelectorAll('.event-card');
             
             cards.forEach(card => {
@@ -439,6 +606,8 @@
             const tab = params.get('tab');
             if (tab === 'past') {
                 switchTab('past');
+            } else if (tab === 'myevents' && myEventsTab) {
+                switchTab('myevents');
             } else {
                 switchTab('upcoming');
             }
