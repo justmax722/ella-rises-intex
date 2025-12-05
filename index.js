@@ -3689,16 +3689,21 @@ app.get('/surveys', requireAuth, restrictDonor, async (req, res) => {
     // Calculate response rate
     const responseRate = totalResponses > 0 ? ((totalResponses / totalResponses) * 100).toFixed(1) : 0;
 
-    // Score distribution for chart based on average metric score per response
-    const scoreDistribution = { '0-3': 0, '4-6': 0, '7-8': 0, '9-10': 0 };
+    // Score distribution for chart based on overallsurveyscore (1-5 scale with 0.5 increments)
+    const scoreDistribution = { 
+      '1': 0, '1.5': 0, '2': 0, '2.5': 0, 
+      '3': 0, '3.5': 0, '4': 0, '4.5': 0, '5': 0 
+    };
     for (const response of surveyResponses) {
-      const scores = Object.values(response.metricScores);
-      if (scores.length > 0) {
-        const avgScore = scores.reduce((a, b) => a + (parseFloat(b) || 0), 0) / scores.length;
-        if (avgScore <= 3) scoreDistribution['0-3']++;
-        else if (avgScore <= 6) scoreDistribution['4-6']++;
-        else if (avgScore <= 8) scoreDistribution['7-8']++;
-        else scoreDistribution['9-10']++;
+      const overallScore = response.overallScore;
+      if (overallScore !== null && overallScore !== undefined) {
+        const score = parseFloat(overallScore);
+        // Round to nearest 0.5 for categorization
+        const roundedScore = Math.round(score * 2) / 2;
+        const category = roundedScore.toString();
+        if (scoreDistribution.hasOwnProperty(category)) {
+          scoreDistribution[category]++;
+        }
       }
     }
 

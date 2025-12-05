@@ -1,19 +1,106 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="overflow-x-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Surveys - Ella Rises CRM</title>
     <link rel="icon" type="image/png" href="/images/favicon.png">
     <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        html, body {
+            overflow-x: hidden !important;
+            max-width: 100vw !important;
+            width: 100% !important;
+        }
+        main {
+            max-width: 100% !important;
+            overflow-x: hidden !important;
+            width: 100% !important;
+        }
+        main > div {
+            max-width: 100% !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        aside {
+            width: 288px !important;
+            min-width: 288px !important;
+            max-width: 288px !important;
+        }
+    </style>
+    <script>
+        // Force sidebar width IMMEDIATELY - runs before page renders
+        (function() {
+            function enforceSidebarWidth() {
+                const sidebar = document.querySelector('aside');
+                if (sidebar) {
+                    sidebar.style.setProperty('width', '288px', 'important');
+                    sidebar.style.setProperty('min-width', '288px', 'important');
+                    sidebar.style.setProperty('max-width', '288px', 'important');
+                    sidebar.classList.add('w-72');
+                    sidebar.classList.remove('w-16', 'w-20', 'w-64');
+                    return true; // Found and fixed
+                }
+                return false; // Not found yet
+            }
+            
+            // Run immediately (before DOM is ready)
+            enforceSidebarWidth();
+            
+            // Run on DOMContentLoaded
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    enforceSidebarWidth();
+                });
+            } else {
+                enforceSidebarWidth();
+            }
+            
+            // Use MutationObserver to catch when sidebar is added to DOM
+            if (document.body) {
+                const observer = new MutationObserver(function(mutations) {
+                    if (enforceSidebarWidth()) {
+                        // Once we find it, we can stop observing so aggressively
+                        observer.disconnect();
+                    }
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+                
+                // Also run immediately after a microtask
+                setTimeout(enforceSidebarWidth, 0);
+            } else {
+                document.addEventListener('DOMContentLoaded', function() {
+                    const observer = new MutationObserver(function(mutations) {
+                        if (enforceSidebarWidth()) {
+                            observer.disconnect();
+                        }
+                    });
+                    observer.observe(document.body, { childList: true, subtree: true });
+                    enforceSidebarWidth();
+                });
+            }
+            
+            // Run on every frame for the first 120 frames (~2 seconds) to catch any changes
+            let frameCount = 0;
+            const maxFrames = 120;
+            function checkFrame() {
+                if (frameCount < maxFrames) {
+                    enforceSidebarWidth();
+                    frameCount++;
+                    requestAnimationFrame(checkFrame);
+                }
+            }
+            requestAnimationFrame(checkFrame);
+        })();
+    </script>
 </head>
-<body class="bg-background min-h-screen flex">
+<body class="bg-background min-h-screen flex overflow-x-hidden">
     <!-- Sidebar Navigation -->
     <%- include('partials/sidebar', { user: user, currentPage: 'surveys' }) %>
 
     <!-- Main Content Area -->
-    <main class="flex-1 p-6 md:p-8">
-        <div class="max-w-full mx-auto">
+    <main class="flex-1 p-6 md:p-8 overflow-x-hidden min-w-0">
+        <div class="max-w-7xl mx-auto w-full overflow-x-hidden">
             <!-- Page Header -->
             <div class="mb-8">
                 <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">
@@ -151,7 +238,7 @@
 
             <% if (typeof stats !== 'undefined' && user.role === 'manager') { %>
             <!-- Key Metrics Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
                 <!-- Total Responses -->
                 <div class="bg-card rounded-lg p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-2">
@@ -173,7 +260,7 @@
                         </svg>
                     </div>
                     <p class="text-3xl font-semibold text-accent"><%= stats.avgSatisfaction %></p>
-                    <p class="text-xs text-card-foreground/70 mt-1">out of 10</p>
+                    <p class="text-xs text-card-foreground/70 mt-1">out of 5</p>
                 </div>
 
                 <!-- Net Promoter Score -->
@@ -221,172 +308,30 @@
             <!-- Score Distribution Chart -->
             <div class="bg-card rounded-lg p-6 shadow-sm mb-8">
                 <h3 class="text-lg font-semibold text-card-foreground mb-4">Score Distribution</h3>
-                <div class="h-48 flex items-end justify-center gap-4 mb-4">
-                    <% const maxScore = Math.max(stats.scoreDistribution['0-3'], stats.scoreDistribution['4-6'], stats.scoreDistribution['7-8'], stats.scoreDistribution['9-10'], 1); %>
-                    <div class="flex flex-col items-center">
-                        <div class="w-16 bg-destructive rounded-t mb-1" style="height: <%= Math.max(4, (stats.scoreDistribution['0-3'] / maxScore) * 180) %>px;"></div>
-                        <span class="text-xs text-card-foreground/70">0-3</span>
-                        <span class="text-sm font-medium text-card-foreground"><%= stats.scoreDistribution['0-3'] %></span>
+                <div class="h-48 flex items-end justify-center gap-2 mb-4 overflow-x-auto">
+                    <% 
+                    const scoreCategories = ['1', '1.5', '2', '2.5', '3', '3.5', '4', '4.5', '5'];
+                    const maxScore = Math.max(...scoreCategories.map(cat => stats.scoreDistribution[cat] || 0), 1);
+                    // Create gradient colors from grey to green
+                    const gradientColors = [
+                        '#6b7280', // grey-500 for 1
+                        '#6b7280', // grey-500 for 1.5
+                        '#78716c', // stone-600 for 2
+                        '#78716c', // stone-600 for 2.5
+                        '#84cc16', // lime-500 for 3
+                        '#84cc16', // lime-500 for 3.5
+                        '#22c55e', // green-500 for 4
+                        '#22c55e', // green-500 for 4.5
+                        '#16a34a'  // green-600 for 5
+                    ];
+                    %>
+                    <% scoreCategories.forEach((category, index) => { %>
+                    <div class="flex flex-col items-center min-w-[3rem]">
+                        <div class="w-12 rounded-t mb-1" style="height: <%= Math.max(4, ((stats.scoreDistribution[category] || 0) / maxScore) * 180) %>px; background-color: <%= gradientColors[index] %>;"></div>
+                        <span class="text-xs text-card-foreground/70"><%= category %></span>
+                        <span class="text-sm font-medium text-card-foreground"><%= stats.scoreDistribution[category] || 0 %></span>
                     </div>
-                    <div class="flex flex-col items-center">
-                        <div class="w-16 bg-accent rounded-t mb-1" style="height: <%= Math.max(4, (stats.scoreDistribution['4-6'] / maxScore) * 180) %>px;"></div>
-                        <span class="text-xs text-card-foreground/70">4-6</span>
-                        <span class="text-sm font-medium text-card-foreground"><%= stats.scoreDistribution['4-6'] %></span>
-                    </div>
-                    <div class="flex flex-col items-center">
-                        <div class="w-16 bg-secondary/70 rounded-t mb-1" style="height: <%= Math.max(4, (stats.scoreDistribution['7-8'] / maxScore) * 180) %>px;"></div>
-                        <span class="text-xs text-card-foreground/70">7-8</span>
-                        <span class="text-sm font-medium text-card-foreground"><%= stats.scoreDistribution['7-8'] %></span>
-                    </div>
-                    <div class="flex flex-col items-center">
-                        <div class="w-16 bg-secondary rounded-t mb-1" style="height: <%= Math.max(4, (stats.scoreDistribution['9-10'] / maxScore) * 180) %>px;"></div>
-                        <span class="text-xs text-card-foreground/70">9-10</span>
-                        <span class="text-sm font-medium text-card-foreground"><%= stats.scoreDistribution['9-10'] %></span>
-                    </div>
-                </div>
-            </div>
-            <% } %>
-
-            <!-- Search and Filter Controls (Managers Only) -->
-            <% if (user.role === 'manager' && typeof filters !== 'undefined') { %>
-            <div class="mb-8">
-                <!-- Search Bar (Always Visible) -->
-                <div class="mb-4">
-                    <form method="GET" action="/surveys" class="flex gap-4">
-                        <div class="flex-1">
-                            <input 
-                                type="text" 
-                                name="participantSearch" 
-                                value="<%= filters.participantSearch || '' %>" 
-                                placeholder="Search participant name..." 
-                                class="w-full px-4 py-2.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                            />
-                        </div>
-                        <button type="submit" class="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
-                            Search
-                        </button>
-                        <!-- Preserve active filters when searching -->
-                        <% if (filters.surveyDateFrom) { %><input type="hidden" name="surveyDateFrom" value="<%= filters.surveyDateFrom %>"><% } %>
-                        <% if (filters.surveyDateTo) { %><input type="hidden" name="surveyDateTo" value="<%= filters.surveyDateTo %>"><% } %>
-                        <% if (filters.sessionDateFrom) { %><input type="hidden" name="sessionDateFrom" value="<%= filters.sessionDateFrom %>"><% } %>
-                        <% if (filters.sessionDateTo) { %><input type="hidden" name="sessionDateTo" value="<%= filters.sessionDateTo %>"><% } %>
-                        <% if (filters.minScore) { %><input type="hidden" name="minScore" value="<%= filters.minScore %>"><% } %>
-                        <% if (filters.maxScore) { %><input type="hidden" name="maxScore" value="<%= filters.maxScore %>"><% } %>
-                        <% if (filters.eventId) { %><input type="hidden" name="eventId" value="<%= filters.eventId %>"><% } %>
-                        <% if (filters.sortBy) { %><input type="hidden" name="sortBy" value="<%= filters.sortBy %>"><% } %>
-                        <% if (filters.sortOrder) { %><input type="hidden" name="sortOrder" value="<%= filters.sortOrder %>"><% } %>
-                    </form>
-                </div>
-
-                <!-- Filter & Sort Dropdown -->
-                <div class="bg-card rounded-lg shadow-sm border border-border">
-                    <button 
-                        type="button"
-                        id="filterToggle"
-                        class="w-full flex items-center justify-between p-4 text-left hover:bg-muted/50 transition-colors"
-                        onclick="toggleFilterDropdown()"
-                    >
-                        <div class="flex items-center gap-2">
-                            <h3 class="text-lg font-semibold text-card-foreground">Filter & Sort</h3>
-                            <% const hasFilters = filters.surveyDateFrom || filters.surveyDateTo || filters.sessionDateFrom || filters.sessionDateTo || filters.minScore || filters.maxScore || filters.eventId || filters.sessionId; %>
-                            <% if (hasFilters) { %>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                                Active Filters
-                            </span>
-                            <% } %>
-                        </div>
-                        <svg 
-                            id="filterToggleIcon"
-                            xmlns="http://www.w3.org/2000/svg" 
-                            width="20" 
-                            height="20" 
-                            viewBox="0 0 24 24" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            stroke-width="2" 
-                            stroke-linecap="round" 
-                            stroke-linejoin="round" 
-                            class="transform transition-transform"
-                        >
-                            <path d="m6 9 6 6 6-6"></path>
-                        </svg>
-                    </button>
-                    
-                    <div id="filterContent" class="hidden border-t border-border">
-                        <form method="GET" action="/surveys" class="p-6 space-y-4">
-                            <input type="hidden" name="participantSearch" value="<%= filters.participantSearch || '' %>">
-                            
-                            <!-- Row 1: Date Ranges -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div>
-                                    <label class="block text-xs font-medium text-card-foreground/70 mb-1">Survey Date From</label>
-                                    <input type="date" name="surveyDateFrom" value="<%= filters.surveyDateFrom %>" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-card-foreground/70 mb-1">Survey Date To</label>
-                                    <input type="date" name="surveyDateTo" value="<%= filters.surveyDateTo %>" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-card-foreground/70 mb-1">Session Date From</label>
-                                    <input type="date" name="sessionDateFrom" value="<%= filters.sessionDateFrom %>" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-card-foreground/70 mb-1">Session Date To</label>
-                                    <input type="date" name="sessionDateTo" value="<%= filters.sessionDateTo %>" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
-                                </div>
-                            </div>
-
-                            <!-- Row 2: Score, Event, Sort -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div>
-                                    <label class="block text-xs font-medium text-card-foreground/70 mb-1">Min Score</label>
-                                    <input type="number" name="minScore" value="<%= filters.minScore %>" min="0" max="10" step="0.1" placeholder="0" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-card-foreground/70 mb-1">Max Score</label>
-                                    <input type="number" name="maxScore" value="<%= filters.maxScore %>" min="0" max="10" step="0.1" placeholder="10" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-card-foreground/70 mb-1">Event</label>
-                                    <select name="eventId" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
-                                        <option value="">All Events</option>
-                                        <% if (typeof eventsList !== 'undefined') { %>
-                                            <% eventsList.forEach(event => { %>
-                                            <option value="<%= event.eventid %>" <%= filters.eventId == event.eventid ? 'selected' : '' %>><%= event.eventname %></option>
-                                            <% }); %>
-                                        <% } %>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-card-foreground/70 mb-1">Sort By</label>
-                                    <select name="sortBy" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
-                                        <option value="surveysubmissiondate" <%= filters.sortBy === 'surveysubmissiondate' ? 'selected' : '' %>>Survey Date</option>
-                                        <option value="sessiondate" <%= filters.sortBy === 'sessiondate' ? 'selected' : '' %>>Session Date</option>
-                                        <option value="overallscore" <%= filters.sortBy === 'overallscore' ? 'selected' : '' %>>Overall Score</option>
-                                        <option value="eventname" <%= filters.sortBy === 'eventname' ? 'selected' : '' %>>Event Name</option>
-                                        <option value="participant" <%= filters.sortBy === 'participant' ? 'selected' : '' %>>Participant Last Name</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <!-- Row 3: Sort Order & Submit -->
-                            <div class="flex flex-wrap items-end gap-4">
-                                <div>
-                                    <label class="block text-xs font-medium text-card-foreground/70 mb-1">Order</label>
-                                    <select name="sortOrder" class="px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
-                                        <option value="desc" <%= filters.sortOrder === 'desc' ? 'selected' : '' %>>Descending</option>
-                                        <option value="asc" <%= filters.sortOrder === 'asc' ? 'selected' : '' %>>Ascending</option>
-                                    </select>
-                                </div>
-                                <button type="submit" class="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
-                                    Apply Filters
-                                </button>
-                                <a href="/surveys" class="px-6 py-2 border border-border rounded-lg hover:bg-muted transition-colors text-sm font-medium text-card-foreground">
-                                    Reset All
-                                </a>
-                            </div>
-                        </form>
-                    </div>
+                    <% }); %>
                 </div>
             </div>
             <% } %>
@@ -395,27 +340,168 @@
             <% if (user.role === 'manager') { %>
             <!-- Survey Responses Pivot Table (Managers Only) -->
             <div class="bg-card rounded-lg shadow-sm overflow-hidden">
-                <div class="p-6 border-b border-border flex items-center justify-between">
-                    <div>
-                        <h3 class="text-lg font-semibold text-card-foreground">All Survey Responses</h3>
-                        <p class="text-sm text-card-foreground/70 mt-1">
-                            <% if (typeof surveyResponses !== 'undefined') { %>
-                                <%= surveyResponses.length %> total response<%= surveyResponses.length !== 1 ? 's' : '' %>
-                                <% if (filters.surveyDateFrom || filters.surveyDateTo || filters.sessionDateFrom || filters.sessionDateTo || filters.minScore || filters.maxScore || filters.eventId || filters.participantSearch) { %>
-                                    (filtered)
+                <div class="p-6 border-b border-border">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-card-foreground">All Survey Responses</h3>
+                            <p class="text-sm text-card-foreground/70 mt-1">
+                                <% if (typeof surveyResponses !== 'undefined') { %>
+                                    <%= surveyResponses.length %> total response<%= surveyResponses.length !== 1 ? 's' : '' %>
+                                    <% if (filters.surveyDateFrom || filters.surveyDateTo || filters.sessionDateFrom || filters.sessionDateTo || filters.minScore || filters.maxScore || filters.eventId || filters.participantSearch) { %>
+                                        (filtered)
+                                    <% } %>
                                 <% } %>
-                            <% } %>
-                        </p>
+                            </p>
+                        </div>
+                        <button onclick="openQuestionsModal()" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Edit Questions
+                        </button>
                     </div>
-                    <button onclick="openQuestionsModal()" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Edit Questions
-                    </button>
+                    
+                    <% if (typeof filters !== 'undefined') { %>
+                    <!-- Search Bar -->
+                    <div class="mb-4">
+                        <form method="GET" action="/surveys" class="flex gap-4">
+                            <div class="flex-1">
+                                <input 
+                                    type="text" 
+                                    name="participantSearch" 
+                                    value="<%= filters.participantSearch || '' %>" 
+                                    placeholder="Search participant name..." 
+                                    class="w-full px-4 py-2.5 text-sm border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                />
+                            </div>
+                            <button type="submit" class="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+                                Search
+                            </button>
+                            <!-- Preserve active filters when searching -->
+                            <% if (filters.surveyDateFrom) { %><input type="hidden" name="surveyDateFrom" value="<%= filters.surveyDateFrom %>"><% } %>
+                            <% if (filters.surveyDateTo) { %><input type="hidden" name="surveyDateTo" value="<%= filters.surveyDateTo %>"><% } %>
+                            <% if (filters.sessionDateFrom) { %><input type="hidden" name="sessionDateFrom" value="<%= filters.sessionDateFrom %>"><% } %>
+                            <% if (filters.sessionDateTo) { %><input type="hidden" name="sessionDateTo" value="<%= filters.sessionDateTo %>"><% } %>
+                            <% if (filters.minScore) { %><input type="hidden" name="minScore" value="<%= filters.minScore %>"><% } %>
+                            <% if (filters.maxScore) { %><input type="hidden" name="maxScore" value="<%= filters.maxScore %>"><% } %>
+                            <% if (filters.eventId) { %><input type="hidden" name="eventId" value="<%= filters.eventId %>"><% } %>
+                            <% if (filters.sortBy) { %><input type="hidden" name="sortBy" value="<%= filters.sortBy %>"><% } %>
+                            <% if (filters.sortOrder) { %><input type="hidden" name="sortOrder" value="<%= filters.sortOrder %>"><% } %>
+                        </form>
+                    </div>
+
+                    <!-- Filter & Sort Dropdown -->
+                    <div class="mb-4 bg-muted/30 rounded-lg border border-border">
+                        <button 
+                            type="button"
+                            id="filterToggle"
+                            class="w-full flex items-center justify-between p-4 text-left hover:bg-muted/50 transition-colors"
+                            onclick="toggleFilterDropdown()"
+                        >
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-lg font-semibold text-card-foreground">Filter & Sort</h3>
+                                <% const hasFilters = filters.surveyDateFrom || filters.surveyDateTo || filters.sessionDateFrom || filters.sessionDateTo || filters.minScore || filters.maxScore || filters.eventId || filters.sessionId; %>
+                                <% if (hasFilters) { %>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                                    Active Filters
+                                </span>
+                                <% } %>
+                            </div>
+                            <svg 
+                                id="filterToggleIcon"
+                                xmlns="http://www.w3.org/2000/svg" 
+                                width="20" 
+                                height="20" 
+                                viewBox="0 0 24 24" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                stroke-width="2" 
+                                stroke-linecap="round" 
+                                stroke-linejoin="round" 
+                                class="transform transition-transform"
+                            >
+                                <path d="m6 9 6 6 6-6"></path>
+                            </svg>
+                        </button>
+                        <div id="filterContent" class="hidden border-t border-border">
+                            <form method="GET" action="/surveys" class="p-6 space-y-4">
+                                <input type="hidden" name="participantSearch" value="<%= filters.participantSearch || '' %>">
+                                
+                                <!-- Row 1: Date Ranges -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-card-foreground/70 mb-1">Survey Date From</label>
+                                        <input type="date" name="surveyDateFrom" value="<%= filters.surveyDateFrom %>" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-card-foreground/70 mb-1">Survey Date To</label>
+                                        <input type="date" name="surveyDateTo" value="<%= filters.surveyDateTo %>" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-card-foreground/70 mb-1">Session Date From</label>
+                                        <input type="date" name="sessionDateFrom" value="<%= filters.sessionDateFrom %>" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-card-foreground/70 mb-1">Session Date To</label>
+                                        <input type="date" name="sessionDateTo" value="<%= filters.sessionDateTo %>" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                                    </div>
+                                </div>
+
+                                <!-- Row 2: Score, Event, Sort -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-card-foreground/70 mb-1">Min Score</label>
+                                        <input type="number" name="minScore" value="<%= filters.minScore %>" min="0" max="10" step="0.1" placeholder="0" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-card-foreground/70 mb-1">Max Score</label>
+                                        <input type="number" name="maxScore" value="<%= filters.maxScore %>" min="0" max="10" step="0.1" placeholder="10" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-card-foreground/70 mb-1">Event</label>
+                                        <select name="eventId" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                                            <option value="">All Events</option>
+                                            <% if (typeof eventsList !== 'undefined') { %>
+                                                <% eventsList.forEach(event => { %>
+                                                <option value="<%= event.eventid %>" <%= filters.eventId == event.eventid ? 'selected' : '' %>><%= event.eventname %></option>
+                                                <% }); %>
+                                            <% } %>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-card-foreground/70 mb-1">Sort By</label>
+                                        <select name="sortBy" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                                            <option value="submittedat" <%= filters.sortBy === 'submittedat' ? 'selected' : '' %>>Submission Date</option>
+                                            <option value="overallscore" <%= filters.sortBy === 'overallscore' ? 'selected' : '' %>>Overall Score</option>
+                                            <option value="eventname" <%= filters.sortBy === 'eventname' ? 'selected' : '' %>>Event Name</option>
+                                            <option value="participant" <%= filters.sortBy === 'participant' ? 'selected' : '' %>>Participant Last Name</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Row 3: Sort Order & Submit -->
+                                <div class="flex flex-wrap items-end gap-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-card-foreground/70 mb-1">Order</label>
+                                        <select name="sortOrder" class="px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                                            <option value="desc" <%= filters.sortOrder === 'desc' ? 'selected' : '' %>>Descending</option>
+                                            <option value="asc" <%= filters.sortOrder === 'asc' ? 'selected' : '' %>>Ascending</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+                                        Apply Filters
+                                    </button>
+                                    <a href="/surveys" class="px-6 py-2 border border-border rounded-lg hover:bg-muted transition-colors text-sm font-medium text-card-foreground">
+                                        Reset All
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <% } %>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full min-w-max">
+                    <table class="w-full">
                         <thead class="bg-muted/50 border-b border-border">
                             <tr>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Participant</th>
@@ -522,15 +608,11 @@
                                     </td>
                                     <!-- Delete Button -->
                                     <td class="px-2 py-2 text-center">
-                                        <form method="POST" action="/surveys/delete" onsubmit="return confirm('Are you sure you want to delete this survey response? This cannot be undone.');" class="inline">
-                                            <input type="hidden" name="userId" value="<%= response.userid %>">
-                                            <input type="hidden" name="sessionId" value="<%= response.sessionid %>">
-                                            <button type="submit" class="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors" title="Delete survey response">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </form>
+                                        <button onclick="openDeleteSurveyModal(<%= response.userid %>, <%= response.sessionid %>, '<%= response.participantName.replace(/'/g, "\\'") %>', '<%= response.eventName.replace(/'/g, "\\'") %>')" class="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors" title="Delete survey response">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
                                     </td>
                                 </tr>
                                 <% }); %>
@@ -624,6 +706,33 @@
             <% } %>
         </div>
     </main>
+
+    <!-- Delete Survey Confirmation Modal (Managers Only) -->
+    <% if (user.role === 'manager') { %>
+    <div id="deleteSurveyModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeDeleteSurveyModal()"></div>
+        <div class="relative bg-card rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="p-6">
+                <h3 class="text-lg font-semibold text-card-foreground mb-4">Delete Survey Response?</h3>
+                <p class="text-sm text-card-foreground/70 mb-6" id="deleteSurveyModalMessage">
+                    Are you sure you want to delete this survey response? This action cannot be undone.
+                </p>
+                <div class="flex gap-3 justify-end">
+                    <button onclick="closeDeleteSurveyModal()" class="px-4 py-2 text-sm border border-input rounded-md font-medium text-card-foreground hover:bg-muted transition-colors">
+                        Cancel
+                    </button>
+                    <form id="deleteSurveyForm" method="POST" action="/surveys/delete" class="inline">
+                        <input type="hidden" id="deleteSurveyUserId" name="userId" value="">
+                        <input type="hidden" id="deleteSurveySessionId" name="sessionId" value="">
+                        <button type="submit" class="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded-md font-medium hover:bg-destructive/90 transition-colors">
+                            Yes, Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <% } %>
 
     <!-- Participant Survey Details Modal (Participants Only) -->
     <% if (user.role !== 'manager') { %>
@@ -937,6 +1046,55 @@
     </div>
     <% } %>
 
+    <style>
+        html, body {
+            overflow-x: hidden !important;
+            max-width: 100vw !important;
+            width: 100% !important;
+        }
+        main {
+            max-width: 100% !important;
+            overflow-x: hidden !important;
+            width: 100% !important;
+        }
+        main > div {
+            max-width: 100% !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        aside {
+            width: 288px !important;
+            min-width: 288px !important;
+            max-width: 288px !important;
+        }
+    </style>
+    <script>
+        // Force sidebar width immediately, before page fully loads
+        (function() {
+            function enforceSidebarWidth() {
+                const sidebar = document.querySelector('aside');
+                if (sidebar) {
+                    sidebar.style.setProperty('width', '288px', 'important');
+                    sidebar.style.setProperty('min-width', '288px', 'important');
+                    sidebar.style.setProperty('max-width', '288px', 'important');
+                    sidebar.classList.add('w-72');
+                    sidebar.classList.remove('w-16', 'w-20', 'w-64');
+                }
+            }
+            // Run immediately
+            enforceSidebarWidth();
+            // Run on DOMContentLoaded
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', enforceSidebarWidth);
+            } else {
+                enforceSidebarWidth();
+            }
+            // Run on load
+            window.addEventListener('load', enforceSidebarWidth);
+            // Run on scroll (in case something triggers on scroll)
+            window.addEventListener('scroll', enforceSidebarWidth);
+        })();
+    </script>
     <script>
         // Store survey metrics for participant modal
         <% if (user.role !== 'manager' && typeof surveyMetrics !== 'undefined') { %>
@@ -1139,6 +1297,30 @@
                 document.getElementById('deleteQuestionForm').submit();
             }
         }
+
+        // Delete Survey Modal Functions
+        let currentDeleteSurveyData = null;
+
+        function openDeleteSurveyModal(userId, sessionId, participantName, eventName) {
+            currentDeleteSurveyData = {
+                userId: userId,
+                sessionId: sessionId,
+                participantName: participantName,
+                eventName: eventName
+            };
+            document.getElementById('deleteSurveyModalMessage').textContent = 
+                'Are you sure you want to delete the survey response for ' + participantName + ' (' + eventName + ')? This action cannot be undone.';
+            document.getElementById('deleteSurveyUserId').value = userId;
+            document.getElementById('deleteSurveySessionId').value = sessionId;
+            document.getElementById('deleteSurveyModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDeleteSurveyModal() {
+            document.getElementById('deleteSurveyModal').classList.add('hidden');
+            document.body.style.overflow = '';
+            currentDeleteSurveyData = null;
+        }
         <% } %>
 
         // Close modal on Escape key
@@ -1147,12 +1329,14 @@
                 closeSurveyInfo();
                 <% if (user.role === 'manager') { %>
                 closeQuestionsModal();
+                closeDeleteSurveyModal();
                 <% } else { %>
                 closeSurveyForm();
                 closeParticipantSurveyModal();
                 <% } %>
             }
         });
+
     </script>
 </body>
 </html>
