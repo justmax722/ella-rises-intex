@@ -2888,9 +2888,11 @@ app.get('/events', requireAuth, restrictDonor, async (req, res) => {
         });
       });
 
-      // Sort past sessions by event date (most recent first)
+      // Sort past sessions by event date (oldest first)
       pastSessions.sort((a, b) => {
-        return new Date(b.eventdatetimestart) - new Date(a.eventdatetimestart);
+        const aEnd = a.eventdatetimeend ? new Date(a.eventdatetimeend) : new Date(a.eventdatetimestart);
+        const bEnd = b.eventdatetimeend ? new Date(b.eventdatetimeend) : new Date(b.eventdatetimestart);
+        return aEnd - bEnd;
       });
     }
 
@@ -3210,6 +3212,11 @@ app.get('/events/:sessionId', requireAuth, async (req, res) => {
         ? parseInt(capacityValue, 10)
         : 'N/A';
 
+    // Flag: has this event session ended?
+    const eventEnded = session.eventdatetimeend
+      ? new Date(session.eventdatetimeend) < new Date()
+      : false;
+
     // Participant registration state
     let isRegistered = false;
     let registrationStatus = null;
@@ -3252,6 +3259,65 @@ app.get('/events/:sessionId', requireAuth, async (req, res) => {
       }
     }
 
+    // Event statistics (only computed after event ends)
+    let metricAverages = [];
+    let overallSurveyAverage = null;
+    let attendeeCount = 0;
+    let attendanceRate = null;
+
+    if (eventEnded) {
+      // Average score per survey question
+      const metricRows = await db('survey as sv')
+        .join('surveymetric as sm', 'sv.metricid', 'sm.metricid')
+        .whereNotNull('sv.surveyscore')
+        .where('sv.sessionid', sessionId)
+        .groupBy('sv.metricid', 'sm.surveymetric', 'sm.metricquestion')
+        .select(
+          'sv.metricid',
+          'sm.surveymetric as metricName',
+          'sm.metricquestion as metricQuestion',
+          db.raw('AVG(sv.surveyscore) as averageScore')
+        );
+
+      metricAverages = metricRows.map(row => ({
+        metricId: row.metricid,
+        metricName: row.metricName,
+        metricQuestion: row.metricQuestion,
+        averageScore:
+          row.averageScore !== null && row.averageScore !== undefined
+            ? Number.parseFloat(row.averageScore).toFixed(1)
+            : null
+      }));
+
+      // Overall survey score average
+      const overallRow = await db('registration')
+        .where('sessionid', sessionId)
+        .whereNotNull('overallsurveyscore')
+        .avg({ avgOverall: 'overallsurveyscore' })
+        .first();
+
+      overallSurveyAverage =
+        overallRow && overallRow.avgOverall !== null && overallRow.avgOverall !== undefined
+          ? Number.parseFloat(overallRow.avgOverall).toFixed(1)
+          : null;
+
+      // Attendee count
+      const attendeeRow = await db('registration')
+        .where('sessionid', sessionId)
+        .andWhere('registrationstatus', 'attended')
+        .andWhere('registrationattendedflag', true)
+        .count('* as count')
+        .first();
+
+      attendeeCount = attendeeRow ? parseInt(attendeeRow.count, 10) || 0 : 0;
+
+      // Attendance percentage relative to registered (exclude cancelled)
+      attendanceRate =
+        currentRegistrationCount > 0
+          ? ((attendeeCount / currentRegistrationCount) * 100).toFixed(1)
+          : null;
+    }
+
     res.render('event-details', { 
       user, 
       session,
@@ -3261,7 +3327,13 @@ app.get('/events/:sessionId', requireAuth, async (req, res) => {
       registrationStatus,
       registrationDeadlinePassed,
       currentRegistrationCount,
-      isFull
+      isFull,
+      eventEnded,
+      registrationCount: currentRegistrationCount,
+      metricAverages,
+      overallSurveyAverage,
+      attendeeCount,
+      attendanceRate
     });
   } catch (error) {
     console.error('Event details error:', error);
@@ -3632,7 +3704,7 @@ app.post('/events/:sessionId/attendance', requireAuth, async (req, res) => {
       }
     });
 
-    res.redirect(`/events/${sessionId}/attendance?success=attendance_saved`);
+    res.redirect(`/events/${sessionId}?success=attendance_saved`);
   } catch (error) {
     console.error('Take attendance POST error:', error);
     res.redirect(`/events/${req.params.sessionId}/attendance?error=attendance_save_failed`);

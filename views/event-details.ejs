@@ -136,10 +136,6 @@
                                 <p class="mt-1 text-sm font-medium"><%= session.eventrecurrencepattern %></p>
                             </div>
                             <% } %>
-                            <div>
-                                <label class="text-sm font-medium text-muted-foreground">Default Capacity</label>
-                                <p class="mt-1 text-sm font-medium"><%= session.eventdefaultcapacity || 'N/A' %></p>
-                            </div>
                         </div>
                     </div>
 
@@ -186,6 +182,71 @@
                                 <p class="mt-1 text-sm font-medium"><%= formattedRegDate %> at <%= formattedRegTime %></p>
                             </div>
                             <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Event Statistics -->
+                    <div class="mt-12">
+                        <h2 class="text-xl font-semibold mb-4 pb-2 border-b border-border">Event Statistics</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Registration Count (always show) -->
+                        <div class="p-4 rounded-lg border bg-muted/20">
+                            <p class="text-sm text-muted-foreground">Registrations</p>
+                            <p class="text-2xl font-semibold text-card-foreground mt-1"><%= (registrationCount ?? currentRegistrationCount ?? 0).toLocaleString('en-US') %></p>
+                            <p class="text-xs text-muted-foreground mt-1">Total registered participants</p>
+                        </div>
+
+                        <% if (eventEnded) { %>
+                        <!-- Attendees -->
+                        <div class="p-4 rounded-lg border bg-muted/20">
+                            <p class="text-sm text-muted-foreground">Attendees</p>
+                            <p class="text-2xl font-semibold text-card-foreground mt-1"><%= attendeeCount !== undefined ? attendeeCount.toLocaleString('en-US') : '0' %></p>
+                            <p class="text-xs text-muted-foreground mt-1">Marked as attended</p>
+                        </div>
+
+                        <!-- Attendance Rate -->
+                        <div class="p-4 rounded-lg border bg-muted/20">
+                            <p class="text-sm text-muted-foreground">Attendance Rate</p>
+                            <p class="text-2xl font-semibold text-card-foreground mt-1">
+                                <%= attendanceRate !== null && attendanceRate !== undefined ? `${attendanceRate}%` : 'N/A' %>
+                            </p>
+                            <p class="text-xs text-muted-foreground mt-1">Attendees / Registered</p>
+                        </div>
+
+                        <!-- Overall Survey Average -->
+                        <div class="p-4 rounded-lg border bg-muted/20">
+                            <p class="text-sm text-muted-foreground">Overall Survey Score</p>
+                            <p class="text-2xl font-semibold text-card-foreground mt-1">
+                                <%= overallSurveyAverage !== null && overallSurveyAverage !== undefined ? overallSurveyAverage : 'N/A' %>
+                            </p>
+                            <p class="text-xs text-muted-foreground mt-1">Average of overall scores</p>
+                        </div>
+
+                        <!-- Per-question averages -->
+                        <div class="p-4 rounded-lg border bg-muted/20 md:col-span-2">
+                            <p class="text-sm font-medium text-card-foreground mb-3">Average by Question</p>
+                            <% if (metricAverages && metricAverages.length > 0) { %>
+                                <div class="space-y-2">
+                                    <% metricAverages.forEach((metric, idx) => { %>
+                                        <div class="flex items-center justify-between p-3 rounded-md bg-card shadow-sm">
+                                            <div class="flex items-center gap-3">
+                                                <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">Q<%= idx + 1 %></span>
+                                                <span class="text-sm text-card-foreground"><%= metric.metricQuestion || metric.metricName || ('Question ' + (idx + 1)) %></span>
+                                            </div>
+                                            <span class="text-sm font-semibold text-card-foreground"><%= metric.averageScore !== null ? metric.averageScore : 'N/A' %></span>
+                                        </div>
+                                    <% }) %>
+                                </div>
+                            <% } else { %>
+                                <p class="text-sm text-muted-foreground">No survey responses yet.</p>
+                            <% } %>
+                        </div>
+                        <% } else { %>
+                            <div class="p-4 rounded-lg border bg-muted/20">
+                                <p class="text-sm text-muted-foreground">Survey and attendance stats will be available after the event ends.</p>
+                            </div>
+                        <% } %>
                         </div>
                     </div>
                 </div>
