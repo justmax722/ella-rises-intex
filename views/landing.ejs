@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Page metadata -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ella Rises</title>
     <link rel="icon" type="image/png" href="/images/favicon.png">
+    
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="/css/styles.css">
+    
+    <!-- Smooth scrolling for anchor links (used in "Learn More" button) -->
     <style>
         html {
             scroll-behavior: smooth;
@@ -13,29 +18,42 @@
     </style>
 </head>
 <body class="bg-background">
-    <!-- Header -->
+    <!-- ============================================================================
+         HEADER / NAVIGATION
+         ============================================================================
+         Main site navigation with logo and action buttons
+         Shows different buttons based on whether user is logged in
+    -->
     <header class="w-full px-6 py-2 md:px-8 md:py-3 bg-muted border-b border-border">
         <div class="container mx-auto flex items-center justify-between">
+            <!-- Logo - links back to home page -->
             <div class="flex items-center">
                 <a href="/" class="block">
                     <img src="/images/logo.png" alt="Ella Rises" class="h-16 md:h-20 w-auto object-contain" style="max-width: 320px;">
                 </a>
             </div>
+            
+            <!-- Navigation buttons -->
             <div class="flex items-center gap-3 md:gap-4">
+                <!-- Donate button - always visible -->
                 <a href="/donate" class="px-4 py-2 md:px-6 md:py-2.5 bg-sage text-sage-foreground rounded-md font-medium hover:bg-sage/80 transition-colors">
                     Donate
                 </a>
+                
+                <!-- Conditional navigation based on login status -->
                 <% if (typeof isLoggedIn !== 'undefined' && isLoggedIn === true) { %>
-                <a href="/home" class="px-4 py-2 md:px-6 md:py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
-                    Go to Home
-                </a>
+                    <!-- Logged in: show link to dashboard -->
+                    <a href="/home" class="px-4 py-2 md:px-6 md:py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
+                        Go to Home
+                    </a>
                 <% } else { %>
-                <a href="/login" class="px-4 py-2 md:px-6 md:py-2.5 border border-primary text-primary rounded-md font-medium hover:bg-primary/10 transition-colors">
-                    Login
-                </a>
-                <a href="/login?signup=true" class="px-4 py-2 md:px-6 md:py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
-                    Sign Up
-                </a>
+                    <!-- Not logged in: show login and signup buttons -->
+                    <a href="/login" class="px-4 py-2 md:px-6 md:py-2.5 border border-primary text-primary rounded-md font-medium hover:bg-primary/10 transition-colors">
+                        Login
+                    </a>
+                    <a href="/login?signup=true" class="px-4 py-2 md:px-6 md:py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
+                        Sign Up
+                    </a>
                 <% } %>
             </div>
         </div>
@@ -69,11 +87,16 @@
     </section>
 
 
-    <!-- Statistics Section -->
+    <!-- ============================================================================
+         STATISTICS SECTION
+         ============================================================================
+         Displays key metrics about Ella Rises' impact
+         Uses primary background color to create visual separation
+    -->
     <section class="w-full bg-primary py-12 md:py-16">
         <div class="container mx-auto max-w-6xl px-6">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
-                <!-- Stat 1 -->
+                <!-- Stat 1: Total participants served -->
                 <div class="text-center">
                     <div class="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-accent mb-2">
                         500+
@@ -83,7 +106,7 @@
                     </div>
                 </div>
                 
-                <!-- Stat 2 -->
+                <!-- Stat 2: Programs delivered -->
                 <div class="text-center">
                     <div class="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-accent mb-2">
                         50+
@@ -93,7 +116,7 @@
                     </div>
                 </div>
                 
-                <!-- Stat 3 -->
+                <!-- Stat 3: Satisfaction rate -->
                 <div class="text-center">
                     <div class="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-accent mb-2">
                         95%
@@ -103,7 +126,7 @@
                     </div>
                 </div>
                 
-                <!-- Stat 4 -->
+                <!-- Stat 4: Years in operation -->
                 <div class="text-center">
                     <div class="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-accent mb-2">
                         12
@@ -117,16 +140,25 @@
     </section>
 
 
-    <!-- What We Offer Section -->
+    <!-- ============================================================================
+         WHAT WE OFFER SECTION
+         ============================================================================
+         Showcases the three main services/programs Ella Rises provides
+         Uses background image with overlay cards for visual appeal
+         This section is the target of the "Learn More" anchor link from hero section
+    -->
     <section id="what-we-offer" class="w-full px-6 py-12 md:py-16 lg:py-20 relative" style="background-image: url('/images/Image_2.jpg'); background-size: cover; background-repeat: no-repeat; background-position: center;">
         <div class="container mx-auto max-w-6xl relative z-10">
+            <!-- Section title -->
             <div class="rounded-xl px-6 py-4 md:px-8 md:py-6 shadow-lg inline-block mb-12 md:mb-16 mx-auto" style="background-color: rgba(255, 255, 255, 0.5);">
                 <h2 class="text-3xl md:text-4xl font-serif text-foreground text-center">
                     What We Offer
                 </h2>
             </div>
+            
+            <!-- Three service cards in a responsive grid -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-                <!-- STEAM Programs Card -->
+                <!-- Card 1: STEAM Programs -->
                 <div class="bg-card rounded-lg p-6 md:p-8 shadow-lg animate-fade-in" style="animation-delay: 0.1s;">
                     <div class="flex justify-center mb-4">
                         <div class="w-16 h-16 rounded-full border-2 border-accent flex items-center justify-center bg-accent/10">
@@ -180,7 +212,12 @@
         </div>
     </section>
 
-    <!-- Join Us Section -->
+    <!-- ============================================================================
+         CALL TO ACTION SECTION
+         ============================================================================
+         Final call-to-action encouraging donations
+         Uses secondary background color for visual distinction
+    -->
     <section class="w-full px-6 py-12 md:py-16 lg:py-20 bg-secondary/20">
         <div class="container mx-auto max-w-4xl text-center">
             <h2 class="text-3xl md:text-4xl font-serif text-foreground mb-6 md:mb-8">
@@ -189,6 +226,7 @@
             <p class="text-base md:text-lg text-foreground/80 mb-8 md:mb-10 max-w-2xl mx-auto leading-relaxed">
                 Your support helps us provide life-changing opportunities to young women in our community. Every contribution makes an impact.
             </p>
+            <!-- Donate button with arrow icon -->
             <a href="/donate" class="inline-flex items-center gap-2 px-6 py-3 md:px-8 md:py-3.5 bg-sage text-sage-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
                 Donate Today
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -198,10 +236,14 @@
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- ============================================================================
+         FOOTER
+         ============================================================================
+         Site footer with social media links and copyright information
+    -->
     <footer class="w-full px-6 py-8 md:py-10 border-t border-border">
         <div class="container mx-auto max-w-6xl text-center">
-            <!-- Social Media Links -->
+            <!-- Social media icons - links to Facebook, Instagram, and Easter egg teapot -->
             <div class="flex justify-center gap-4 mb-4">
                 <a href="https://www.facebook.com/EllaRises/" target="_blank" rel="noopener noreferrer" class="text-muted-foreground hover:text-primary transition-colors" aria-label="Facebook">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
