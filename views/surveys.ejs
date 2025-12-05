@@ -98,15 +98,20 @@
             <% } %>
 
             <!-- Pending Surveys Section (Participants Only) -->
-            <% if (user.role !== 'manager' && typeof pendingSurveys !== 'undefined' && pendingSurveys.length > 0) { %>
+            <% if (user.role !== 'manager') { %>
             <div class="bg-card rounded-lg shadow-sm overflow-hidden mb-8">
                 <div class="p-6 border-b border-border">
                     <h3 class="text-lg font-semibold text-card-foreground">Pending Surveys</h3>
                     <p class="text-sm text-card-foreground/70 mt-1">
-                        You have <%= pendingSurveys.length %> survey<%= pendingSurveys.length !== 1 ? 's' : '' %> waiting for your feedback
+                        <% if (typeof pendingSurveys !== 'undefined' && pendingSurveys.length > 0) { %>
+                            You have <%= pendingSurveys.length %> survey<%= pendingSurveys.length !== 1 ? 's' : '' %> waiting for your feedback
+                        <% } else { %>
+                            No pending surveys at this time
+                        <% } %>
                     </p>
                 </div>
                 <div class="p-6">
+                    <% if (typeof pendingSurveys !== 'undefined' && pendingSurveys.length > 0) { %>
                     <div class="space-y-4">
                         <% pendingSurveys.forEach(survey => { %>
                         <div class="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border">
@@ -129,6 +134,17 @@
                         </div>
                         <% }); %>
                     </div>
+                    <% } else { %>
+                    <div class="text-center py-8">
+                        <p class="text-card-foreground/70 mb-4">You don't have any pending surveys at this time.</p>
+                        <a href="/events" class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors text-sm font-medium" style="background-color: #5fe891 !important;" onmouseover="this.style.backgroundColor='#16a34a'" onmouseout="this.style.backgroundColor='#5fe891'">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Register for an Event
+                        </a>
+                    </div>
+                    <% } %>
                 </div>
             </div>
             <% } %>
@@ -536,14 +552,21 @@
             <!-- Participant Survey Responses List -->
             <div class="bg-card rounded-lg shadow-sm overflow-hidden">
                 <div class="p-6 border-b border-border">
-                    <h3 class="text-lg font-semibold text-card-foreground">Your Survey Responses</h3>
-                    <p class="text-sm text-card-foreground/70 mt-1">
-                        <% if (typeof surveyResponses !== 'undefined') { %>
-                            <%= surveyResponses.length %> response<%= surveyResponses.length !== 1 ? 's' : '' %>
-                        <% } %>
-                    </p>
+                    <button onclick="toggleSurveyResponses()" class="w-full flex items-center justify-between text-left hover:bg-muted/30 -m-6 p-6 rounded-t-lg transition-colors">
+                        <div>
+                            <h3 class="text-lg font-semibold text-card-foreground">Your Survey Responses</h3>
+                            <p class="text-sm text-card-foreground/70 mt-1">
+                                <% if (typeof surveyResponses !== 'undefined') { %>
+                                    <%= surveyResponses.length %> response<%= surveyResponses.length !== 1 ? 's' : '' %>
+                                <% } %>
+                            </p>
+                        </div>
+                        <svg id="surveyResponsesToggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-card-foreground/70 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
                 </div>
-                <div class="p-6">
+                <div id="surveyResponsesContent" class="p-6 hidden">
                     <% if (typeof surveyResponses !== 'undefined' && surveyResponses.length > 0) { %>
                         <div class="space-y-4">
                             <% surveyResponses.forEach(response => { %>
@@ -610,7 +633,7 @@
         
         <!-- Modal Content -->
         <div class="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
-            <div class="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden pointer-events-auto">
+            <div class="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden pointer-events-auto" onclick="event.stopPropagation()">
                 <!-- Modal Header -->
                 <div class="px-6 py-4 border-b border-border flex items-center justify-between">
                     <div>
@@ -1055,6 +1078,19 @@
         function closeParticipantSurveyModal() {
             document.getElementById('participantSurveyModal').classList.add('hidden');
             document.body.style.overflow = '';
+        }
+
+        // Toggle survey responses dropdown
+        function toggleSurveyResponses() {
+            const content = document.getElementById('surveyResponsesContent');
+            const icon = document.getElementById('surveyResponsesToggleIcon');
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                content.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
         }
         <% } %>
 
