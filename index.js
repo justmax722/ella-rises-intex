@@ -1579,6 +1579,133 @@ app.get('/home', requireAuth, async (req, res) => {
       lastName: req.session.userLastName || ''
     };
 
+    // For managers, fetch admin dashboard stats
+    let activeParticipantsCount = 0;
+    let upcomingEventsCount = 0;
+    let milestonesAchievedCount = 0;
+    let donationsThisMonth = 0;
+    let surveyResponseRate = 0;
+    let netPromoterScore = 0;
+
+    if (req.session.userRole === 'manager') {
+      try {
+        // Count active participants: rows in profile table where user has roleid = 2 (participant)
+        // Using inner join to only count profiles that exist with participant role
+        const activeParticipantsResult = await db('profile as p')
+          .innerJoin('users as u', 'p.userid', 'u.userid')
+          .where('u.roleid', 2)
+          .count('* as count')
+          .first();
+        // PostgreSQL returns count as string, handle both string and number
+        const count = activeParticipantsResult?.count;
+        if (count !== undefined && count !== null) {
+          activeParticipantsCount = typeof count === 'string' ? parseInt(count, 10) : Number(count);
+          if (isNaN(activeParticipantsCount)) activeParticipantsCount = 0;
+        }
+      } catch (error) {
+        console.error('Error counting active participants:', error);
+        activeParticipantsCount = 0;
+      }
+
+      try {
+        // Count upcoming events: sessions where eventdatetimestart > now
+        const now = new Date();
+        const upcomingEventsResult = await db('session')
+          .where('eventdatetimestart', '>', now)
+          .count('* as count')
+          .first();
+        const count = upcomingEventsResult?.count;
+        if (count !== undefined && count !== null) {
+          upcomingEventsCount = typeof count === 'string' ? parseInt(count, 10) : Number(count);
+          if (isNaN(upcomingEventsCount)) upcomingEventsCount = 0;
+        }
+      } catch (error) {
+        console.error('Error counting upcoming events:', error);
+        upcomingEventsCount = 0;
+      }
+
+      try {
+        // Count total milestones achieved: all rows in usermilestone table
+        const milestonesResult = await db('usermilestone')
+          .count('* as count')
+          .first();
+        const count = milestonesResult?.count;
+        if (count !== undefined && count !== null) {
+          milestonesAchievedCount = typeof count === 'string' ? parseInt(count, 10) : Number(count);
+          if (isNaN(milestonesAchievedCount)) milestonesAchievedCount = 0;
+        }
+      } catch (error) {
+        console.error('Error counting milestones:', error);
+        milestonesAchievedCount = 0;
+      }
+
+      try {
+        // Calculate donations this month (same logic as donations page)
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        const allDonations = await db('donation')
+          .select('donationamount', 'donationdate');
+        
+        const thisMonthDonationsList = allDonations.filter(d => {
+          const donationDate = new Date(d.donationdate);
+          return donationDate.getMonth() === currentMonth && donationDate.getFullYear() === currentYear;
+        });
+        
+        donationsThisMonth = thisMonthDonationsList.reduce((sum, d) => sum + parseFloat(d.donationamount || 0), 0);
+      } catch (error) {
+        console.error('Error calculating donations this month:', error);
+        donationsThisMonth = 0;
+      }
+
+      try {
+        // Calculate survey response rate: % of people who attended and took surveys
+        // Count registrations where attended = true AND survey submitted
+        const attendedWithSurvey = await db('registration')
+          .where('registrationattendedflag', true)
+          .whereNotNull('surveynpsbucket')
+          .count('* as count')
+          .first();
+        
+        // Count all registrations where attended = true
+        const totalAttended = await db('registration')
+          .where('registrationattendedflag', true)
+          .count('* as count')
+          .first();
+        
+        const attendedWithSurveyCount = attendedWithSurvey?.count ? (typeof attendedWithSurvey.count === 'string' ? parseInt(attendedWithSurvey.count, 10) : Number(attendedWithSurvey.count)) : 0;
+        const totalAttendedCount = totalAttended?.count ? (typeof totalAttended.count === 'string' ? parseInt(totalAttended.count, 10) : Number(totalAttended.count)) : 0;
+        
+        surveyResponseRate = totalAttendedCount > 0 ? ((attendedWithSurveyCount / totalAttendedCount) * 100) : 0;
+      } catch (error) {
+        console.error('Error calculating survey response rate:', error);
+        surveyResponseRate = 0;
+      }
+
+      try {
+        // Calculate Net Promoter Score (same logic as surveys page)
+        // NPS = ((Promoters - Detractors) / Total Responses) * 100
+        const allSurveyResponses = await db('registration')
+          .whereNotNull('surveynpsbucket')
+          .select('surveynpsbucket');
+        
+        let promoters = 0;
+        let detractors = 0;
+        const totalResponses = allSurveyResponses.length;
+        
+        for (const response of allSurveyResponses) {
+          if (response.surveynpsbucket === 'Promoter') promoters++;
+          else if (response.surveynpsbucket === 'Detractor') detractors++;
+        }
+        
+        netPromoterScore = totalResponses > 0 ? Math.round(((promoters - detractors) / totalResponses) * 100) : 0;
+      } catch (error) {
+        console.error('Error calculating Net Promoter Score:', error);
+        netPromoterScore = 0;
+      }
+    }
+
     // For participants, fetch additional data
     let myUpcomingEvents = [];
     let pendingSurveys = [];
@@ -1641,12 +1768,139 @@ app.get('/home', requireAuth, async (req, res) => {
       }
     }
 
+    // For managers, fetch low registration events and other data
+    let lowRegistrationEvents = [];
+    let participants = [];
+    let milestoneTypes = [];
+    if (req.session.userRole === 'manager') {
+      try {
+        // Get upcoming events with registration counts and capacity
+        const now = new Date();
+        const upcomingSessions = await db('session as s')
+          .join('event as e', 's.eventid', 'e.eventid')
+          .where('s.eventdatetimestart', '>', now)
+          .select(
+            's.sessionid',
+            's.eventid',
+            's.eventdatetimestart',
+            's.eventlocation',
+            's.eventcapacity',
+            'e.eventname',
+            'e.eventdefaultcapacity'
+          )
+          .orderBy('s.eventdatetimestart', 'asc');
+
+        // Get registration counts for each session (exclude cancelled)
+        const sessionIds = upcomingSessions.map(s => s.sessionid);
+        let registrationCountsBySessionId = {};
+        if (sessionIds.length > 0) {
+          const registrationCounts = await db('registration')
+            .select('sessionid')
+            .count('* as count')
+            .whereIn('sessionid', sessionIds)
+            .andWhere(function () {
+              this.whereNull('registrationstatus')
+                .orWhereNot('registrationstatus', 'cancelled');
+            })
+            .groupBy('sessionid');
+
+          registrationCountsBySessionId = registrationCounts.reduce((acc, row) => {
+            const count = row.count;
+            acc[row.sessionid] = typeof count === 'string' ? parseInt(count, 10) : (typeof count === 'number' ? count : 0);
+            if (isNaN(acc[row.sessionid])) acc[row.sessionid] = 0;
+            return acc;
+          }, {});
+        }
+
+        // Calculate registration percentage and filter for < 30%
+        for (const session of upcomingSessions) {
+          const registeredCount = registrationCountsBySessionId[session.sessionid] || 0;
+          
+          // Parse capacity - use session capacity if available, otherwise default capacity
+          const capacityValue = session.eventcapacity || session.eventdefaultcapacity || null;
+          let capacity = null;
+          
+          if (capacityValue !== null && capacityValue !== undefined) {
+            if (typeof capacityValue === 'number') {
+              capacity = capacityValue;
+            } else {
+              capacity = parseInt(capacityValue, 10);
+              if (isNaN(capacity)) {
+                capacity = null;
+              }
+            }
+          }
+          
+          // Only process if we have a valid capacity > 0
+          if (capacity !== null && capacity > 0) {
+            const registrationPercentage = (registeredCount / capacity) * 100;
+            
+            // Debug logging
+            console.log(`Session ${session.sessionid}: ${session.eventname} - ${registeredCount}/${capacity} = ${registrationPercentage.toFixed(1)}%`);
+            
+            if (registrationPercentage < 30) {
+              lowRegistrationEvents.push({
+                sessionid: session.sessionid,
+                eventname: session.eventname,
+                eventdatetimestart: session.eventdatetimestart,
+                eventlocation: session.eventlocation,
+                registeredCount: registeredCount,
+                capacity: capacity,
+                registrationPercentage: registrationPercentage.toFixed(1)
+              });
+            }
+          } else {
+            // Debug logging for sessions without capacity
+            console.log(`Session ${session.sessionid}: ${session.eventname} - No capacity (eventcapacity: ${session.eventcapacity}, eventdefaultcapacity: ${session.eventdefaultcapacity})`);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching low registration events:', error);
+      }
+
+      try {
+        // Get all participants (users with roleid = 2)
+        const participantsData = await db('users')
+          .where('roleid', 2)
+          .select('userid', 'userfirstname', 'userlastname', 'useremail')
+          .orderBy('userlastname', 'asc')
+          .orderBy('userfirstname', 'asc');
+        
+        participants = participantsData.map(p => ({
+          userid: p.userid,
+          userfirstname: p.userfirstname || '',
+          userlastname: p.userlastname || '',
+          useremail: p.useremail
+        }));
+      } catch (error) {
+        console.error('Error fetching participants for home:', error);
+      }
+
+      try {
+        // Get all milestone types
+        milestoneTypes = await db('milestonetype')
+          .select('milestoneid', 'milestonetitle')
+          .orderBy('milestonetitle');
+      } catch (error) {
+        console.error('Error fetching milestone types for home:', error);
+      }
+    }
+
     res.render('home', {
       user,
       myUpcomingEvents,
       pendingSurveys,
       milestoneCount,
-      mostRecentMilestone
+      mostRecentMilestone,
+      activeParticipantsCount,
+      upcomingEventsCount,
+      milestonesAchievedCount,
+      donationsThisMonth,
+      surveyResponseRate,
+      netPromoterScore,
+      participants,
+      milestoneTypes,
+      lowRegistrationEvents
     });
   } catch (error) {
     console.error('Home error:', error);
