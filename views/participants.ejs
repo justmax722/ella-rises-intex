@@ -93,10 +93,6 @@
                                         <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Date of Birth</th>
                                         <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Phone</th>
                                         <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">City</th>
-                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">State</th>
-                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">ZIP</th>
-                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">School/Employer</th>
-                                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Field of Interest</th>
                                         <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Actions</th>
                                     </tr>
                                 </thead>
@@ -128,34 +124,14 @@
                                                 <td class="p-4 align-middle">
                                                     <%= participant.profileCity || '<span class="text-muted-foreground">—</span>' %>
                                                 </td>
-                                                <td class="p-4 align-middle">
-                                                    <%= participant.profileState || '<span class="text-muted-foreground">—</span>' %>
-                                                </td>
-                                                <td class="p-4 align-middle">
-                                                    <%= participant.profileZip || '<span class="text-muted-foreground">—</span>' %>
-                                                </td>
-                                                <td class="p-4 align-middle">
-                                                    <%= participant.profileSchoolOrEmployer || '<span class="text-muted-foreground">—</span>' %>
-                                                </td>
-                                                <td class="p-4 align-middle">
-                                                    <%= participant.profileFieldOfInterest || '<span class="text-muted-foreground">—</span>' %>
-                                                </td>
                                                 <td class="p-4 align-middle text-sm">
-                                                    <a href="/participants/edit/<%= participant.userid %>" class="text-accent hover:text-accent/80 mr-3">Edit</a>
-                                                    <button 
-                                                        class="text-destructive hover:text-destructive/80 delete-participant-btn"
-                                                        data-userid="<%= participant.userid %>"
-                                                        data-name="<%= participant.fullName %>"
-                                                        data-email="<%= participant.email %>"
-                                                    >
-                                                        Delete
-                                                    </button>
+                                                    <a href="/participants/view/<%= participant.userid %>" class="text-accent hover:text-accent/80">View More</a>
                                                 </td>
                                             </tr>
                                         <% }); %>
                                     <% } else { %>
                                         <tr>
-                                            <td colspan="10" class="px-6 py-4 text-center text-sm text-card-foreground/70">No participants found</td>
+                                            <td colspan="6" class="px-6 py-4 text-center text-sm text-card-foreground/70">No participants found</td>
                                         </tr>
                                     <% } %>
                                 </tbody>

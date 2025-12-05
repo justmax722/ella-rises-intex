@@ -122,7 +122,6 @@
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Email</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Role</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Last Login</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
@@ -158,9 +157,6 @@
                                             <% } else { %>
                                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">inactive</span>
                                             <% } %>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-card-foreground/70">—</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <a href="/users/edit/<%= user.userid %>" class="text-accent hover:text-accent/80 mr-3">Edit</a>
