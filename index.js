@@ -2063,6 +2063,18 @@ app.get('/participants/view/:userid', requireAuth, restrictDonor, async (req, re
       .where('userid', userId)
       .first();
 
+    // Get all milestone types for the add milestone modal
+    const milestoneTypes = await db('milestonetype')
+      .select('milestoneid', 'milestonetitle')
+      .orderBy('milestonetitle');
+
+    // Get all participants for the add milestone modal (though we'll pre-select this one)
+    const participants = await db('users')
+      .where('roleid', 2)
+      .select('userid', 'userfirstname', 'userlastname', 'useremail')
+      .orderBy('userlastname', 'asc')
+      .orderBy('userfirstname', 'asc');
+
     const user = {
       email: req.session.userEmail,
       role: req.session.userRole,
@@ -2070,7 +2082,7 @@ app.get('/participants/view/:userid', requireAuth, restrictDonor, async (req, re
       lastName: req.session.userLastName || ''
     };
 
-    res.render('admin-view-participant', { user, participant: userData, profileData, query: req.query });
+    res.render('admin-view-participant', { user, participant: userData, profileData, milestoneTypes, participants, query: req.query });
   } catch (error) {
     console.error('View participant page error:', error);
     res.redirect('/participants?error=page_error');
@@ -5258,6 +5270,11 @@ app.get('/health', async (req, res) => {
   } catch (error) {
     res.status(503).json({ status: 'unhealthy', database: 'disconnected', error: error.message });
   }
+});
+
+// Teapot endpoint (418 I'm a teapot)
+app.get('/teapot', (req, res) => {
+  res.status(418).send("I'm a teapot");
 });
 
 // Error handling middleware
