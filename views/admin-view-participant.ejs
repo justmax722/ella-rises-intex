@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Participant - Ella Rises CRM</title>
+    <link rel="icon" type="image/png" href="/images/favicon.png">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-background min-h-screen flex">
+    <!-- Sidebar Navigation -->
+    <%- include('partials/sidebar', { user: user, currentPage: 'participants' }) %>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-6 overflow-auto">
+        <div class="space-y-6">
+            <!-- Page Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-serif font-bold text-primary">Participant Profile</h1>
+                    <p class="text-muted-foreground mt-1">View participant profile details</p>
+                </div>
+                <div class="flex gap-3">
+                    <a href="/participants/edit/<%= participant.userid %>" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                        Edit
+                    </a>
+                    <button 
+                        class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground h-10 px-4 py-2 delete-participant-btn"
+                        data-userid="<%= participant.userid %>"
+                        data-name="<%= (participant.userfirstname || '') + ' ' + (participant.userlastname || '') %>"
+                        data-email="<%= participant.useremail %>"
+                    >
+                        Delete
+                    </button>
+                    <a href="/participants" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                        Back
+                    </a>
+                </div>
+            </div>
+
+            <!-- Profile Information Card -->
+            <div class="rounded-lg border bg-card text-card-foreground shadow-sm">
+                <div class="p-6">
+                    <h2 class="text-xl font-semibold mb-6 pb-2 border-b border-border">Profile Information</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Name -->
+                        <div>
+                            <label class="text-xs text-muted-foreground uppercase tracking-wide mb-1 block">Name</label>
+                            <p class="text-lg font-semibold text-card-foreground">
+                                <%= (participant.userfirstname || '') + ' ' + (participant.userlastname || '') || 'No Name' %>
+                            </p>
+                        </div>
+
+                        <!-- Email -->
+                        <div>
+                            <label class="text-xs text-muted-foreground uppercase tracking-wide mb-1 block">Email</label>
+                            <p class="text-lg font-semibold text-card-foreground"><%= participant.useremail %></p>
+                        </div>
+
+                        <!-- Date of Birth -->
+                        <div>
+                            <label class="text-xs text-muted-foreground uppercase tracking-wide mb-1 block">Date of Birth</label>
+                            <% if (profileData && profileData.profiledob) { %>
+                                <% const dob = new Date(profileData.profiledob); %>
+                                <p class="text-lg font-semibold text-card-foreground">
+                                    <%= (dob.getMonth() + 1) + '/' + dob.getDate() + '/' + dob.getFullYear() %>
+                                </p>
+                            <% } else { %>
+                                <p class="text-lg font-semibold text-card-foreground text-muted-foreground">—</p>
+                            <% } %>
+                        </div>
+
+                        <!-- Phone -->
+                        <div>
+                            <label class="text-xs text-muted-foreground uppercase tracking-wide mb-1 block">Phone</label>
+                            <p class="text-lg font-semibold text-card-foreground">
+                                <%= profileData && profileData.profilephone ? profileData.profilephone : '<span class="text-muted-foreground">—</span>' %>
+                            </p>
+                        </div>
+
+                        <!-- City -->
+                        <div>
+                            <label class="text-xs text-muted-foreground uppercase tracking-wide mb-1 block">City</label>
+                            <p class="text-lg font-semibold text-card-foreground">
+                                <%= profileData && profileData.profilecity ? profileData.profilecity : '<span class="text-muted-foreground">—</span>' %>
+                            </p>
+                        </div>
+
+                        <!-- State -->
+                        <div>
+                            <label class="text-xs text-muted-foreground uppercase tracking-wide mb-1 block">State</label>
+                            <p class="text-lg font-semibold text-card-foreground">
+                                <%= profileData && profileData.profilestate ? profileData.profilestate : '<span class="text-muted-foreground">—</span>' %>
+                            </p>
+                        </div>
+
+                        <!-- ZIP -->
+                        <div>
+                            <label class="text-xs text-muted-foreground uppercase tracking-wide mb-1 block">ZIP</label>
+                            <p class="text-lg font-semibold text-card-foreground">
+                                <%= profileData && profileData.profilezip ? profileData.profilezip : '<span class="text-muted-foreground">—</span>' %>
+                            </p>
+                        </div>
+
+                        <!-- School/Employer -->
+                        <div>
+                            <label class="text-xs text-muted-foreground uppercase tracking-wide mb-1 block">School/Employer</label>
+                            <p class="text-lg font-semibold text-card-foreground">
+                                <%= profileData && profileData.profileschooloremployer ? profileData.profileschooloremployer : '<span class="text-muted-foreground">—</span>' %>
+                            </p>
+                        </div>
+
+                        <!-- Field of Interest -->
+                        <div>
+                            <label class="text-xs text-muted-foreground uppercase tracking-wide mb-1 block">Field of Interest</label>
+                            <p class="text-lg font-semibold text-card-foreground">
+                                <%= profileData && profileData.profilefieldofinterest ? profileData.profilefieldofinterest : '<span class="text-muted-foreground">—</span>' %>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-card rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-lg font-semibold text-card-foreground mb-4">Delete Participant?</h3>
+            <p class="text-sm text-card-foreground/70 mb-6">
+                Are you sure? This will permanently delete the participant's login and profile. Their donation history will be anonymized and cannot be recovered.
+            </p>
+            <div class="flex gap-3 justify-end">
+                <button 
+                    id="cancelDeleteBtn"
+                    class="px-4 py-2 border border-input rounded-md text-sm font-medium text-card-foreground hover:bg-muted transition-colors"
+                >
+                    Cancel
+                </button>
+                <form id="deleteForm" method="POST" action="/participants/delete" class="inline">
+                    <input type="hidden" id="deleteUserId" name="userid" value="" />
+                    <button 
+                        type="submit"
+                        class="px-4 py-2 bg-destructive text-destructive-foreground rounded-md text-sm font-medium hover:bg-destructive/90 transition-colors"
+                    >
+                        Yes, Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Delete modal functionality
+        const deleteModal = document.getElementById('deleteModal');
+        const deleteForm = document.getElementById('deleteForm');
+        const deleteUserIdInput = document.getElementById('deleteUserId');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const deleteButton = document.querySelector('.delete-participant-btn');
+
+        if (deleteButton) {
+            deleteButton.addEventListener('click', function() {
+                const userId = this.getAttribute('data-userid');
+                deleteUserIdInput.value = userId;
+                deleteModal.classList.remove('hidden');
+            });
+        }
+
+        cancelDeleteBtn.addEventListener('click', function() {
+            deleteModal.classList.add('hidden');
+        });
+
+        // Close modal when clicking outside
+        deleteModal.addEventListener('click', function(e) {
+            if (e.target === deleteModal) {
+                deleteModal.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
+

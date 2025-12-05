@@ -1772,6 +1772,8 @@ app.get('/home', requireAuth, async (req, res) => {
     let lowRegistrationEvents = [];
     let participants = [];
     let milestoneTypes = [];
+    let milestonesThisMonth = 0;
+    let topMilestonesThisMonth = [];
     if (req.session.userRole === 'manager') {
       try {
         // Get upcoming events with registration counts and capacity
@@ -1884,6 +1886,43 @@ app.get('/home', requireAuth, async (req, res) => {
       } catch (error) {
         console.error('Error fetching milestone types for home:', error);
       }
+
+      try {
+        // Get milestones from the past month (last 30 days)
+        const now = new Date();
+        const oneMonthAgo = new Date(now);
+        oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
+
+        // Count total milestones reached this past month
+        const milestonesThisMonthResult = await db('usermilestone')
+          .where('milestonedate', '>=', oneMonthAgo.toISOString())
+          .where('milestonedate', '<=', now.toISOString())
+          .count('* as count')
+          .first();
+        
+        milestonesThisMonth = milestonesThisMonthResult?.count ? parseInt(milestonesThisMonthResult.count, 10) : 0;
+
+        // Get top 3 most reached milestones for this month
+        const topMilestones = await db('usermilestone as um')
+          .join('milestonetype as mt', 'um.milestoneid', 'mt.milestoneid')
+          .where('um.milestonedate', '>=', oneMonthAgo.toISOString())
+          .where('um.milestonedate', '<=', now.toISOString())
+          .select('mt.milestoneid', 'mt.milestonetitle')
+          .count('* as count')
+          .groupBy('mt.milestoneid', 'mt.milestonetitle')
+          .orderBy('count', 'desc')
+          .limit(3);
+
+        topMilestonesThisMonth = topMilestones.map(m => ({
+          milestoneid: m.milestoneid,
+          milestonetitle: m.milestonetitle,
+          count: typeof m.count === 'string' ? parseInt(m.count, 10) : (typeof m.count === 'number' ? m.count : 0)
+        }));
+      } catch (error) {
+        console.error('Error fetching milestones this month:', error);
+        milestonesThisMonth = 0;
+        topMilestonesThisMonth = [];
+      }
     }
 
     res.render('home', {
@@ -1900,7 +1939,9 @@ app.get('/home', requireAuth, async (req, res) => {
       netPromoterScore,
       participants,
       milestoneTypes,
-      lowRegistrationEvents
+      lowRegistrationEvents,
+      milestonesThisMonth,
+      topMilestonesThisMonth
     });
   } catch (error) {
     console.error('Home error:', error);
@@ -1987,6 +2028,52 @@ app.get('/participants', requireAuth, restrictDonor, async (req, res) => {
   } catch (error) {
     console.error('Participants error:', error);
     res.redirect('/login');
+  }
+});
+
+// Admin View Participant route - GET (protected, manager only)
+app.get('/participants/view/:userid', requireAuth, restrictDonor, async (req, res) => {
+  try {
+    // Check if user is manager
+    if (req.session.userRole !== 'manager') {
+      return res.redirect(getDefaultRedirect(req.session.userRole));
+    }
+
+    const userId = parseInt(req.params.userid);
+    if (isNaN(userId)) {
+      return res.redirect('/participants?error=invalid_user_id');
+    }
+
+    // Fetch participant user data
+    const userData = await db('users')
+      .where('userid', userId)
+      .first();
+
+    if (!userData) {
+      return res.redirect('/participants?error=participant_not_found');
+    }
+
+    // Verify user is a participant (roleid = 2)
+    if (userData.roleid !== 2) {
+      return res.redirect('/participants?error=not_participant');
+    }
+
+    // Fetch profile data
+    const profileData = await db('profile')
+      .where('userid', userId)
+      .first();
+
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
+    };
+
+    res.render('admin-view-participant', { user, participant: userData, profileData, query: req.query });
+  } catch (error) {
+    console.error('View participant page error:', error);
+    res.redirect('/participants?error=page_error');
   }
 });
 
