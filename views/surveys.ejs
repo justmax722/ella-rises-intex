@@ -118,13 +118,13 @@
                                     <% } %>
                                 </p>
                             </div>
-                            <button onclick="openSurveyForm(<%= survey.sessionid %>, '<%= survey.eventname.replace(/'/g, "\\'") %>', '<%= new Date(survey.eventdatetimestart).toLocaleDateString() %>')" 
+                            <a href="/surveys/take/<%= survey.sessionid %>" 
                                     class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
                                 Take Survey
-                            </button>
+                            </a>
                         </div>
                         <% }); %>
                     </div>
@@ -132,7 +132,7 @@
             </div>
             <% } %>
 
-            <% if (typeof stats !== 'undefined') { %>
+            <% if (typeof stats !== 'undefined' && user.role === 'manager') { %>
             <!-- Key Metrics Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <!-- Total Responses -->
@@ -374,42 +374,34 @@
             </div>
             <% } %>
 
-            <!-- Survey Responses Pivot Table -->
+            <!-- Survey Responses Section -->
+            <% if (user.role === 'manager') { %>
+            <!-- Survey Responses Pivot Table (Managers Only) -->
             <div class="bg-card rounded-lg shadow-sm overflow-hidden">
                 <div class="p-6 border-b border-border flex items-center justify-between">
                     <div>
-                        <h3 class="text-lg font-semibold text-card-foreground">
-                            <% if (user.role === 'manager') { %>
-                                All Survey Responses
-                            <% } else { %>
-                                Your Survey Responses
-                            <% } %>
-                        </h3>
+                        <h3 class="text-lg font-semibold text-card-foreground">All Survey Responses</h3>
                         <p class="text-sm text-card-foreground/70 mt-1">
                             <% if (typeof surveyResponses !== 'undefined') { %>
-                                <%= surveyResponses.length %> <%= user.role === 'manager' ? 'total' : '' %> response<%= surveyResponses.length !== 1 ? 's' : '' %>
-                                <% if (user.role === 'manager' && (filters.surveyDateFrom || filters.surveyDateTo || filters.sessionDateFrom || filters.sessionDateTo || filters.minScore || filters.maxScore || filters.eventId || filters.participantSearch)) { %>
+                                <%= surveyResponses.length %> total response<%= surveyResponses.length !== 1 ? 's' : '' %>
+                                <% if (filters.surveyDateFrom || filters.surveyDateTo || filters.sessionDateFrom || filters.sessionDateTo || filters.minScore || filters.maxScore || filters.eventId || filters.participantSearch) { %>
                                     (filtered)
                                 <% } %>
                             <% } %>
                         </p>
                     </div>
-                    <% if (user.role === 'manager') { %>
                     <button onclick="openQuestionsModal()" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
                         Edit Questions
                     </button>
-                    <% } %>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full min-w-max">
                         <thead class="bg-muted/50 border-b border-border">
                             <tr>
-                                <% if (user.role === 'manager') { %>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Participant</th>
-                                <% } %>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Event</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Event Date</th>
                                 <!-- Dynamic metric columns (pivot) - show as Q1, Q2, etc. -->
@@ -424,20 +416,16 @@
                                 <th class="px-2 py-2 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Info</th>
                                 <th class="px-4 py-3 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">NPS Bucket</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Submitted</th>
-                                <% if (user.role === 'manager') { %>
                                 <th class="px-2 py-2 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider whitespace-nowrap">Delete</th>
-                                <% } %>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-border">
                             <% if (typeof surveyResponses !== 'undefined' && surveyResponses.length > 0) { %>
                                 <% surveyResponses.forEach(response => { %>
                                 <tr class="hover:bg-muted/30 transition-colors">
-                                    <% if (user.role === 'manager') { %>
                                     <td class="px-3 py-2 whitespace-nowrap">
                                         <div class="text-xs font-medium text-card-foreground"><%= response.participantName || 'Unknown' %></div>
                                     </td>
-                                    <% } %>
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <div class="text-sm text-card-foreground/70"><%= response.eventName || 'N/A' %></div>
                                     </td>
@@ -515,8 +503,7 @@
                                             <span class="text-card-foreground/30 text-sm">-</span>
                                         <% } %>
                                     </td>
-                                    <!-- Delete Button (Managers Only) -->
-                                    <% if (user.role === 'manager') { %>
+                                    <!-- Delete Button -->
                                     <td class="px-2 py-2 text-center">
                                         <form method="POST" action="/surveys/delete" onsubmit="return confirm('Are you sure you want to delete this survey response? This cannot be undone.');" class="inline">
                                             <input type="hidden" name="userId" value="<%= response.userid %>">
@@ -528,7 +515,6 @@
                                             </button>
                                         </form>
                                     </td>
-                                    <% } %>
                                 </tr>
                                 <% }); %>
                             <% } else { %>
@@ -545,9 +531,61 @@
                     </table>
                 </div>
             </div>
+            <% } else { %>
+            <!-- Participant Survey Responses List -->
+            <div class="bg-card rounded-lg shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-border">
+                    <h3 class="text-lg font-semibold text-card-foreground">Your Survey Responses</h3>
+                    <p class="text-sm text-card-foreground/70 mt-1">
+                        <% if (typeof surveyResponses !== 'undefined') { %>
+                            <%= surveyResponses.length %> response<%= surveyResponses.length !== 1 ? 's' : '' %>
+                        <% } %>
+                    </p>
+                </div>
+                <div class="p-6">
+                    <% if (typeof surveyResponses !== 'undefined' && surveyResponses.length > 0) { %>
+                        <div class="space-y-4">
+                            <% surveyResponses.forEach(response => { %>
+                            <div class="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border">
+                                <div class="flex-1">
+                                    <h4 class="font-medium text-card-foreground"><%= response.eventName || 'N/A' %></h4>
+                                    <div class="flex gap-4 mt-2 text-sm text-card-foreground/70">
+                                        <div>
+                                            <span class="font-medium">Event Date:</span>
+                                            <span class="ml-1"><%= response.eventDate ? new Date(response.eventDate).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A' %></span>
+                                        </div>
+                                        <div>
+                                            <span class="font-medium">Submitted:</span>
+                                            <span class="ml-1"><%= response.submittedAt ? new Date(response.submittedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A' %></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button onclick="showParticipantSurveyDetails(<%= response.userid %>, <%= response.sessionid %>)" 
+                                        data-response='<%- JSON.stringify(response).replace(/'/g, "&#39;") %>'
+                                        class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    View Responses
+                                </button>
+                            </div>
+                            <% }); %>
+                        </div>
+                    <% } else { %>
+                        <div class="text-center py-8 text-card-foreground/70">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 text-card-foreground/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <p>No survey responses found.</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+            <% } %>
 
-            <!-- Survey Questions Legend -->
-            <% if (typeof surveyMetrics !== 'undefined' && surveyMetrics.length > 0) { %>
+            <!-- Survey Questions Legend (Managers Only) -->
+            <% if (user.role === 'manager' && typeof surveyMetrics !== 'undefined' && surveyMetrics.length > 0) { %>
             <div class="mt-6 bg-card rounded-lg p-6 shadow-sm">
                 <h4 class="text-sm font-semibold text-card-foreground mb-3">Survey Questions</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -562,6 +600,75 @@
             <% } %>
         </div>
     </main>
+
+    <!-- Participant Survey Details Modal (Participants Only) -->
+    <% if (user.role !== 'manager') { %>
+    <div id="participantSurveyModal" class="fixed inset-0 z-50 hidden">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" onclick="closeParticipantSurveyModal()"></div>
+        
+        <!-- Modal Content -->
+        <div class="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
+            <div class="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden pointer-events-auto">
+                <!-- Modal Header -->
+                <div class="px-6 py-4 border-b border-border flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-card-foreground" id="participantModalTitle">Survey Responses</h3>
+                        <p class="text-sm text-card-foreground/70" id="participantModalSubtitle"></p>
+                    </div>
+                    <button onclick="closeParticipantSurveyModal()" class="p-2 hover:bg-muted rounded-lg transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-card-foreground/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Modal Body -->
+                <div class="px-6 py-4 overflow-y-auto max-h-[70vh]">
+                    <div class="space-y-6">
+                        <!-- Event Info -->
+                        <div class="grid grid-cols-2 gap-4 pb-4 border-b border-border">
+                            <div>
+                                <span class="text-sm text-card-foreground/70">Event:</span>
+                                <p class="font-medium text-card-foreground" id="participantModalEvent"></p>
+                            </div>
+                            <div>
+                                <span class="text-sm text-card-foreground/70">Event Date:</span>
+                                <p class="font-medium text-card-foreground" id="participantModalEventDate"></p>
+                            </div>
+                            <div>
+                                <span class="text-sm text-card-foreground/70">Submitted:</span>
+                                <p class="font-medium text-card-foreground" id="participantModalSubmitted"></p>
+                            </div>
+                            <div>
+                                <span class="text-sm text-card-foreground/70">Overall Score:</span>
+                                <p class="font-medium text-card-foreground" id="participantModalOverallScore"></p>
+                            </div>
+                        </div>
+
+                        <!-- Metric Scores -->
+                        <div id="participantModalMetrics" class="space-y-3">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+
+                        <!-- Comments -->
+                        <div class="pt-4 border-t border-border">
+                            <span class="text-sm text-card-foreground/70">Comments:</span>
+                            <p class="mt-2 text-card-foreground whitespace-pre-wrap" id="participantModalComments"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal Footer -->
+                <div class="px-6 py-4 border-t border-border bg-muted/30">
+                    <button onclick="closeParticipantSurveyModal()" class="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <% } %>
 
     <!-- Survey Info Modal Popup -->
     <div id="surveyInfoModal" class="fixed inset-0 z-50 hidden">
@@ -807,6 +914,17 @@
     <% } %>
 
     <script>
+        // Store survey metrics for participant modal
+        <% if (user.role !== 'manager' && typeof surveyMetrics !== 'undefined') { %>
+        const surveyMetricsData = [
+            <% surveyMetrics.forEach((metric, index) => { %>
+            { id: <%= metric.metricid %>, name: '<%= (metric.metricquestion || 'Question ' + (index + 1)).replace(/'/g, "\\'") %>', index: <%= index %> }<%= index < surveyMetrics.length - 1 ? ',' : '' %>
+            <% }); %>
+        ];
+        <% } else { %>
+        const surveyMetricsData = [];
+        <% } %>
+
         // Toggle Filter Dropdown
         function toggleFilterDropdown() {
             const filterContent = document.getElementById('filterContent');
@@ -852,6 +970,89 @@
 
         function closeSurveyForm() {
             document.getElementById('surveyFormModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        // Participant Survey Details Modal
+        function showParticipantSurveyDetails(userId, sessionId) {
+            // Find the button that was clicked and get its data
+            const buttons = document.querySelectorAll('[data-response]');
+            let responseData = null;
+            
+            buttons.forEach(button => {
+                const data = JSON.parse(button.getAttribute('data-response'));
+                if (data.userid === userId && data.sessionid === sessionId) {
+                    responseData = data;
+                }
+            });
+
+            if (!responseData) {
+                console.error('Survey response data not found');
+                return;
+            }
+
+            // Populate modal with data
+            document.getElementById('participantModalTitle').textContent = responseData.eventName || 'Survey Responses';
+            document.getElementById('participantModalSubtitle').textContent = 'Your survey feedback';
+            document.getElementById('participantModalEvent').textContent = responseData.eventName || 'N/A';
+            document.getElementById('participantModalEventDate').textContent = responseData.eventDate 
+                ? new Date(responseData.eventDate).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
+                : 'N/A';
+            document.getElementById('participantModalSubmitted').textContent = responseData.submittedAt 
+                ? new Date(responseData.submittedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+                : 'N/A';
+            
+            // Overall Score
+            const overallScore = responseData.overallScore !== null && responseData.overallScore !== undefined 
+                ? parseFloat(responseData.overallScore).toFixed(1) 
+                : 'N/A';
+            document.getElementById('participantModalOverallScore').textContent = overallScore;
+
+
+            // Metric Scores
+            const metricsContainer = document.getElementById('participantModalMetrics');
+            metricsContainer.innerHTML = '';
+            
+            if (surveyMetricsData && surveyMetricsData.length > 0) {
+                surveyMetricsData.forEach(metric => {
+                const score = responseData.metricScores && responseData.metricScores[metric.id];
+                const scoreValue = score !== null && score !== undefined ? score : 'N/A';
+                
+                const metricDiv = document.createElement('div');
+                metricDiv.className = 'flex items-center justify-between p-3 bg-muted/30 rounded-lg';
+                metricDiv.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">Q${metric.index + 1}</span>
+                        <span class="text-sm text-card-foreground">${metric.name}</span>
+                    </div>
+                    <span class="inline-flex items-center justify-center w-10 h-10 rounded-full text-sm font-medium ${
+                        scoreValue === 'N/A' ? 'text-card-foreground/30' :
+                        scoreValue >= 4.5 ? 'bg-secondary/20 text-secondary' :
+                        scoreValue >= 3.5 ? 'bg-accent/20 text-accent' :
+                        scoreValue >= 2.5 ? 'bg-yellow-500/20 text-yellow-600' :
+                        'bg-destructive/20 text-destructive'
+                    }">${scoreValue}</span>
+                `;
+                metricsContainer.appendChild(metricDiv);
+            });
+            } else {
+                const noMetricsDiv = document.createElement('div');
+                noMetricsDiv.className = 'text-sm text-card-foreground/70 text-center py-4';
+                noMetricsDiv.textContent = 'No metric scores available.';
+                metricsContainer.appendChild(noMetricsDiv);
+            }
+
+            // Comments
+            const comments = responseData.surveyComments || 'No comments provided.';
+            document.getElementById('participantModalComments').textContent = comments;
+
+            // Show modal
+            document.getElementById('participantSurveyModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeParticipantSurveyModal() {
+            document.getElementById('participantSurveyModal').classList.add('hidden');
             document.body.style.overflow = '';
         }
         <% } %>
@@ -911,6 +1112,7 @@
                 closeQuestionsModal();
                 <% } else { %>
                 closeSurveyForm();
+                closeParticipantSurveyModal();
                 <% } %>
             }
         });

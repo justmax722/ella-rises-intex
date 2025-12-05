@@ -3375,6 +3375,58 @@ app.post('/events/:sessionId/cancel-registration', requireAuth, restrictDonor, a
 });
 
 // Surveys route (protected, no donor access)
+// Take Survey Page (Participants Only)
+app.get('/surveys/take/:sessionId', requireAuth, restrictDonor, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const sessionId = parseInt(req.params.sessionId);
+
+    // Verify user is registered and attended
+    const registration = await db('registration as r')
+      .join('session as s', 'r.sessionid', 's.sessionid')
+      .join('event as e', 's.eventid', 'e.eventid')
+      .where('r.userid', userId)
+      .where('r.sessionid', sessionId)
+      .where('r.registrationattendedflag', true)
+      .whereNull('r.surveynpsbucket')
+      .select(
+        's.sessionid',
+        's.eventdatetimestart',
+        'e.eventname',
+        'e.eventid'
+      )
+      .first();
+
+    if (!registration) {
+      return res.redirect('/surveys?error=not_eligible');
+    }
+
+    // Get active survey metrics with questions
+    const surveyMetrics = await db('surveymetric')
+      .select('metricid', 'surveymetric', 'metricquestion')
+      .where(function() {
+        this.where('metricactive', true).orWhereNull('metricactive');
+      })
+      .orderBy('metricid');
+
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
+    };
+
+    res.render('take-survey', {
+      user,
+      session: registration,
+      surveyMetrics
+    });
+  } catch (error) {
+    console.error('Take survey GET error:', error);
+    res.redirect('/surveys?error=survey_load_failed');
+  }
+});
+
 app.get('/surveys', requireAuth, restrictDonor, async (req, res) => {
   try {
     const user = {
@@ -3726,7 +3778,7 @@ app.post('/surveys/submit', requireAuth, async (req, res) => {
       const scoreKey = `metric_${metric.metricid}`;
       const score = metricScores[scoreKey];
       if (score !== undefined && score !== '') {
-        const scoreValue = parseInt(score);
+        const scoreValue = parseFloat(score); // Use parseFloat to handle decimals
         scores.push(scoreValue);
         await db('survey').insert({
           userid: userId,
@@ -3743,13 +3795,15 @@ app.post('/surveys/submit', requireAuth, async (req, res) => {
       : null;
 
     // Calculate NPS bucket based on overall score (1-5 scale)
-    // 5 = Promoter, 3-4 = Passive, 1-2 = Detractor
+    // 5 = Promoter, 4 = Passive, 1-3 = Detractor
     let npsBucket = 'Passive';
     if (overallScore !== null) {
       if (overallScore >= 4.5) {
         npsBucket = 'Promoter';
-      } else if (overallScore < 3) {
+      } else if (overallScore <= 3.5) {
         npsBucket = 'Detractor';
+      } else {
+        npsBucket = 'Passive';
       }
     }
 
