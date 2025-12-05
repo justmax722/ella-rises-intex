@@ -14,13 +14,154 @@
     <%- include('partials/sidebar', { user: user, currentPage: 'home' }) %>
 
     <!-- Main Content Area -->
-    <main class="flex-1 p-6 md:p-8">
-        <div class="max-w-7xl mx-auto">
+    <main class="flex-1 p-6 md:p-8 flex flex-col">
+        <div class="max-w-7xl mx-auto w-full flex flex-col flex-1">
             <!-- Page Header -->
             <div class="mb-8">
                 <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">Home</h1>
             </div>
 
+            <% if (user.role !== 'manager') { %>
+            <!-- Participant View - 3 Column Layout -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">
+            
+            <!-- Left Column: My Upcoming Events -->
+            <div class="bg-card rounded-lg shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-border">
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <h3 class="text-sm font-semibold text-card-foreground">My Upcoming Events</h3>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <% if (typeof myUpcomingEvents !== 'undefined' && myUpcomingEvents.length > 0) { %>
+                    <div class="space-y-3">
+                        <% myUpcomingEvents.forEach(event => { %>
+                        <div class="p-3 bg-muted/30 rounded-lg border border-border">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h4 class="text-sm font-medium text-card-foreground"><%= event.eventname %></h4>
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Registered</span>
+                            </div>
+                            <p class="text-xs text-card-foreground/70 mb-2">
+                                <%= new Date(event.eventdatetimestart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
+                                at <%= new Date(event.eventdatetimestart).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %>
+                            </p>
+                            <a href="/events/<%= event.sessionid %>" class="text-xs text-primary hover:underline">View Details →</a>
+                        </div>
+                        <% }); %>
+                    </div>
+                    <% } else { %>
+                    <div class="text-center py-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-muted-foreground mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p class="text-xs text-muted-foreground mb-3">No upcoming events</p>
+                        <a href="/events" class="inline-flex items-center justify-center rounded-md text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1.5">
+                            Browse Events
+                        </a>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Middle Column: Surveys to Complete -->
+            <div class="bg-card rounded-lg shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-border">
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                        <h3 class="text-sm font-semibold text-card-foreground">Surveys to Complete</h3>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <% if (typeof pendingSurveys !== 'undefined' && pendingSurveys.length > 0) { %>
+                    <p class="text-xs text-card-foreground/70 mb-3">
+                        <%= pendingSurveys.length %> survey<%= pendingSurveys.length !== 1 ? 's' : '' %> pending
+                    </p>
+                    <div class="space-y-3">
+                        <% pendingSurveys.forEach(survey => { %>
+                        <div class="p-3 bg-muted/30 rounded-lg border border-border">
+                            <h4 class="text-sm font-medium text-card-foreground mb-1"><%= survey.eventname %></h4>
+                            <p class="text-xs text-card-foreground/70 mb-2">
+                                <%= new Date(survey.eventdatetimestart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
+                            </p>
+                            <a href="/surveys/take/<%= survey.sessionid %>" class="inline-flex items-center gap-1 text-xs bg-primary text-primary-foreground rounded px-2 py-1 hover:bg-primary/90">
+                                Take Survey
+                            </a>
+                        </div>
+                        <% }); %>
+                    </div>
+                    <% } else { %>
+                    <div class="text-center py-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-muted-foreground mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p class="text-xs text-muted-foreground mb-3">All caught up!</p>
+                        <a href="/events" class="inline-flex items-center justify-center rounded-md text-xs font-medium bg-sage text-sage-foreground hover:bg-sage/90 px-3 py-1.5">
+                            Sign Up for Events
+                        </a>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Right Column: Milestones (stacked) -->
+            <div class="flex flex-col gap-4">
+                <!-- Milestones Count (Top) -->
+                <div class="bg-card rounded-lg shadow-sm overflow-hidden">
+                    <div class="p-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <h3 class="text-sm font-semibold text-card-foreground">Milestones Achieved</h3>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-4xl font-bold text-primary mb-1"><%= typeof milestoneCount !== 'undefined' ? milestoneCount : 0 %></p>
+                            <a href="/milestones" class="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                                View All →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Most Recent Milestone (Bottom) -->
+                <div class="bg-card rounded-lg shadow-sm overflow-hidden flex-1">
+                    <div class="p-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-secondary" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            <h3 class="text-sm font-semibold text-card-foreground">Most Recent</h3>
+                        </div>
+                        <% if (typeof mostRecentMilestone !== 'undefined' && mostRecentMilestone) { %>
+                        <div class="text-center">
+                            <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-accent/20 mb-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <h4 class="text-sm font-semibold text-card-foreground mb-1"><%= mostRecentMilestone.milestonetitle %></h4>
+                            <p class="text-xs text-card-foreground/70">🎉 Congrats!</p>
+                        </div>
+                        <% } else { %>
+                        <div class="text-center py-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto text-muted-foreground mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                            </svg>
+                            <p class="text-xs text-muted-foreground">None yet!</p>
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+            </div><!-- End 3-column grid -->
+            <% } %>
+
+            <% if (user.role === 'manager') { %>
             <!-- Key Metrics Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <!-- Active Participants -->
@@ -148,6 +289,7 @@
                     </div>
                 </div>
             </div>
+            <% } %>
         </div>
     </main>
 </body>
