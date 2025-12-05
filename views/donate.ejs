@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Page metadata -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Make a Donation - Ella Rises</title>
@@ -8,36 +9,48 @@
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body class="bg-background">
-    <!-- Header -->
+    <!-- ============================================================================
+         HEADER / NAVIGATION
+         ============================================================================
+         Same header structure as landing page
+         Shows different navigation based on login status
+    -->
     <header class="w-full px-6 py-4 md:px-8 md:py-6 bg-muted border-b border-border">
         <div class="container mx-auto flex items-center justify-between">
+            <!-- Logo -->
             <div class="flex items-center">
                 <a href="/" class="block">
-                    <img src="/images/logo.png" alt="Ella Rises" class="h-8 md:h-10 w-auto object-contain" style="max-width: 200px;">
+                    <img src="/images/logo.png" alt="Ella Rises" class="h-16 md:h-20 w-auto object-contain" style="max-width: 320px;">
                 </a>
             </div>
+            <!-- Navigation buttons -->
             <div class="flex items-center gap-3 md:gap-4">
                 <a href="/donate" class="px-4 py-2 md:px-6 md:py-2.5 bg-sage text-sage-foreground rounded-md font-medium hover:bg-sage/80 transition-colors">
                     Donate
                 </a>
+                <!-- Conditional navigation based on login status -->
                 <% if (typeof isLoggedIn !== 'undefined' && isLoggedIn === true) { %>
-                <a href="/home" class="px-4 py-2 md:px-6 md:py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
-                    Dashboard
-                </a>
+                    <!-- Logged in: show dashboard link -->
+                    <a href="/home" class="px-4 py-2 md:px-6 md:py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
+                        Dashboard
+                    </a>
                 <% } else { %>
-                <a href="/login" class="px-4 py-2 md:px-6 md:py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
-                    Login
-                </a>
+                    <!-- Not logged in: show login button -->
+                    <a href="/login" class="px-4 py-2 md:px-6 md:py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
+                        Login
+                    </a>
                 <% } %>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
+    <!-- ============================================================================
+         MAIN CONTENT
+         ============================================================================
+         Donation form with payment method selection and processing
+    -->
     <main class="w-full px-6 py-8 md:py-10 lg:py-10">
         <div class="container mx-auto max-w-2xl">
-
-
             <!-- Back to Home Button -->
             <div class="mb-6">
                 <a href="/" class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Page metadata -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal - Ella Rises</title>
@@ -9,7 +10,11 @@
 </head>
 <body class="min-h-screen bg-cream flex items-center justify-center p-4">
     <div class="w-full max-w-md">
-        <!-- Back to Home Link -->
+        <!-- ============================================================================
+             BACK TO HOME LINK
+             ============================================================================
+             Navigation link to return to landing page
+        -->
         <div class="mb-4">
             <a class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground" href="/">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left h-4 w-4">
@@ -20,18 +25,24 @@
             </a>
         </div>
 
-        <!-- Card -->
+        <!-- ============================================================================
+             MAIN CARD CONTAINER
+             ============================================================================
+             Contains both login and signup forms in a tabbed interface
+        -->
         <div class="rounded-lg border text-card-foreground shadow-sm bg-background">
-            <!-- Title Section -->
+            <!-- Page title and description -->
             <div class="flex flex-col space-y-1.5 p-6 text-center">
                 <h3 class="tracking-tight text-3xl font-serif font-bold text-primary">Ella Rises Portal</h3>
                 <p class="text-sm text-muted-foreground">Access your account to manage your profile and donations.</p>
             </div>
 
-            <!-- Forms Container -->
+            <!-- Forms container with tabbed interface -->
             <div class="p-6 pt-0">
-                <!-- Tabs -->
+                <!-- Tab switcher - allows toggling between Login and Sign Up forms -->
                 <div class="flex bg-muted rounded-full p-1 mb-6">
+                    <!-- Login tab button -->
+                    <!-- Active tab is determined by showSignUp variable from server -->
                     <button 
                         type="button"
                         id="loginTab"
@@ -40,6 +51,7 @@
                     >
                         Login
                     </button>
+                    <!-- Sign Up tab button -->
                     <button 
                         type="button"
                         id="signupTab"

@@ -1,24 +1,47 @@
-// testing
+// ============================================================================
+// INITIALIZATION AND DEPENDENCIES
+// ============================================================================
+
+// Load environment variables from .env file
 require('dotenv').config();
+
+// Core Express and routing dependencies
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
+
+// Database connection using Knex query builder
 const knex = require('knex');
 const knexConfig = require('./knexfile');
-const bcrypt = require('bcrypt');
-const PDFDocument = require('pdfkit');
 
+// Security and utility libraries
+const bcrypt = require('bcrypt'); // Password hashing
+const PDFDocument = require('pdfkit'); // PDF generation for receipts
+
+// Initialize Express application
 const app = express();
+
+// Server port - defaults to 8080 if not specified in environment
 const PORT = process.env.PORT || 8080;
+
+// Create database connection instance
 const db = knex(knexConfig);
 
-// Test database connection on startup
+// ============================================================================
+// DATABASE CONNECTION TEST
+// ============================================================================
+
+// Test database connection immediately on server startup
+// This helps catch connection issues before the server starts accepting requests
 (async () => {
   try {
+    // Simple query to verify database is accessible
     await db.raw('SELECT 1');
     console.log('✓ Database connection successful');
   } catch (error) {
     console.error('✗ Database connection failed:', error.message);
+    
+    // Detect if we're connecting to AWS RDS (helps with troubleshooting)
     const host = process.env.RDS_HOSTNAME || process.env.DB_HOST || 'localhost';
     const isRDS = !!(
       process.env.RDS_HOSTNAME || 
@@ -27,6 +50,8 @@ const db = knex(knexConfig);
       host.includes('.rds.amazonaws.com') ||
       host.includes('.rds.')
     );
+    
+    // Log connection details for debugging (without exposing passwords)
     console.error('Connection details:', {
       host: host,
       database: process.env.RDS_DB_NAME || process.env.DB_NAME || 'ella_rises',
@@ -37,44 +62,85 @@ const db = knex(knexConfig);
   }
 })();
 
-// Set EJS as the view engine
+// ============================================================================
+// EXPRESS CONFIGURATION
+// ============================================================================
+
+// Configure EJS as the templating engine for rendering views
 app.set('view engine', 'ejs');
+// Set the directory where EJS templates are located
 app.set('views', path.join(__dirname, 'views'));
 
-// Serve static files from public directory
+// Serve static files (CSS, images, JS) from the public directory
+// This allows direct access to files like /css/styles.css and /images/logo.png
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Parse URL-encoded bodies (for login form)
+// Middleware to parse incoming request bodies
+// urlencoded: handles form submissions (application/x-www-form-urlencoded)
+// json: handles JSON payloads (application/json)
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Session configuration
+// ============================================================================
+// SESSION CONFIGURATION
+// ============================================================================
+
+// Session management for user authentication and state
+// Sessions are stored server-side and identified by cookies sent to the client
 const sessionSecret = process.env.SESSION_SECRET;
+
+// Warn if session secret is not set in production (security risk)
 if (!sessionSecret && process.env.NODE_ENV === 'production') {
   console.warn('⚠️  WARNING: SESSION_SECRET not set in production! Using default (INSECURE).');
 }
 
 app.use(session({
+  // Secret key used to sign the session ID cookie
+  // In production, this should be a strong random string stored in environment variables
   secret: sessionSecret || 'ella-rises-secret-key-change-in-production',
+  
+  // Don't save session if it wasn't modified (performance optimization)
   resave: false,
+  
+  // Don't create session until something is stored (saves storage)
   saveUninitialized: false,
+  
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-    httpOnly: true, // Prevent XSS attacks
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    // Only send cookie over HTTPS in production (security)
+    secure: process.env.NODE_ENV === 'production',
+    
+    // Prevent JavaScript access to cookie (XSS protection)
+    httpOnly: true,
+    
+    // Session expires after 24 hours of inactivity
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours in milliseconds
   }
 }));
 
-// Middleware to check if user is authenticated
+// ============================================================================
+// AUTHENTICATION MIDDLEWARE
+// ============================================================================
+
+/**
+ * Middleware to protect routes that require authentication
+ * Checks if user has a valid session (userId exists)
+ * Redirects to login page if not authenticated
+ */
 const requireAuth = (req, res, next) => {
   if (req.session.userId) {
+    // User is authenticated, proceed to the route handler
     next();
   } else {
+    // Not authenticated, redirect to login
     res.redirect('/login');
   }
 };
 
-// Middleware to restrict routes for donor role
+/**
+ * Middleware to restrict certain routes from donor role
+ * Donors have limited access and should only see donation-related pages
+ * Redirects donors to the donations page if they try to access restricted routes
+ */
 const restrictDonor = (req, res, next) => {
   if (req.session.userRole === 'donor') {
     return res.redirect('/donations');
@@ -82,30 +148,52 @@ const restrictDonor = (req, res, next) => {
   next();
 };
 
-// Helper function to get the default redirect destination based on user role
+/**
+ * Helper function to determine where to redirect users after login
+ * Different user roles have different default landing pages
+ * @param {string} userRole - The role of the user (donor, manager, user)
+ * @returns {string} The URL path to redirect to
+ */
 const getDefaultRedirect = (userRole) => {
   if (userRole === 'donor') {
     return '/donations';
   }
+  // Managers and regular users go to home page
   return '/home';
 };
 
-// Landing page route
+// ============================================================================
+// PUBLIC ROUTES (No Authentication Required)
+// ============================================================================
+
+/**
+ * Route: GET /
+ * Landing page - public homepage
+ * Shows information about Ella Rises and allows navigation to other pages
+ * Access: Public (no login required)
+ */
 app.get('/', (req, res) => {
   res.render('landing', { isLoggedIn: !!req.session.userId });
 });
 
-// Donation page route
+/**
+ * Route: GET /donate
+ * Public donation page
+ * Can be accessed by both logged-in and guest users
+ * If user is logged in, pre-fills their email in the form
+ * Access: Public
+ */
 app.get('/donate', async (req, res) => {
   try {
-    // Check if user is logged in
+    // If user is logged in, fetch their info to pre-fill the donation form
     if (req.session.userId) {
-      // Fetch user email from database
+      // Get user details from database
       const dbUser = await db('users')
         .where('userid', req.session.userId)
         .first();
       
       if (dbUser) {
+        // Render donation page with user's email pre-filled
         return res.render('donate', {
           query: req.query,
           loggedIn: true,
@@ -115,20 +203,29 @@ app.get('/donate', async (req, res) => {
       }
     }
     
-    // Not logged in - keep existing behavior
+    // Guest user - render donation page without pre-filled info
     res.render('donate', { query: req.query });
   } catch (error) {
     console.error('Donate page error:', error);
+    // On error, still render the page (graceful degradation)
     res.render('donate', { query: req.query });
   }
 });
 
-// Donation form submission route
+/**
+ * Route: POST /donate
+ * Handles donation form submission
+ * Supports both logged-in users and guest donations
+ * For logged-in users: saves donation to their account
+ * For guests: creates donation record with email only
+ * Access: Public
+ */
 app.post('/donate', async (req, res) => {
   try {
+    // Extract form data - different payment methods have different email fields
     const { donationAmount, paymentMethod, creditEmail, debitEmail, paypalEmail, bankEmail, message, loggedInUserId } = req.body;
 
-    // Validate required fields
+    // Validate that required fields are present
     if (!donationAmount || !paymentMethod) {
       const errorParams = new URLSearchParams();
       errorParams.set('error', 'missing_fields');
@@ -138,8 +235,10 @@ app.post('/donate', async (req, res) => {
       return res.redirect(`/donate?${errorParams.toString()}`);
     }
 
+    // Validate donation amount is a valid positive number
     const donationAmountNum = parseFloat(donationAmount);
     if (isNaN(donationAmountNum) || donationAmountNum <= 0) {
+      // Invalid amount - redirect back with error, preserving form data
       const errorParams = new URLSearchParams();
       errorParams.set('error', 'invalid_amount');
       errorParams.set('amount', donationAmount);
@@ -148,7 +247,8 @@ app.post('/donate', async (req, res) => {
       return res.redirect(`/donate?${errorParams.toString()}`);
     }
 
-    // Check if user is logged in (via session or loggedInUserId from form)
+    // Determine if user is logged in
+    // Can come from session (normal flow) or form field (if session expired but form submitted)
     const sessionUserId = req.session.userId;
     const formUserId = loggedInUserId ? parseInt(loggedInUserId) : null;
     const isLoggedIn = !!(sessionUserId || formUserId);
@@ -166,7 +266,8 @@ app.post('/donate', async (req, res) => {
         return res.redirect('/donate?error=user_not_found');
       }
 
-      // Get next donation number for this user
+      // Each user has their own donation numbering sequence (donationno)
+      // Find the highest donation number for this user to get the next one
       const maxDonation = await db('donation')
         .where('userid', userId)
         .max('donationno as maxno')
@@ -174,7 +275,7 @@ app.post('/donate', async (req, res) => {
 
       const nextDonationNo = (maxDonation?.maxno || 0) + 1;
 
-      // Insert donation
+      // Save donation to database
       await db('donation').insert({
         userid: userId,
         donationno: nextDonationNo,
@@ -183,17 +284,21 @@ app.post('/donate', async (req, res) => {
         donationmessage: message && message.trim() ? message.trim() : null
       });
 
-      // Update total donations
+      // Update user's total donations counter
       await db('users')
         .where('userid', userId)
         .increment('totaldonations', donationAmountNum);
 
-      // Redirect back to donations page with success message
+      // Redirect to donations page with success indicator
       return res.redirect('/donations?donationSuccess=true');
     }
 
-    // Guest flow - existing logic
-    // Extract email based on payment method
+    // ============================================================================
+    // GUEST DONATION FLOW (User not logged in)
+    // ============================================================================
+    
+    // Guest users must provide email - extract it based on which payment method they selected
+    // Each payment method has its own email input field in the form
     let email = null;
     if (paymentMethod === 'credit' && creditEmail) {
       email = creditEmail.toLowerCase().trim();
@@ -371,18 +476,25 @@ app.post('/donate', async (req, res) => {
   }
 });
 
-// Donation success page route
+/**
+ * Route: GET /donate/success
+ * Success confirmation page after donation
+ * Shows thank you message and donation amount
+ * Access: Public (accessed via redirect with query params)
+ */
 app.get('/donate/success', async (req, res) => {
   try {
+    // Get donation details from query parameters
     const userId = parseInt(req.query.userId);
     const amount = parseFloat(req.query.amount);
     const isActive = req.query.active === 'true';
 
+    // Validate parameters are valid numbers
     if (isNaN(userId) || isNaN(amount)) {
       return res.redirect('/donate?error=invalid_parameters');
     }
 
-    // Fetch user data
+    // Fetch user data to display email on success page
     const user = await db('users')
       .where('userid', userId)
       .first();
@@ -391,6 +503,7 @@ app.get('/donate/success', async (req, res) => {
       return res.redirect('/donate?error=user_not_found');
     }
 
+    // Render success page with donation details
     res.render('donate-success', {
       userId: userId,
       amount: amount,
@@ -404,7 +517,13 @@ app.get('/donate/success', async (req, res) => {
   }
 });
 
-// Claim account route (activate shadow account with password)
+/**
+ * Route: POST /donate/claim
+ * Allows guest donors to claim/activate their shadow account
+ * Shadow accounts are created automatically for guest donations
+ * This route lets them set a password and activate the account
+ * Access: Public
+ */
 app.post('/donate/claim', async (req, res) => {
   try {
     const { userId, firstName, lastName, password, confirmPassword } = req.body;
@@ -470,9 +589,19 @@ app.post('/donate/claim', async (req, res) => {
   }
 });
 
-// Login page route
+// ============================================================================
+// AUTHENTICATION ROUTES
+// ============================================================================
+
+/**
+ * Route: GET /login
+ * Login page - handles both login and signup forms
+ * If user is already logged in, redirects to their default page
+ * Supports redirect parameter to send user back after login
+ * Access: Public
+ */
 app.get('/login', (req, res) => {
-  // If already logged in, check for redirect or go to dashboard
+  // If user is already logged in, redirect them away from login page
   if (req.session.userId) {
     const redirect = req.query.redirect || req.session.loginRedirect;
     if (redirect) {
@@ -1397,11 +1526,18 @@ app.post('/verify-claim', async (req, res) => {
   }
 });
 
-// Login route (POST)
+/**
+ * Route: POST /login
+ * Handles login form submission
+ * Validates credentials and creates session if successful
+ * Handles both hashed and plain text passwords (for migration/testing)
+ * Access: Public
+ */
 app.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Validate that both email and password were provided
     if (!email || !password) {
       return res.render('login', {
         error: 'Please provide both email and password',
@@ -1412,37 +1548,38 @@ app.post('/login', async (req, res) => {
       });
     }
 
-    // Check if email exists in users table
+    // Look up user by email (case-insensitive)
     const user = await db('users')
       .where('useremail', email.toLowerCase())
       .first();
 
-    // If email doesn't exist, redirect to signup with email/password stored in session (more secure)
+    // If user doesn't exist, redirect to signup form
+    // Store their email/password in session to pre-fill the signup form
     if (!user) {
-      // Store email and password in session for signup pre-fill (more secure than localStorage)
       req.session.signupEmail = email.toLowerCase();
       req.session.signupPassword = password;
       req.session.signupMessage = 'No account found with this email. Please create an account to continue.';
       return res.redirect('/login?signup=true');
     }
 
-    // Check if it's a shadow donor account (inactive, no password, roleid 3) - redirect directly to verify-claim
+    // Check if this is an unclaimed shadow account (created from guest donation)
+    // Shadow accounts are inactive, have no password, and are roleid 3 (donor)
     if (!user.accountactive && !user.userpassword && user.roleid === 3) {
       return res.redirect(`/verify-claim?email=${encodeURIComponent(email.toLowerCase())}&error=unclaimed_account`);
     }
 
-    // Check password first - note: if passwords are stored plain text, use direct comparison
-    // If they're hashed, use bcrypt.compare
-    // Column names are lowercase: userpassword
+    // Verify password
+    // System supports both bcrypt hashed passwords and plain text (for testing/migration)
     const userPassword = user.userpassword;
     let passwordMatch = false;
     
     if (userPassword) {
+      // Check if password is bcrypt hashed (starts with $2)
       if (userPassword.startsWith('$2')) {
-        // Password is hashed with bcrypt
+        // Password is hashed - use bcrypt to compare
         passwordMatch = await bcrypt.compare(password, userPassword);
       } else {
-        // Password is plain text (for your test accounts)
+        // Password is plain text (legacy/test accounts)
         passwordMatch = password === userPassword;
       }
     }
@@ -1564,14 +1701,27 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Home route (protected) - renamed from dashboard
+// ============================================================================
+// DASHBOARD AND HOME ROUTES
+// ============================================================================
+
+/**
+ * Route: GET /home
+ * Main dashboard/home page for authenticated users
+ * Shows different content based on user role:
+ * - Managers: Admin dashboard with statistics
+ * - Participants: Participant home page with personal info
+ * - Donors: Redirected to donations page
+ * Access: Requires authentication
+ */
 app.get('/home', requireAuth, async (req, res) => {
   try {
-    // Redirect donors to donations page
+    // Donors have limited access - redirect them to donations page
     if (req.session.userRole === 'donor') {
       return res.redirect('/donations');
     }
     
+    // Build user object for template
     const user = {
       email: req.session.userEmail,
       role: req.session.userRole,
@@ -1579,7 +1729,7 @@ app.get('/home', requireAuth, async (req, res) => {
       lastName: req.session.userLastName || ''
     };
 
-    // For managers, fetch admin dashboard stats
+    // Initialize statistics variables for manager dashboard
     let activeParticipantsCount = 0;
     let upcomingEventsCount = 0;
     let milestonesAchievedCount = 0;
@@ -1587,16 +1737,18 @@ app.get('/home', requireAuth, async (req, res) => {
     let surveyResponseRate = 0;
     let netPromoterScore = 0;
 
+    // Managers see admin dashboard with statistics
     if (req.session.userRole === 'manager') {
       try {
-        // Count active participants: rows in profile table where user has roleid = 2 (participant)
-        // Using inner join to only count profiles that exist with participant role
+        // Count active participants (users with roleid = 2 who have completed profiles)
+        // Using inner join to ensure we only count users who have both role and profile
         const activeParticipantsResult = await db('profile as p')
           .innerJoin('users as u', 'p.userid', 'u.userid')
           .where('u.roleid', 2)
           .count('* as count')
           .first();
-        // PostgreSQL returns count as string, handle both string and number
+        
+        // PostgreSQL returns count as string, need to parse it
         const count = activeParticipantsResult?.count;
         if (count !== undefined && count !== null) {
           activeParticipantsCount = typeof count === 'string' ? parseInt(count, 10) : Number(count);
@@ -1949,10 +2101,15 @@ app.get('/home', requireAuth, async (req, res) => {
   }
 });
 
-// Dashboard route (protected, manager only) - new route for Tableau dashboard
+/**
+ * Route: GET /dashboard
+ * Manager-only dashboard page (separate from /home)
+ * This is for Tableau or advanced analytics dashboard
+ * Access: Requires authentication, managers only
+ */
 app.get('/dashboard', requireAuth, async (req, res) => {
   try {
-    // Only managers can access the dashboard
+    // Restrict access to managers only
     if (req.session.userRole !== 'manager') {
       return res.redirect(getDefaultRedirect(req.session.userRole));
     }
@@ -1971,14 +2128,25 @@ app.get('/dashboard', requireAuth, async (req, res) => {
   }
 });
 
-// Participants route (protected, manager only)
+// ============================================================================
+// PARTICIPANT MANAGEMENT ROUTES
+// ============================================================================
+
+/**
+ * Route: GET /participants
+ * List all participants (users with roleid = 2)
+ * Shows participants with their profile information if available
+ * Access: Requires authentication, managers only (donors restricted)
+ */
 app.get('/participants', requireAuth, restrictDonor, async (req, res) => {
   try {
-    // Check if user is manager
+    // Only managers can view participants list
     if (req.session.userRole !== 'manager') {
       return res.redirect(getDefaultRedirect(req.session.userRole));
     }
 
+    // Fetch all participants with their profile data
+    // Using LEFT JOIN so we get participants even if they don't have profiles yet
     // Query all participants (users with roleid = 2) with LEFT JOIN to profile table
     const participantsData = await db('users as u')
       .leftJoin('profile as p', 'u.userid', 'p.userid')
@@ -2674,7 +2842,17 @@ app.post('/profile/convert-to-participant', requireAuth, async (req, res) => {
   }
 });
 
-// Events route (protected, no donor access)
+// ============================================================================
+// EVENT MANAGEMENT ROUTES
+// ============================================================================
+
+/**
+ * Route: GET /events
+ * Events listing page
+ * Shows all events and sessions
+ * Managers see all events, participants see events they can register for
+ * Access: Requires authentication, donors restricted
+ */
 app.get('/events', requireAuth, restrictDonor, async (req, res) => {
   try {
     const user = {
@@ -3375,12 +3553,18 @@ app.post('/events/:sessionId/delete', requireAuth, async (req, res) => {
       return res.redirect('/events?error=session_not_found');
     }
 
-    // Cascade delete: First delete all registrations for this session
+    // Cascade delete: Delete dependent records in the correct order
+    // 1. Delete all survey responses for this session (survey table has FK to session)
+    await db('survey')
+      .where('sessionid', sessionId)
+      .del();
+
+    // 2. Delete all registrations for this session (registration table has FK to session)
     await db('registration')
       .where('sessionid', sessionId)
       .del();
 
-    // Then delete the session itself
+    // 3. Finally, delete the session itself
     await db('session')
       .where('sessionid', sessionId)
       .del();
@@ -4379,7 +4563,17 @@ app.post('/surveys/delete', requireAuth, async (req, res) => {
   }
 });
 
-// Milestones route (protected, no donor access)
+// ============================================================================
+// MILESTONE MANAGEMENT ROUTES
+// ============================================================================
+
+/**
+ * Route: GET /milestones
+ * Milestones management page
+ * Shows all milestones achieved by participants
+ * Supports filtering by participant, milestone type, etc.
+ * Access: Requires authentication, donors restricted
+ */
 app.get('/milestones', requireAuth, restrictDonor, async (req, res) => {
   try {
     const user = {
@@ -4694,7 +4888,17 @@ app.post('/milestones/delete', requireAuth, async (req, res) => {
   }
 });
 
-// Donations route (protected)
+// ============================================================================
+// DONATION MANAGEMENT ROUTES
+// ============================================================================
+
+/**
+ * Route: GET /donations
+ * Donations listing and management page
+ * Managers see all donations, others see only their own
+ * Supports filtering and searching
+ * Access: Requires authentication
+ */
 app.get('/donations', requireAuth, async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -4947,7 +5151,16 @@ app.get('/donations/receipt', requireAuth, async (req, res) => {
   }
 });
 
-// Users route (protected, manager only)
+// ============================================================================
+// USER MANAGEMENT ROUTES
+// ============================================================================
+
+/**
+ * Route: GET /users
+ * User management page for managers
+ * Lists all users in the system with their roles and status
+ * Access: Requires authentication, managers only
+ */
 app.get('/users', requireAuth, async (req, res) => {
   try {
     // Check if user is manager
