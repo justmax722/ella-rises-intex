@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Page metadata -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Claim Your Account - Ella Rises</title>
@@ -9,7 +10,7 @@
 </head>
 <body class="min-h-screen bg-cream flex items-center justify-center p-4">
     <div class="w-full max-w-md">
-        <!-- Back to Home Link -->
+        <!-- Navigation: Back to home link -->
         <div class="mb-4">
             <a class="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground" href="/">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left h-4 w-4">
@@ -20,17 +21,17 @@
             </a>
         </div>
 
-        <!-- Card -->
+        <!-- Main card container -->
         <div class="rounded-lg border text-card-foreground shadow-sm bg-background">
-            <!-- Title Section -->
+            <!-- Page title and description -->
             <div class="flex flex-col space-y-1.5 p-6 text-center">
                 <h3 class="tracking-tight text-3xl font-serif font-bold text-primary">Claim Your Account</h3>
                 <p class="text-sm text-muted-foreground">Your account is pending. Please verify your identity to activate it.</p>
             </div>
 
-            <!-- Form Container -->
+            <!-- Form container -->
             <div class="p-6 pt-0">
-                <!-- Error Message -->
+                <!-- Error message display -->
                 <% if (typeof error !== 'undefined' && error) { %>
                 <div class="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-md">
                     <p class="text-sm text-destructive"><%= error %></p>
@@ -51,8 +52,9 @@
                 </div>
                 <% } %>
 
-                <!-- Account Claim Form -->
+                <!-- Account claim form - verifies user identity via DOB and zip code -->
                 <form id="claimForm" action="/account-claim" method="POST" class="space-y-4" <%= typeof maxAttemptsReached !== 'undefined' && maxAttemptsReached ? 'onsubmit="return false;"' : '' %>>
+                    <!-- Date of birth fields (month, day, year) -->
                     <div class="space-y-2">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Date of Birth</label>
                         <div class="grid grid-cols-3 gap-4 w-full">
@@ -107,6 +109,7 @@
                         </div>
                     </div>
 
+                    <!-- Zip code field for identity verification -->
                     <div class="space-y-2">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilezip">Zip Code</label>
                         <input 
@@ -135,10 +138,10 @@
     </div>
 
     <script>
-        // Preserve form data if available
+        // Preserve form data if validation failed (keeps user input)
         var preservedFormData = <%- typeof formData !== 'undefined' && formData ? JSON.stringify(formData) : 'null' %>;
 
-        // Populate year dropdown (from current year back to 100 years ago)
+        // Populate year dropdown (current year back to 100 years ago)
         const yearSelect = document.getElementById('dob_year');
         const currentYear = new Date().getFullYear();
         for (let year = currentYear; year >= currentYear - 100; year--) {
@@ -151,11 +154,11 @@
             yearSelect.appendChild(option);
         }
 
-        // Populate day dropdown - show all 31 days initially
+        // Day dropdown management - updates based on selected month/year
         const monthSelect = document.getElementById('dob_month');
         const daySelect = document.getElementById('dob_day');
 
-        // Initialize with all 31 days
+        // Initialize day dropdown with all 31 days
         function initializeDays() {
             daySelect.innerHTML = '<option value="">Day</option>';
             const preservedDay = preservedFormData ? preservedFormData.dob_day : null;
@@ -170,7 +173,7 @@
             }
         }
 
-        // Update day dropdown when month/year changes to show valid days
+        // Update day dropdown when month/year changes (handles leap years and month lengths)
         function updateDays() {
             const month = monthSelect.value;
             const year = yearSelect.value;

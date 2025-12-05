@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Page metadata -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add User - Ella Rises CRM</title>
@@ -8,19 +9,19 @@
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body class="bg-background min-h-screen flex">
-    <!-- Sidebar Navigation -->
+    <!-- Sidebar navigation (manager only) -->
     <%- include('partials/sidebar', { user: user, currentPage: 'users' }) %>
 
-    <!-- Main Content Area -->
+    <!-- Main content area -->
     <main class="flex-1 p-6 md:p-8">
         <div class="max-w-4xl mx-auto">
-            <!-- Page Header -->
+            <!-- Page header -->
             <div class="mb-8">
                 <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">Add User</h1>
                 <p class="text-base text-card-foreground/70">Create a new user account</p>
             </div>
 
-            <!-- Success/Error Messages -->
+            <!-- Error/success message display -->
             <% if (typeof query !== 'undefined' && query.error) { %>
             <div class="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-md">
                 <p class="text-sm text-destructive text-center">
@@ -41,13 +42,14 @@
             </div>
             <% } %>
 
-            <!-- Add User Form -->
+            <!-- Add user form card -->
             <div class="bg-card rounded-lg shadow-sm overflow-hidden">
                 <div class="p-6 border-b border-border">
                     <h3 class="text-lg font-semibold text-card-foreground">User Information</h3>
                 </div>
+                <!-- Form fields for creating new user -->
                 <form method="POST" action="/users/add" class="p-6 space-y-6">
-                    <!-- Email -->
+                    <!-- Email field -->
                     <div>
                         <label for="useremail" class="block text-sm font-medium text-card-foreground mb-2">Email</label>
                         <input 
@@ -83,7 +85,7 @@
                         />
                     </div>
 
-                    <!-- Role -->
+                    <!-- Role selection (Manager, User/Participant, or Donor) -->
                     <div>
                         <label for="roleid" class="block text-sm font-medium text-card-foreground mb-2">Role</label>
                         <select 
@@ -99,7 +101,7 @@
                         </select>
                     </div>
 
-                    <!-- Password -->
+                    <!-- Temporary password field (user must change on first login) -->
                     <div>
                         <label for="password" class="block text-sm font-medium text-card-foreground mb-2">Temporary Password</label>
                         <div class="relative">
@@ -154,7 +156,7 @@
                         </div>
                     </div>
 
-                    <!-- Info Notes -->
+                    <!-- Information notes about account creation process -->
                     <div class="space-y-3">
                         <div class="p-4 bg-secondary/20 border border-secondary rounded-md">
                             <p class="text-sm text-card-foreground">
@@ -168,7 +170,7 @@
                         </div>
                     </div>
 
-                    <!-- Form Actions -->
+                    <!-- Form action buttons -->
                     <div class="flex gap-3 justify-end pt-4 border-t border-border">
                         <a 
                             href="/users" 
@@ -189,7 +191,7 @@
     </main>
 
     <script>
-        // Password visibility toggle function
+        // Toggle password visibility (show/hide password text)
         function togglePasswordVisibility(inputId, toggleId) {
             const input = document.getElementById(inputId);
             const icon = document.getElementById(toggleId + 'Icon');
