@@ -1572,15 +1572,78 @@ app.get('/home', requireAuth, async (req, res) => {
       return res.redirect('/donations');
     }
     
-    // We already have user info in session from login, no need to query again
-    // But if we did, we'd use userid (lowercase), not id
-    res.render('home', {
-      user: {
-        email: req.session.userEmail,
-        role: req.session.userRole,
-        firstName: req.session.userFirstName || '',
-        lastName: req.session.userLastName || ''
+    const user = {
+      email: req.session.userEmail,
+      role: req.session.userRole,
+      firstName: req.session.userFirstName || '',
+      lastName: req.session.userLastName || ''
+    };
+
+    // For participants, fetch additional data
+    let myUpcomingEvents = [];
+    let pendingSurveys = [];
+    let milestoneCount = 0;
+    let mostRecentMilestone = null;
+
+    if (req.session.userRole === 'user') {
+      const userId = req.session.userId;
+      const now = new Date();
+
+      // Get upcoming registered events
+      const registeredSessions = await db('registration as r')
+        .join('session as s', 'r.sessionid', 's.sessionid')
+        .join('event as e', 's.eventid', 'e.eventid')
+        .join('eventtype as et', 'e.eventtypeid', 'et.eventtypeid')
+        .where('r.userid', userId)
+        .where('r.registrationstatus', 'registered')
+        .where('s.eventdatetimestart', '>', now)
+        .select(
+          's.sessionid',
+          'e.eventname',
+          'e.eventdescription',
+          's.eventlocation',
+          'et.eventtype',
+          's.eventdatetimestart',
+          's.eventdatetimeend'
+        )
+        .orderBy('s.eventdatetimestart', 'asc');
+
+      myUpcomingEvents = registeredSessions;
+
+      // Get pending surveys (events attended but no survey submitted)
+      pendingSurveys = await db('registration as r')
+        .join('session as s', 'r.sessionid', 's.sessionid')
+        .join('event as e', 's.eventid', 'e.eventid')
+        .where('r.userid', userId)
+        .whereNull('r.surveynpsbucket')
+        .where('r.registrationattendedflag', true)
+        .select(
+          's.sessionid',
+          'e.eventname',
+          's.eventlocation',
+          's.eventdatetimestart'
+        )
+        .orderBy('s.eventdatetimestart', 'desc');
+
+      // Get milestone count and most recent milestone
+      const milestones = await db('usermilestone as um')
+        .join('milestonetype as mt', 'um.milestoneid', 'mt.milestoneid')
+        .where('um.userid', userId)
+        .select('mt.milestonetitle', 'um.milestonedate')
+        .orderBy('um.milestonedate', 'desc');
+
+      milestoneCount = milestones.length;
+      if (milestones.length > 0) {
+        mostRecentMilestone = milestones[0];
       }
+    }
+
+    res.render('home', {
+      user,
+      myUpcomingEvents,
+      pendingSurveys,
+      milestoneCount,
+      mostRecentMilestone
     });
   } catch (error) {
     console.error('Home error:', error);

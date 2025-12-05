@@ -316,6 +316,29 @@
                 e.preventDefault();
             }
         });
+
+        // Field of Interest selection visual feedback
+        const fieldOfInterestRadios = document.querySelectorAll('input[name="profilefieldofinterest"]');
+        fieldOfInterestRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Reset all buttons to default state
+                fieldOfInterestRadios.forEach(r => {
+                    const div = r.nextElementSibling;
+                    div.style.borderColor = '';
+                    div.style.backgroundColor = '';
+                    div.style.color = '';
+                    div.style.boxShadow = '';
+                });
+                // Highlight the selected button
+                if (this.checked) {
+                    const div = this.nextElementSibling;
+                    div.style.borderColor = 'hsl(var(--primary))';
+                    div.style.backgroundColor = 'hsl(var(--primary) / 0.1)';
+                    div.style.color = 'hsl(var(--primary))';
+                    div.style.boxShadow = '0 0 0 2px hsl(var(--primary))';
+                }
+            });
+        });
     </script>
 </body>
 </html>
