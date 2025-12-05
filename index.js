@@ -3962,7 +3962,8 @@ app.get('/milestones', requireAuth, restrictDonor, async (req, res) => {
       milestoneSearch: req.query.milestoneSearch || '',
       milestoneType: req.query.milestoneType || '',
       success: req.query.success || '',
-      error: req.query.error || ''
+      error: req.query.error || '',
+      milestoneTitle: req.query.milestoneTitle || ''
     };
 
     // Get all milestone types
@@ -4035,12 +4036,21 @@ app.get('/milestones', requireAuth, restrictDonor, async (req, res) => {
       count: countsMap[mt.milestoneid] || 0
     }));
 
+    // Get completed milestone IDs for the current user (for filtering in add modal)
+    let completedMilestoneIds = [];
+    if (user.role !== 'manager') {
+      // For participants, get their completed milestones
+      completedMilestoneIds = userMilestones.map(m => m.milestoneid);
+    }
+    // For managers, don't filter - they can add any milestone for any participant
+
     res.render('milestones', { 
       user,
       milestoneTypes: milestoneTypesWithCounts,
       participants,
       userMilestones,
-      filters
+      filters,
+      completedMilestoneIds
     });
   } catch (error) {
     console.error('Milestones error:', error);
@@ -4078,6 +4088,16 @@ app.post('/milestones/add', requireAuth, async (req, res) => {
       milestoneid: parseInt(milestoneId),
       milestonedate: milestoneDate
     });
+
+    // Get milestone title for congratulation message (participants only)
+    if (req.session.userRole !== 'manager') {
+      const milestoneType = await db('milestonetype')
+        .where('milestoneid', milestoneId)
+        .first();
+      if (milestoneType) {
+        return res.redirect(`/milestones?success=milestone_added&milestoneTitle=${encodeURIComponent(milestoneType.milestonetitle)}`);
+      }
+    }
 
     res.redirect('/milestones?success=milestone_added');
   } catch (error) {

@@ -32,17 +32,19 @@
                         <% } %>
                     </p>
                 </div>
+                <% if (user.role === 'manager') { %>
                 <button onclick="openAddModal()" class="px-4 py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
                     Add Milestone
                 </button>
+                <% } %>
             </div>
 
             <!-- Success/Error Messages -->
             <% if (typeof filters !== 'undefined') { %>
-                <% if (filters.success === 'milestone_added') { %>
+                <% if (filters.success === 'milestone_added' && user.role === 'manager') { %>
                 <div class="mb-6 p-4 bg-secondary/20 border border-secondary rounded-lg text-secondary-foreground">
                     Milestone added successfully.
                 </div>
@@ -75,6 +77,7 @@
             <% } %>
 
             <!-- Milestone Summary Cards -->
+            <% if (user.role === 'manager') { %>
             <% if (typeof milestoneTypes !== 'undefined' && milestoneTypes.length > 0) { %>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <% milestoneTypes.slice(0, 4).forEach(mt => { %>
@@ -90,61 +93,64 @@
                 <% }); %>
             </div>
             <% } %>
-
-            <!-- Filter Controls -->
-            <div class="bg-card rounded-lg p-6 shadow-sm mb-8">
-                <h3 class="text-lg font-semibold text-card-foreground mb-4">Filter Milestones</h3>
-                <form id="filterForm" method="GET" action="/milestones" class="flex flex-wrap items-end gap-4">
-                    <% if (user.role === 'manager') { %>
-                    <div class="flex-1 min-w-[200px]">
-                        <label class="block text-xs font-medium text-card-foreground/70 mb-1">Search Participant</label>
-                        <input type="text" id="participantSearch" name="participantSearch" value="<%= filters.participantSearch %>" 
-                               class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                               placeholder="Name...">
-                    </div>
-                    <% } else { %>
-                    <div class="flex-1 min-w-[200px]">
-                        <label class="block text-xs font-medium text-card-foreground/70 mb-1">Search Milestones</label>
-                        <input type="text" id="milestoneSearch" name="milestoneSearch" value="<%= filters.milestoneSearch %>" 
-                               class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                               placeholder="Search milestone type...">
-                    </div>
-                    <% } %>
-                    <div class="min-w-[200px]">
-                        <label class="block text-xs font-medium text-card-foreground/70 mb-1">Milestone Type</label>
-                        <select id="milestoneType" name="milestoneType" class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
-                            <option value="">All Types</option>
-                            <% milestoneTypes.forEach(mt => { %>
-                            <option value="<%= mt.milestoneid %>" <%= filters.milestoneType == mt.milestoneid ? 'selected' : '' %>><%= mt.milestonetitle %></option>
-                            <% }); %>
-                        </select>
-                    </div>
-                    <a href="/milestones" class="px-6 py-2 border border-border rounded-lg hover:bg-muted transition-colors text-sm font-medium text-card-foreground">
-                        Reset
-                    </a>
-                </form>
-            </div>
+            <% } %>
 
             <!-- Achievement History -->
             <div class="bg-card rounded-lg shadow-sm overflow-hidden">
                 <div class="p-6 border-b border-border">
-                    <h3 class="text-lg font-semibold text-card-foreground">Achievement History</h3>
-                    <p class="text-sm text-card-foreground/70 mt-1 achievement-history-count">
-                        <% if (typeof userMilestones !== 'undefined') { %>
-                            <%= userMilestones.length %> milestone<%= userMilestones.length !== 1 ? 's' : '' %>
-                            <% if (filters.participantSearch || filters.milestoneSearch || filters.milestoneType) { %>
-                                (filtered)
+                    <div class="flex items-center gap-3">
+                        <h3 class="text-lg font-semibold text-card-foreground">Achievement History</h3>
+                        <span class="text-sm font-semibold achievement-history-count" style="color: #16a34a !important;">
+                            <% if (typeof userMilestones !== 'undefined') { %>
+                                <%= userMilestones.length %> milestone<%= userMilestones.length !== 1 ? 's' : '' %>
+                                <% if (filters.participantSearch || filters.milestoneSearch || filters.milestoneType) { %>
+                                    (filtered)
+                                <% } %>
                             <% } %>
-                        <% } %>
-                    </p>
+                        </span>
+                    </div>
                 </div>
+
+                <!-- Search and Filter Controls -->
+                <div class="p-6 border-b border-border bg-muted/30">
+                    <form id="filterForm" method="GET" action="/milestones" class="flex flex-wrap items-end gap-4">
+                        <% if (user.role === 'manager') { %>
+                        <div class="flex-1 min-w-[200px]">
+                            <label for="participantSearch" class="block text-sm font-medium text-card-foreground mb-2">Search</label>
+                            <input type="text" id="participantSearch" name="participantSearch" value="<%= filters.participantSearch %>" 
+                                   class="w-full px-4 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                                   placeholder="Search by name or email...">
+                        </div>
+                        <% } else { %>
+                        <div class="flex-1 min-w-[200px]">
+                            <label for="milestoneSearch" class="block text-sm font-medium text-card-foreground mb-2">Search</label>
+                            <input type="text" id="milestoneSearch" name="milestoneSearch" value="<%= filters.milestoneSearch %>" 
+                                   class="w-full px-4 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                                   placeholder="Search milestone type...">
+                        </div>
+                        <% } %>
+                        <div class="min-w-[200px]">
+                            <label for="milestoneType" class="block text-sm font-medium text-card-foreground mb-2">Milestone Type</label>
+                            <select id="milestoneType" name="milestoneType" class="w-full px-4 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent">
+                                <option value="">All Types</option>
+                                <% milestoneTypes.forEach(mt => { %>
+                                <option value="<%= mt.milestoneid %>" <%= filters.milestoneType == mt.milestoneid ? 'selected' : '' %>><%= mt.milestonetitle %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div>
+                            <button type="button" onclick="window.location.href='/milestones'" class="px-4 py-2 bg-muted text-foreground rounded-md font-medium hover:bg-muted/80 transition-colors focus:outline-none focus:ring-2 focus:ring-ring whitespace-nowrap">
+                                Clear Filters
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <% if (user.role === 'manager') { %>
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead class="bg-muted/50 border-b border-border">
                             <tr>
-                                <% if (user.role === 'manager') { %>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Participant</th>
-                                <% } %>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Milestone Type</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-card-foreground uppercase tracking-wider">Date Achieved</th>
                                 <th class="px-6 py-3 text-center text-xs font-semibold text-card-foreground uppercase tracking-wider">Actions</th>
@@ -158,12 +164,10 @@
                                     data-participant-email="<%= (milestone.useremail || '').toLowerCase() %>"
                                     data-milestone-title="<%= (milestone.milestonetitle || '').toLowerCase() %>"
                                     data-milestone-id="<%= milestone.milestoneid %>">
-                                    <% if (user.role === 'manager') { %>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-card-foreground"><%= milestone.userfirstname %> <%= milestone.userlastname %></div>
                                         <div class="text-xs text-card-foreground/50"><%= milestone.useremail %></div>
                                     </td>
-                                    <% } %>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
                                             <%= milestone.milestonetitle %>
@@ -177,30 +181,57 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-center">
                                         <button onclick="openEditModal(<%= milestone.userid %>, <%= milestone.milestoneid %>, '<%= milestone.milestonedate ? new Date(milestone.milestonedate).toISOString().split('T')[0] : '' %>', '<%= milestone.userfirstname %> <%= milestone.userlastname %>', '<%= milestone.milestonetitle %>')" 
                                                 class="text-accent hover:text-accent/80 mr-3 text-sm font-medium">Edit</button>
-                                        <button onclick="confirmDelete(<%= milestone.userid %>, <%= milestone.milestoneid %>, '<%= milestone.milestonedate ? new Date(milestone.milestonedate).toISOString().split('T')[0] : '' %>', '<%= milestone.userfirstname %> <%= milestone.userlastname %>', '<%= milestone.milestonetitle %>')" 
+                                        <button onclick="openDeleteModal(<%= milestone.userid %>, <%= milestone.milestoneid %>, '<%= milestone.milestonedate ? new Date(milestone.milestonedate).toISOString().split('T')[0] : '' %>', '<%= milestone.userfirstname %> <%= milestone.userlastname %>', '<%= milestone.milestonetitle %>')" 
                                                 class="text-destructive hover:text-destructive/80 text-sm font-medium">Delete</button>
                                     </td>
                                 </tr>
                                 <% }); %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="<%= user.role === 'manager' ? '4' : '3' %>" class="px-6 py-12 text-center text-card-foreground/50">
-                                        <% if (user.role === 'manager') { %>
-                                            No milestones found.
-                                        <% } else { %>
-                                            You haven't added any milestones yet. Click "Add Milestone" to record your achievements!
-                                        <% } %>
+                                    <td colspan="4" class="px-6 py-12 text-center text-card-foreground/50">
+                                        No milestones found.
                                     </td>
                                 </tr>
                             <% } %>
                         </tbody>
                     </table>
                 </div>
+                <% } else { %>
+                <!-- Participant Card View -->
+                <div class="p-6">
+                    <% if (typeof userMilestones !== 'undefined' && userMilestones.length > 0) { %>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="milestonesCardContainer">
+                            <% userMilestones.forEach(milestone => { %>
+                            <div class="milestone-card bg-background border border-border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
+                                 data-milestone-title="<%= (milestone.milestonetitle || '').toLowerCase() %>"
+                                 data-milestone-id="<%= milestone.milestoneid %>">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <h4 class="text-lg font-semibold text-card-foreground mb-2"><%= milestone.milestonetitle %></h4>
+                                        <p class="text-sm text-card-foreground/70">
+                                            Date Achieved: <span class="font-medium"><%= milestone.milestonedate ? new Date(milestone.milestonedate).toLocaleDateString() : '-' %></span>
+                                        </p>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-secondary flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <% }); %>
+                        </div>
+                    <% } else { %>
+                        <div class="text-center py-12 text-card-foreground/50">
+                            You haven't achieved any milestones yet.
+                        </div>
+                    <% } %>
+                </div>
+                <% } %>
             </div>
         </div>
     </main>
 
-    <!-- Add Milestone Modal -->
+    <!-- Add Milestone Modal (Managers Only) -->
+    <% if (user.role === 'manager') { %>
     <div id="addModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
         <div class="absolute inset-0 bg-black/50" onclick="closeAddModal()"></div>
         <div class="relative bg-card rounded-lg shadow-xl w-full max-w-md mx-4">
@@ -228,19 +259,39 @@
                     <% } %>
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-card-foreground mb-2">Milestone Type</label>
-                        <select name="milestoneId" required class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                        <select name="milestoneId" id="addMilestoneId" required class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
                             <option value="">Select milestone...</option>
                             <% if (typeof milestoneTypes !== 'undefined') { %>
-                                <% milestoneTypes.forEach(mt => { %>
-                                <option value="<%= mt.milestoneid %>"><%= mt.milestonetitle %></option>
-                                <% }); %>
+                                <% 
+                                if (user.role === 'manager') {
+                                    // For managers, show all milestones (they can add for any participant)
+                                    milestoneTypes.forEach(mt => { %>
+                                    <option value="<%= mt.milestoneid %>"><%= mt.milestonetitle %></option>
+                                    <% });
+                                } else {
+                                    // For participants, only show uncompleted milestones
+                                    const completedMilestoneIdsSet = new Set();
+                                    if (typeof completedMilestoneIds !== 'undefined') {
+                                        completedMilestoneIds.forEach(id => {
+                                            completedMilestoneIdsSet.add(id);
+                                        });
+                                    }
+                                    milestoneTypes.forEach(mt => {
+                                        if (!completedMilestoneIdsSet.has(mt.milestoneid)) { %>
+                                        <option value="<%= mt.milestoneid %>"><%= mt.milestonetitle %></option>
+                                        <% }
+                                    });
+                                }
+                                %>
                             <% } %>
                         </select>
                     </div>
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-card-foreground mb-2">Date Achieved</label>
-                        <input type="date" name="milestoneDate" required 
+                        <input type="date" name="milestoneDate" id="addMilestoneDate" required 
+                               max="<%= new Date().toISOString().split('T')[0] %>"
                                class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                        <p class="text-xs text-destructive mt-1 hidden" id="dateError">Date cannot be in the future.</p>
                     </div>
                     <div class="flex gap-3">
                         <button type="button" onclick="closeAddModal()" class="flex-1 px-4 py-2 border border-border text-card-foreground rounded-lg hover:bg-muted/50 transition-colors">
@@ -254,8 +305,10 @@
             </div>
         </div>
     </div>
+    <% } %>
 
-    <!-- Edit Milestone Modal -->
+    <!-- Edit Milestone Modal (Managers Only) -->
+    <% if (user.role === 'manager') { %>
     <div id="editModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
         <div class="absolute inset-0 bg-black/50" onclick="closeEditModal()"></div>
         <div class="relative bg-card rounded-lg shadow-xl w-full max-w-md mx-4">
@@ -298,17 +351,96 @@
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-card-foreground mb-2">Date Achieved</label>
                         <input type="date" name="newDate" id="editDate" required 
+                               max="<%= new Date().toISOString().split('T')[0] %>"
                                class="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+                        <p class="text-xs text-destructive mt-1 hidden" id="editDateError">Date cannot be in the future.</p>
                     </div>
                     <div class="flex gap-3">
-                        <button type="button" onclick="closeEditModal()" class="flex-1 px-4 py-2 border border-border text-card-foreground rounded-lg hover:bg-muted/50 transition-colors">
+                        <button type="button" onclick="closeEditModal()" class="flex-1 px-4 py-2 text-sm border border-border text-card-foreground rounded-lg hover:bg-muted/50 transition-colors">
                             Cancel
                         </button>
-                        <button type="submit" class="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium">
+                        <% if (user.role !== 'manager') { %>
+                        <button type="button" onclick="openDeleteModalFromEdit()" class="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors font-medium">
+                            Delete
+                        </button>
+                        <% } %>
+                        <button type="submit" class="flex-1 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium">
                             Update Milestone
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+    <% } %>
+
+    <!-- Delete Confirmation Modal (appears over edit modal) (Managers Only) -->
+    <% if (user.role === 'manager') { %>
+    <div id="deleteConfirmationModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeDeleteModalFromEdit()"></div>
+        <div class="relative bg-card rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="p-6">
+                <h3 class="text-lg font-semibold text-card-foreground mb-4">Delete Milestone?</h3>
+                <p class="text-sm text-card-foreground/70 mb-6" id="deleteModalMessage">
+                    Are you sure you want to delete this milestone? This action cannot be undone.
+                </p>
+                <div class="flex gap-3 justify-end">
+                    <button onclick="closeDeleteModalFromEdit()" class="px-4 py-2 text-sm border border-input rounded-md font-medium text-card-foreground hover:bg-muted transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="confirmDeleteSubmit()" class="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded-md font-medium hover:bg-destructive/90 transition-colors">
+                        Yes, Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <% } %>
+
+    <!-- Congratulation Modal (Participants Only) -->
+    <div id="congratulationModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeCongratulationModal()"></div>
+        <div class="relative bg-card rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-secondary mx-auto mb-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <h3 class="text-2xl font-semibold text-card-foreground mb-2">Congratulations!</h3>
+                    <p class="text-base text-card-foreground/70" id="congratulationMessage">
+                        You've achieved a milestone!
+                    </p>
+                </div>
+                <div class="flex flex-col gap-3">
+                    <button onclick="openUncompletedMilestonesModal()" class="w-full px-4 py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors">
+                        View Other Milestones
+                    </button>
+                    <a href="/events" class="w-full px-4 py-2.5 bg-accent text-accent-foreground rounded-md font-medium hover:bg-accent/90 transition-colors text-center">
+                        View Upcoming Events
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Uncompleted Milestones Modal (Participants Only) -->
+    <div id="uncompletedMilestonesModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeUncompletedMilestonesModal()"></div>
+        <div class="relative bg-card rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[60vh] overflow-hidden flex flex-col">
+            <div class="p-4 border-b border-border flex-shrink-0">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-card-foreground">Other Milestones You Can Accomplish</h3>
+                    <button onclick="closeUncompletedMilestonesModal()" class="text-card-foreground/50 hover:text-card-foreground">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="p-4 overflow-y-auto flex-1 min-h-0">
+                <div id="uncompletedMilestonesList" class="space-y-2">
+                    <!-- Will be populated by JavaScript -->
+                </div>
             </div>
         </div>
     </div>
@@ -321,6 +453,9 @@
     </form>
 
     <script>
+        // Store current delete data
+        let currentDeleteData = null;
+
         function openAddModal() {
             document.getElementById('addModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
@@ -346,6 +481,14 @@
             <% if (user.role === 'manager') { %>
             document.getElementById('editUserIdSelect').value = userId;
             <% } %>
+            // Store delete data for use in delete button
+            currentDeleteData = {
+                userId: userId,
+                milestoneId: milestoneId,
+                date: date,
+                participantName: participantName,
+                milestoneTitle: milestoneTitle
+            };
             document.getElementById('editModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
@@ -353,38 +496,219 @@
         function closeEditModal() {
             document.getElementById('editModal').classList.add('hidden');
             document.body.style.overflow = '';
+            currentDeleteData = null;
         }
 
-        function confirmDelete(userId, milestoneId, date, participantName, milestoneTitle) {
+        function openDeleteModal(userId, milestoneId, date, participantName, milestoneTitle) {
+            currentDeleteData = {
+                userId: userId,
+                milestoneId: milestoneId,
+                date: date,
+                participantName: participantName,
+                milestoneTitle: milestoneTitle
+            };
             <% if (user.role === 'manager') { %>
-            const message = 'Are you sure you want to delete the "' + milestoneTitle + '" milestone for ' + participantName + '?';
+            document.getElementById('deleteModalMessage').textContent = 
+                'Are you sure you want to delete the "' + milestoneTitle + '" milestone for ' + participantName + '? This action cannot be undone.';
             <% } else { %>
-            const message = 'Are you sure you want to delete your "' + milestoneTitle + '" milestone?';
+            document.getElementById('deleteModalMessage').textContent = 
+                'Are you sure you want to delete your "' + milestoneTitle + '" milestone? This action cannot be undone.';
             <% } %>
-            if (confirm(message)) {
-                document.getElementById('deleteUserId').value = userId;
-                document.getElementById('deleteMilestoneId').value = milestoneId;
-                document.getElementById('deleteMilestoneDate').value = date;
+            document.getElementById('deleteConfirmationModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function openDeleteModalFromEdit() {
+            if (currentDeleteData) {
+                <% if (user.role === 'manager') { %>
+                document.getElementById('deleteModalMessage').textContent = 
+                    'Are you sure you want to delete the "' + currentDeleteData.milestoneTitle + '" milestone for ' + currentDeleteData.participantName + '? This action cannot be undone.';
+                <% } else { %>
+                document.getElementById('deleteModalMessage').textContent = 
+                    'Are you sure you want to delete your "' + currentDeleteData.milestoneTitle + '" milestone? This action cannot be undone.';
+                <% } %>
+                document.getElementById('deleteConfirmationModal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeDeleteModalFromEdit() {
+            document.getElementById('deleteConfirmationModal').classList.add('hidden');
+            // Don't change body overflow - edit modal is still open
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteConfirmationModal').classList.add('hidden');
+            document.body.style.overflow = '';
+            currentDeleteData = null;
+        }
+
+        function confirmDeleteSubmit() {
+            if (currentDeleteData) {
+                document.getElementById('deleteUserId').value = currentDeleteData.userId;
+                document.getElementById('deleteMilestoneId').value = currentDeleteData.milestoneId;
+                document.getElementById('deleteMilestoneDate').value = currentDeleteData.date;
+                // Close both modals
+                closeDeleteModalFromEdit();
+                closeEditModal();
                 document.getElementById('deleteForm').submit();
             }
         }
 
-        // Close modals on Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeAddModal();
-                closeEditModal();
+        // Date validation for add milestone form
+        document.addEventListener('DOMContentLoaded', function() {
+            const addDateInput = document.getElementById('addMilestoneDate');
+            const addDateError = document.getElementById('dateError');
+            const addForm = document.querySelector('#addModal form');
+            
+            if (addDateInput && addForm) {
+                addDateInput.addEventListener('change', function() {
+                    const selectedDate = new Date(this.value);
+                    const today = new Date();
+                    today.setHours(23, 59, 59, 999); // End of today
+                    
+                    if (selectedDate > today) {
+                        this.classList.add('border-destructive');
+                        addDateError.classList.remove('hidden');
+                        addForm.querySelector('button[type="submit"]').disabled = true;
+                    } else {
+                        this.classList.remove('border-destructive');
+                        addDateError.classList.add('hidden');
+                        addForm.querySelector('button[type="submit"]').disabled = false;
+                    }
+                });
+            }
+
+            // Date validation for edit milestone form
+            const editDateInput = document.getElementById('editDate');
+            const editDateError = document.getElementById('editDateError');
+            const editForm = document.querySelector('#editModal form');
+            
+            if (editDateInput && editForm) {
+                editDateInput.addEventListener('change', function() {
+                    const selectedDate = new Date(this.value);
+                    const today = new Date();
+                    today.setHours(23, 59, 59, 999); // End of today
+                    
+                    if (selectedDate > today) {
+                        this.classList.add('border-destructive');
+                        editDateError.classList.remove('hidden');
+                        editForm.querySelector('button[type="submit"]').disabled = true;
+                    } else {
+                        this.classList.remove('border-destructive');
+                        editDateError.classList.add('hidden');
+                        editForm.querySelector('button[type="submit"]').disabled = false;
+                    }
+                });
             }
         });
 
-        // Client-side filtering for milestones table (no page reload)
+        <% if (user.role !== 'manager') { %>
+        // Congratulation Modal Functions
+        function openCongratulationModal(milestoneTitle) {
+            document.getElementById('congratulationMessage').textContent = 
+                'Congratulations! You\'ve achieved the "' + milestoneTitle + '" milestone!';
+            document.getElementById('congratulationModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCongratulationModal() {
+            document.getElementById('congratulationModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function openUncompletedMilestonesModal() {
+            closeCongratulationModal();
+            
+            // Get all milestone types
+            const allMilestoneTypes = [
+                <% if (typeof milestoneTypes !== 'undefined') { %>
+                    <% milestoneTypes.forEach((mt, index) => { %>
+                    { id: <%= mt.milestoneid %>, title: '<%= mt.milestonetitle %>' }<%= index < milestoneTypes.length - 1 ? ',' : '' %>
+                    <% }); %>
+                <% } %>
+            ];
+
+            // Get completed milestone IDs
+            const completedMilestoneIds = new Set([
+                <% if (typeof userMilestones !== 'undefined' && userMilestones.length > 0) { %>
+                    <% userMilestones.forEach((m, index) => { %>
+                    <%= m.milestoneid %><%= index < userMilestones.length - 1 ? ',' : '' %>
+                    <% }); %>
+                <% } %>
+            ]);
+
+            // Filter to uncompleted milestones
+            const uncompletedMilestones = allMilestoneTypes.filter(mt => !completedMilestoneIds.has(mt.id));
+
+            // Populate the list
+            const listContainer = document.getElementById('uncompletedMilestonesList');
+            if (uncompletedMilestones.length > 0) {
+                listContainer.innerHTML = uncompletedMilestones.map(mt => `
+                    <div class="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
+                        <div class="flex items-center gap-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-muted-foreground" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <span class="font-medium text-card-foreground">${mt.title}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                listContainer.innerHTML = `
+                    <div class="text-center py-8 text-card-foreground/50">
+                        <p>You've completed all available milestones! Great job!</p>
+                    </div>
+                `;
+            }
+
+            document.getElementById('uncompletedMilestonesModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeUncompletedMilestonesModal() {
+            document.getElementById('uncompletedMilestonesModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        // Check if we should show congratulation modal on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            <% if (typeof filters !== 'undefined' && filters.success === 'milestone_added' && filters.milestoneTitle) { %>
+            const milestoneTitle = decodeURIComponent('<%= filters.milestoneTitle %>');
+            openCongratulationModal(milestoneTitle);
+            <% } %>
+        });
+        <% } %>
+
+        // Close modals on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                // Close delete modal first if open (it's on top)
+                if (!document.getElementById('deleteConfirmationModal').classList.contains('hidden')) {
+                    closeDeleteModalFromEdit();
+                } else {
+                    closeAddModal();
+                    closeEditModal();
+                    closeDeleteModal();
+                    <% if (user.role !== 'manager') { %>
+                    closeCongratulationModal();
+                    closeUncompletedMilestonesModal();
+                    <% } %>
+                }
+            }
+        });
+
+        // Client-side filtering for milestones (table for managers, cards for participants)
         function filterMilestonesTable() {
             const searchInput = document.getElementById('participantSearch') || document.getElementById('milestoneSearch');
             const milestoneTypeSelect = document.getElementById('milestoneType');
-            const rows = document.querySelectorAll('.milestone-row');
             
             const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
             const selectedType = milestoneTypeSelect ? milestoneTypeSelect.value : '';
+            
+            <% if (user.role === 'manager') { %>
+            // Manager view: filter table rows
+            const rows = document.querySelectorAll('.milestone-row');
             
             rows.forEach(row => {
                 let matchesSearch = true;
@@ -392,14 +716,9 @@
                 
                 // Check search filter
                 if (searchTerm) {
-                    <% if (user.role === 'manager') { %>
                     const participantName = row.getAttribute('data-participant-name') || '';
                     const participantEmail = row.getAttribute('data-participant-email') || '';
                     matchesSearch = participantName.includes(searchTerm) || participantEmail.includes(searchTerm);
-                    <% } else { %>
-                    const milestoneTitle = row.getAttribute('data-milestone-title') || '';
-                    matchesSearch = milestoneTitle.includes(searchTerm);
-                    <% } %>
                 }
                 
                 // Check type filter
@@ -423,6 +742,42 @@
                 const count = visibleRows.length;
                 countText.textContent = count + ' milestone' + (count !== 1 ? 's' : '') + (searchTerm || selectedType ? ' (filtered)' : '');
             }
+            <% } else { %>
+            // Participant view: filter cards
+            const cards = document.querySelectorAll('.milestone-card');
+            
+            cards.forEach(card => {
+                let matchesSearch = true;
+                let matchesType = true;
+                
+                // Check search filter
+                if (searchTerm) {
+                    const milestoneTitle = card.getAttribute('data-milestone-title') || '';
+                    matchesSearch = milestoneTitle.includes(searchTerm);
+                }
+                
+                // Check type filter
+                if (selectedType) {
+                    const milestoneId = card.getAttribute('data-milestone-id');
+                    matchesType = milestoneId === selectedType;
+                }
+                
+                // Show/hide card based on filters
+                if (matchesSearch && matchesType) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Update count display
+            const visibleCards = Array.from(cards).filter(card => card.style.display !== 'none');
+            const countText = document.querySelector('.achievement-history-count');
+            if (countText) {
+                const count = visibleCards.length;
+                countText.textContent = count + ' milestone' + (count !== 1 ? 's' : '') + (searchTerm || selectedType ? ' (filtered)' : '');
+            }
+            <% } %>
         }
 
         // Set up filter event listeners

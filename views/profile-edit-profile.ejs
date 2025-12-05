@@ -41,58 +41,57 @@
             <% } %>
 
             <!-- Edit Form -->
-            <div class="rounded-lg border bg-card text-card-foreground shadow-sm">
+            <div class="rounded-lg border bg-card text-card-foreground shadow-sm max-w-2xl mx-auto">
                 <div class="p-6">
                     <form action="/profile/edit?type=profile" method="POST" class="space-y-4">
-                        <!-- Date of Birth -->
+                        <!-- Date of Birth - Month, Day, Year inline -->
                         <div class="space-y-2">
                             <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Date of Birth</label>
-                            <input type="hidden" id="profiledob" name="profiledob" />
-                            <div class="grid grid-cols-3 gap-4 w-full">
-                                <div class="space-y-2">
-                                    <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="dob_month">Month</label>
-                                    <select 
-                                        id="dob_month" 
-                                        name="dob_month" 
-                                        required
-                                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                                    >
-                                        <option value="">Month</option>
-                                        <% for (let i = 1; i <= 12; i++) { %>
-                                        <option value="<%= i %>" <%= profileData && profileData.profiledob ? (new Date(profileData.profiledob).getMonth() + 1 === i ? 'selected' : '') : '' %>><%= i %></option>
-                                        <% } %>
-                                    </select>
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="dob_day">Day</label>
-                                    <select 
-                                        id="dob_day" 
-                                        name="dob_day" 
-                                        required
-                                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                                    >
-                                        <option value="">Day</option>
-                                        <% for (let i = 1; i <= 31; i++) { %>
-                                        <option value="<%= i %>" <%= profileData && profileData.profiledob ? (new Date(profileData.profiledob).getDate() === i ? 'selected' : '') : '' %>><%= i %></option>
-                                        <% } %>
-                                    </select>
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="dob_year">Year</label>
-                                    <select 
-                                        id="dob_year" 
-                                        name="dob_year" 
-                                        required
-                                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                                    >
-                                        <option value="">Year</option>
-                                        <% const currentYear = new Date().getFullYear(); %>
-                                        <% for (let i = currentYear; i >= 1900; i--) { %>
-                                        <option value="<%= i %>" <%= profileData && profileData.profiledob ? (new Date(profileData.profiledob).getFullYear() === i ? 'selected' : '') : '' %>><%= i %></option>
-                                        <% } %>
-                                    </select>
-                                </div>
+                            <div class="flex gap-3">
+                                <select 
+                                    id="dob_month" 
+                                    name="dob_month" 
+                                    required
+                                    class="w-32 h-10 rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                >
+                                    <option value="">Month</option>
+                                    <% 
+                                    let selectedMonth = '';
+                                    if (profileData && profileData.profiledob) {
+                                        selectedMonth = String(new Date(profileData.profiledob).getMonth() + 1).padStart(2, '0');
+                                    }
+                                    %>
+                                    <option value="01" <%= selectedMonth === '01' ? 'selected' : '' %>>January</option>
+                                    <option value="02" <%= selectedMonth === '02' ? 'selected' : '' %>>February</option>
+                                    <option value="03" <%= selectedMonth === '03' ? 'selected' : '' %>>March</option>
+                                    <option value="04" <%= selectedMonth === '04' ? 'selected' : '' %>>April</option>
+                                    <option value="05" <%= selectedMonth === '05' ? 'selected' : '' %>>May</option>
+                                    <option value="06" <%= selectedMonth === '06' ? 'selected' : '' %>>June</option>
+                                    <option value="07" <%= selectedMonth === '07' ? 'selected' : '' %>>July</option>
+                                    <option value="08" <%= selectedMonth === '08' ? 'selected' : '' %>>August</option>
+                                    <option value="09" <%= selectedMonth === '09' ? 'selected' : '' %>>September</option>
+                                    <option value="10" <%= selectedMonth === '10' ? 'selected' : '' %>>October</option>
+                                    <option value="11" <%= selectedMonth === '11' ? 'selected' : '' %>>November</option>
+                                    <option value="12" <%= selectedMonth === '12' ? 'selected' : '' %>>December</option>
+                                </select>
+                                <select 
+                                    id="dob_day" 
+                                    name="dob_day" 
+                                    required
+                                    class="w-20 h-10 rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                >
+                                    <option value="">Day</option>
+                                </select>
+                                <select 
+                                    id="dob_year" 
+                                    name="dob_year" 
+                                    required
+                                    class="w-24 h-10 rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                >
+                                    <option value="">Year</option>
+                                </select>
                             </div>
+                            <input type="hidden" id="profiledob" name="profiledob" required />
                         </div>
 
                         <!-- Phone Number -->
@@ -105,7 +104,8 @@
                                 value="<%= profileData ? (profileData.profilephone || '') : '' %>"
                                 required
                                 placeholder="(555) 123-4567"
-                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                maxlength="14"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                             />
                         </div>
 
@@ -118,65 +118,104 @@
                                 name="profilecity" 
                                 value="<%= profileData ? (profileData.profilecity || '') : '' %>"
                                 required
-                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                placeholder="New York"
+                                maxlength="100"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                             />
                         </div>
 
-                        <!-- State -->
-                        <div class="space-y-2">
-                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilestate">State</label>
-                            <input 
-                                type="text" 
-                                id="profilestate" 
-                                name="profilestate" 
-                                value="<%= profileData ? (profileData.profilestate || '') : '' %>"
-                                required
-                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                            />
-                        </div>
-
-                        <!-- Zip Code -->
-                        <div class="space-y-2">
-                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilezip">Zip Code</label>
-                            <input 
-                                type="text" 
-                                id="profilezip" 
-                                name="profilezip" 
-                                value="<%= profileData ? (profileData.profilezip || '') : '' %>"
-                                required
-                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                            />
+                        <!-- State and Zip Code -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilestate">State</label>
+                                <input 
+                                    type="text" 
+                                    id="profilestate" 
+                                    name="profilestate" 
+                                    value="<%= profileData ? (profileData.profilestate || '') : '' %>"
+                                    required
+                                    placeholder="NY"
+                                    maxlength="50"
+                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                />
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilezip">Zip Code</label>
+                                <input 
+                                    type="text" 
+                                    id="profilezip" 
+                                    name="profilezip" 
+                                    value="<%= profileData ? (profileData.profilezip || '') : '' %>"
+                                    required
+                                    placeholder="10001"
+                                    maxlength="20"
+                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                />
+                            </div>
                         </div>
 
                         <!-- School/Employer -->
                         <div class="space-y-2">
-                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profileschooloremployer">School/Employer</label>
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profileschooloremployer">School or Employer</label>
                             <input 
                                 type="text" 
                                 id="profileschooloremployer" 
                                 name="profileschooloremployer" 
                                 value="<%= profileData ? (profileData.profileschooloremployer || '') : '' %>"
                                 required
-                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                placeholder="ABC University or XYZ Company"
+                                maxlength="200"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                             />
                         </div>
 
                         <!-- Field of Interest -->
-                        <div class="space-y-2">
-                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilefieldofinterest">Field of Interest</label>
-                            <input 
-                                type="text" 
-                                id="profilefieldofinterest" 
-                                name="profilefieldofinterest" 
-                                value="<%= profileData ? (profileData.profilefieldofinterest || '') : '' %>"
-                                required
-                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                            />
+                        <div class="space-y-3">
+                            <label class="text-sm font-medium leading-none">Field of Interest</label>
+                            <div class="flex gap-3">
+                                <label class="flex-1 cursor-pointer">
+                                    <input 
+                                        type="radio" 
+                                        name="profilefieldofinterest" 
+                                        value="STEM"
+                                        required
+                                        <%= profileData && profileData.profilefieldofinterest === 'STEM' ? 'checked' : '' %>
+                                        class="peer hidden"
+                                    />
+                                    <div class="flex items-center justify-center h-10 px-4 rounded-md border border-input bg-background text-sm font-medium transition-all peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary hover:bg-muted/50">
+                                        STEM
+                                    </div>
+                                </label>
+                                <label class="flex-1 cursor-pointer">
+                                    <input 
+                                        type="radio" 
+                                        name="profilefieldofinterest" 
+                                        value="Arts"
+                                        <%= profileData && profileData.profilefieldofinterest === 'Arts' ? 'checked' : '' %>
+                                        class="peer hidden"
+                                    />
+                                    <div class="flex items-center justify-center h-10 px-4 rounded-md border border-input bg-background text-sm font-medium transition-all peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary hover:bg-muted/50">
+                                        Arts
+                                    </div>
+                                </label>
+                                <label class="flex-1 cursor-pointer">
+                                    <input 
+                                        type="radio" 
+                                        name="profilefieldofinterest" 
+                                        value="Both"
+                                        <%= profileData && profileData.profilefieldofinterest === 'Both' ? 'checked' : '' %>
+                                        class="peer hidden"
+                                    />
+                                    <div class="flex items-center justify-center h-10 px-4 rounded-md border border-input bg-background text-sm font-medium transition-all peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary hover:bg-muted/50">
+                                        Both
+                                    </div>
+                                </label>
+                            </div>
                         </div>
 
                         <!-- Submit Button -->
                         <div class="flex gap-4 pt-4">
-                            <button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                            <button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-white h-10 px-4 py-2" style="background-color: #49db7f !important;" onmouseover="this.style.backgroundColor='#15803d'" onmouseout="this.style.backgroundColor='#49db7f'">
                                 Save Changes
                             </button>
                             <a href="/profile?tab=profile" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
@@ -190,24 +229,122 @@
     </main>
 
     <script>
-        // Update hidden date field when date selects change
-        const dobMonth = document.getElementById('dob_month');
-        const dobDay = document.getElementById('dob_day');
-        const dobYear = document.getElementById('dob_year');
+        // Populate year dropdown (from current year back to 100 years ago)
+        const yearSelect = document.getElementById('dob_year');
+        const currentYear = new Date().getFullYear();
+        <% if (profileData && profileData.profiledob) { %>
+        const existingDate = new Date('<%= profileData.profiledob %>');
+        const existingYear = existingDate.getFullYear();
+        const existingMonth = String(existingDate.getMonth() + 1).padStart(2, '0');
+        const existingDay = String(existingDate.getDate()).padStart(2, '0');
+        <% } else { %>
+        const existingYear = null;
+        const existingMonth = null;
+        const existingDay = null;
+        <% } %>
+        
+        for (let year = currentYear; year >= currentYear - 100; year--) {
+            const option = document.createElement('option');
+            option.value = year.toString();
+            option.textContent = year.toString();
+            <% if (profileData && profileData.profiledob) { %>
+            if (year === existingYear) {
+                option.selected = true;
+            }
+            <% } %>
+            yearSelect.appendChild(option);
+        }
+
+        // Populate day dropdown - show all 31 days initially
+        const monthSelect = document.getElementById('dob_month');
+        const daySelect = document.getElementById('dob_day');
         const dobHidden = document.getElementById('profiledob');
 
-        function updateHiddenDate() {
-            if (dobMonth.value && dobDay.value && dobYear.value) {
-                const month = String(dobMonth.value).padStart(2, '0');
-                const day = String(dobDay.value).padStart(2, '0');
-                const year = dobYear.value;
-                dobHidden.value = `${year}-${month}-${day}`;
+        // Initialize with all 31 days
+        function initializeDays() {
+            daySelect.innerHTML = '<option value="">Day</option>';
+            <% if (profileData && profileData.profiledob) { %>
+            const daysInMonth = existingMonth && existingYear ? new Date(parseInt(existingYear), parseInt(existingMonth), 0).getDate() : 31;
+            <% } else { %>
+            const daysInMonth = 31;
+            <% } %>
+            for (let day = 1; day <= daysInMonth; day++) {
+                const option = document.createElement('option');
+                option.value = day.toString().padStart(2, '0');
+                option.textContent = day.toString();
+                <% if (profileData && profileData.profiledob) { %>
+                if (existingDay && parseInt(existingDay) === day) {
+                    option.selected = true;
+                }
+                <% } %>
+                daySelect.appendChild(option);
             }
         }
 
-        if (dobMonth) dobMonth.addEventListener('change', updateHiddenDate);
-        if (dobDay) dobDay.addEventListener('change', updateHiddenDate);
-        if (dobYear) dobYear.addEventListener('change', updateHiddenDate);
+        // Initialize hidden date field if existing date is present
+        <% if (profileData && profileData.profiledob) { %>
+        if (existingMonth && existingDay && existingYear) {
+            dobHidden.value = `${existingYear}-${existingMonth}-${existingDay}`;
+        }
+        <% } %>
+
+        // Update day dropdown when month/year changes to show valid days
+        function updateDays() {
+            const month = monthSelect.value;
+            const year = yearSelect.value;
+            
+            // If both month and year are selected, limit to valid days
+            if (month && year) {
+                // Get number of days in the selected month (handles leap years)
+                const daysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate();
+                
+                // Save currently selected day
+                const selectedDay = daySelect.value;
+                
+                // Rebuild day options
+                daySelect.innerHTML = '<option value="">Day</option>';
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const option = document.createElement('option');
+                    option.value = day.toString().padStart(2, '0');
+                    option.textContent = day.toString();
+                    // Restore selection if it's still valid
+                    if (selectedDay && parseInt(selectedDay) === day) {
+                        option.selected = true;
+                    }
+                    daySelect.appendChild(option);
+                }
+            } else {
+                // If month/year not selected, show all 31 days
+                initializeDays();
+            }
+        }
+
+        function updateHiddenDate() {
+            const month = monthSelect.value;
+            const day = daySelect.value;
+            const year = yearSelect.value;
+            
+            if (month && day && year) {
+                dobHidden.value = `${year}-${month}-${day}`;
+            } else {
+                dobHidden.value = '';
+            }
+        }
+
+        // Initialize days on page load
+        initializeDays();
+
+        monthSelect.addEventListener('change', function() {
+            updateDays();
+            updateHiddenDate();
+        });
+
+        yearSelect.addEventListener('change', function() {
+            updateDays();
+            updateHiddenDate();
+        });
+
+        daySelect.addEventListener('change', updateHiddenDate);
 
         // Phone number formatting: (XXX) XXX-XXXX
         const phoneInput = document.getElementById('profilephone');

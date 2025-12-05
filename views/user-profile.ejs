@@ -60,14 +60,20 @@
                     </div>
                     
                     <% if (profileData) { %>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-6">
                         <div>
-                            <label class="text-sm font-medium text-muted-foreground">Date of Birth</label>
-                            <p class="mt-1 text-sm font-medium"><%= profileData.profiledob ? new Date(profileData.profiledob).toLocaleDateString() : 'Not set' %></p>
+                            <p class="text-xs text-muted-foreground mb-1">Date of Birth</p>
+                            <p class="text-lg font-semibold text-card-foreground">
+                                <% if (profileData.profiledob) { %>
+                                    <%= new Date(profileData.profiledob).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %>
+                                <% } else { %>
+                                    <span class="text-muted-foreground/60 italic">Not set</span>
+                                <% } %>
+                            </p>
                         </div>
                         <div>
-                            <label class="text-sm font-medium text-muted-foreground">Phone Number</label>
-                            <p class="mt-1 text-sm font-medium">
+                            <p class="text-xs text-muted-foreground mb-1">Phone Number</p>
+                            <p class="text-lg font-semibold text-card-foreground">
                                 <% if (profileData.profilephone) { %>
                                     <% 
                                         const phone = profileData.profilephone.replace(/\D/g, '');
@@ -78,29 +84,51 @@
                                     %>
                                     <%= formattedPhone %>
                                 <% } else { %>
-                                    Not set
+                                    <span class="text-muted-foreground/60 italic">Not set</span>
                                 <% } %>
                             </p>
                         </div>
                         <div>
-                            <label class="text-sm font-medium text-muted-foreground">City</label>
-                            <p class="mt-1 text-sm font-medium"><%= profileData.profilecity || 'Not set' %></p>
+                            <p class="text-xs text-muted-foreground mb-1">Address</p>
+                            <p class="text-lg font-semibold text-card-foreground">
+                                <% 
+                                const city = profileData.profilecity || '';
+                                const state = profileData.profilestate || '';
+                                const zip = profileData.profilezip || '';
+                                const locationParts = [];
+                                if (city) locationParts.push(city);
+                                if (state) locationParts.push(state);
+                                if (zip) locationParts.push(zip);
+                                const fullLocation = locationParts.join(', ');
+                                %>
+                                <% if (fullLocation) { %>
+                                    <%= fullLocation %>
+                                <% } else { %>
+                                    <span class="text-muted-foreground/60 italic">Not set</span>
+                                <% } %>
+                            </p>
                         </div>
-                        <div>
-                            <label class="text-sm font-medium text-muted-foreground">State</label>
-                            <p class="mt-1 text-sm font-medium"><%= profileData.profilestate || 'Not set' %></p>
-                        </div>
-                        <div>
-                            <label class="text-sm font-medium text-muted-foreground">Zip Code</label>
-                            <p class="mt-1 text-sm font-medium"><%= profileData.profilezip || 'Not set' %></p>
-                        </div>
-                        <div>
-                            <label class="text-sm font-medium text-muted-foreground">School/Employer</label>
-                            <p class="mt-1 text-sm font-medium"><%= profileData.profileschooloremployer || 'Not set' %></p>
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="text-sm font-medium text-muted-foreground">Field of Interest</label>
-                            <p class="mt-1 text-sm font-medium"><%= profileData.profilefieldofinterest || 'Not set' %></p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <p class="text-xs text-muted-foreground mb-1">School or Employer</p>
+                                <p class="text-lg font-semibold text-card-foreground">
+                                    <% if (profileData.profileschooloremployer) { %>
+                                        <%= profileData.profileschooloremployer %>
+                                    <% } else { %>
+                                        <span class="text-muted-foreground/60 italic">Not set</span>
+                                    <% } %>
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-muted-foreground mb-1">Field of Interest</p>
+                                <p class="text-lg font-semibold text-card-foreground">
+                                    <% if (profileData.profilefieldofinterest) { %>
+                                        <%= profileData.profilefieldofinterest %>
+                                    <% } else { %>
+                                        <span class="text-muted-foreground/60 italic">Not set</span>
+                                    <% } %>
+                                </p>
+                            </div>
                         </div>
                     </div>
                     <% } else { %>
@@ -126,18 +154,38 @@
                         </a>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-6">
                         <div>
-                            <label class="text-sm font-medium text-muted-foreground">Email</label>
-                            <p class="mt-1 text-sm font-medium"><%= dbUser.useremail || 'Not set' %></p>
+                            <p class="text-xs text-muted-foreground mb-1">Email Address</p>
+                            <p class="text-lg font-semibold text-card-foreground break-all">
+                                <% if (dbUser.useremail) { %>
+                                    <%= dbUser.useremail %>
+                                <% } else { %>
+                                    <span class="text-muted-foreground/60 italic">Not set</span>
+                                <% } %>
+                            </p>
                         </div>
-                        <div>
-                            <label class="text-sm font-medium text-muted-foreground">First Name</label>
-                            <p class="mt-1 text-sm font-medium"><%= dbUser.userfirstname || 'Not set' %></p>
-                        </div>
-                        <div>
-                            <label class="text-sm font-medium text-muted-foreground">Last Name</label>
-                            <p class="mt-1 text-sm font-medium"><%= dbUser.userlastname || 'Not set' %></p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <p class="text-xs text-muted-foreground mb-1">First Name</p>
+                                <p class="text-lg font-semibold text-card-foreground">
+                                    <% if (dbUser.userfirstname) { %>
+                                        <%= dbUser.userfirstname %>
+                                    <% } else { %>
+                                        <span class="text-muted-foreground/60 italic">Not set</span>
+                                    <% } %>
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-muted-foreground mb-1">Last Name</p>
+                                <p class="text-lg font-semibold text-card-foreground">
+                                    <% if (dbUser.userlastname) { %>
+                                        <%= dbUser.userlastname %>
+                                    <% } else { %>
+                                        <span class="text-muted-foreground/60 italic">Not set</span>
+                                    <% } %>
+                                </p>
+                            </div>
                         </div>
                     </div>
 
