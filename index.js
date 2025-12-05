@@ -511,8 +511,11 @@ app.get('/login', (req, res) => {
     error: null, 
     success: null, 
     showSignUp: showSignUp,
+    signupFirstName: '',
+    signupLastName: '',
     signupEmail: signupEmail,
     signupPassword: signupPassword,
+    signupConfirmPassword: '',
     signupMessage: signupMessage,
     loginEmail: loginEmail
   });
@@ -523,31 +526,33 @@ app.post('/signup', async (req, res) => {
   try {
     const { first_name, last_name, email, password, confirm_password } = req.body;
 
+    // Helper to render with preserved form values
+    const renderWithError = (errorMsg, clearPassword = false) => {
+      return res.render('login', {
+        error: errorMsg,
+        success: null,
+        showSignUp: true,
+        signupFirstName: first_name || '',
+        signupLastName: last_name || '',
+        signupEmail: email || '',
+        signupPassword: clearPassword ? '' : (password || ''),
+        signupConfirmPassword: ''  // Always clear confirm password on error
+      });
+    };
+
     // Validate input
     if (!first_name || !last_name || !email || !password || !confirm_password) {
-      return res.render('login', {
-        error: 'Please fill in all fields',
-        success: null,
-        showSignUp: true
-      });
+      return renderWithError('Please fill in all fields');
     }
 
     // Validate password match
     if (password !== confirm_password) {
-      return res.render('login', {
-        error: 'Passwords do not match',
-        success: null,
-        showSignUp: true
-      });
+      return renderWithError('Passwords do not match', true);
     }
 
     // Validate password length
     if (password.length < 6) {
-      return res.render('login', {
-        error: 'Password must be at least 6 characters long',
-        success: null,
-        showSignUp: true
-      });
+      return renderWithError('Password must be at least 6 characters long', true);
     }
 
     // Check if email already exists in users table
@@ -557,11 +562,7 @@ app.post('/signup', async (req, res) => {
 
     // Check if user exists and is active
     if (existingUser && existingUser.accountactive === true) {
-      return res.render('login', {
-        error: 'Email already registered. Please login instead.',
-        success: null,
-        showSignUp: true
-      });
+      return renderWithError('Email already registered. Please login instead.');
     }
 
     // Check if user exists but is inactive
@@ -577,11 +578,7 @@ app.post('/signup', async (req, res) => {
         .first();
       
       if (existingProfile) {
-        return res.render('login', {
-          error: 'Account exists but is inactive. Please contact support.',
-          success: null,
-          showSignUp: true
-        });
+        return renderWithError('Account exists but is inactive. Please contact support.');
       }
     }
 
@@ -595,11 +592,7 @@ app.post('/signup', async (req, res) => {
       .first();
 
     if (!userRole) {
-      return res.render('login', {
-        error: 'System error: User role not found',
-        success: null,
-        showSignUp: true
-      });
+      return renderWithError('System error: User role not found');
     }
 
     let userId;
@@ -659,11 +652,7 @@ app.post('/signup', async (req, res) => {
       }
     } else {
       // This shouldn't happen based on our checks above, but handle it
-      return res.render('login', {
-        error: 'An error occurred. Please try again.',
-        success: null,
-        showSignUp: true
-      });
+      return renderWithError('An error occurred. Please try again.');
     }
 
     // Store user info in session temporarily for profile completion
@@ -679,7 +668,12 @@ app.post('/signup', async (req, res) => {
     res.render('login', {
       error: 'An error occurred during signup. Please try again.',
       success: null,
-      showSignUp: true
+      showSignUp: true,
+      signupFirstName: req.body?.first_name || '',
+      signupLastName: req.body?.last_name || '',
+      signupEmail: req.body?.email || '',
+      signupPassword: '',
+      signupConfirmPassword: ''
     });
   }
 });

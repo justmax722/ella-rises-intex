@@ -38,55 +38,46 @@
 
                 <!-- Profile Form -->
                 <form id="profileForm" action="/profile" method="POST" class="space-y-4">
-                    <!-- Date of Birth - Month, Day, Year side by side -->
+                    <!-- Date of Birth - Month, Day, Year inline -->
                     <div class="space-y-2">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Date of Birth</label>
-                        <div class="grid grid-cols-3 gap-4 w-full">
-                            <div class="space-y-2">
-                                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="dob_month">Month</label>
-                                <select 
-                                    id="dob_month" 
-                                    name="dob_month" 
-                                    required
-                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                                >
-                                    <option value="">Month</option>
-                                    <option value="01">January</option>
-                                    <option value="02">February</option>
-                                    <option value="03">March</option>
-                                    <option value="04">April</option>
-                                    <option value="05">May</option>
-                                    <option value="06">June</option>
-                                    <option value="07">July</option>
-                                    <option value="08">August</option>
-                                    <option value="09">September</option>
-                                    <option value="10">October</option>
-                                    <option value="11">November</option>
-                                    <option value="12">December</option>
-                                </select>
-                            </div>
-                            <div class="space-y-2">
-                                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="dob_day">Day</label>
-                                <select 
-                                    id="dob_day" 
-                                    name="dob_day" 
-                                    required
-                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                                >
-                                    <option value="">Day</option>
-                                </select>
-                            </div>
-                            <div class="space-y-2">
-                                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="dob_year">Year</label>
-                                <select 
-                                    id="dob_year" 
-                                    name="dob_year" 
-                                    required
-                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                                >
-                                    <option value="">Year</option>
-                                </select>
-                            </div>
+                        <div class="flex gap-3">
+                            <select 
+                                id="dob_month" 
+                                name="dob_month" 
+                                required
+                                class="flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            >
+                                <option value="">Month</option>
+                                <option value="01">January</option>
+                                <option value="02">February</option>
+                                <option value="03">March</option>
+                                <option value="04">April</option>
+                                <option value="05">May</option>
+                                <option value="06">June</option>
+                                <option value="07">July</option>
+                                <option value="08">August</option>
+                                <option value="09">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                            <select 
+                                id="dob_day" 
+                                name="dob_day" 
+                                required
+                                class="w-20 h-10 rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            >
+                                <option value="">Day</option>
+                            </select>
+                            <select 
+                                id="dob_year" 
+                                name="dob_year" 
+                                required
+                                class="w-24 h-10 rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            >
+                                <option value="">Year</option>
+                            </select>
                         </div>
                         <input type="hidden" id="profiledob" name="profiledob" required />
                     </div>
@@ -117,30 +108,31 @@
                         />
                     </div>
 
-                    <div class="space-y-2">
-                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilestate">State</label>
-                        <input 
-                            type="text" 
-                            id="profilestate" 
-                            name="profilestate" 
-                            required
-                            placeholder="NY"
-                            maxlength="50"
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                        />
-                    </div>
-
-                    <div class="space-y-2">
-                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilezip">Zip Code</label>
-                        <input 
-                            type="text" 
-                            id="profilezip" 
-                            name="profilezip" 
-                            required
-                            placeholder="10001"
-                            maxlength="20"
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                        />
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilestate">State</label>
+                            <input 
+                                type="text" 
+                                id="profilestate" 
+                                name="profilestate" 
+                                required
+                                placeholder="NY"
+                                maxlength="50"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilezip">Zip Code</label>
+                            <input 
+                                type="text" 
+                                id="profilezip" 
+                                name="profilezip" 
+                                required
+                                placeholder="10001"
+                                maxlength="20"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                            />
+                        </div>
                     </div>
 
                     <div class="space-y-2">
@@ -156,24 +148,51 @@
                         />
                     </div>
 
-                    <div class="space-y-2">
-                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="profilefieldofinterest">Field of Interest</label>
-                        <input 
-                            type="text" 
-                            id="profilefieldofinterest" 
-                            name="profilefieldofinterest" 
-                            required
-                            placeholder="Technology, Education, Healthcare, etc."
-                            maxlength="100"
-                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                        />
+                    <div class="space-y-3">
+                        <label class="text-sm font-medium leading-none">Field of Interest</label>
+                        <div class="flex gap-3">
+                            <label class="flex-1 cursor-pointer">
+                                <input 
+                                    type="radio" 
+                                    name="profilefieldofinterest" 
+                                    value="STEM"
+                                    required
+                                    class="peer hidden"
+                                />
+                                <div class="flex items-center justify-center h-10 px-4 rounded-md border border-input bg-background text-sm font-medium transition-all peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary hover:bg-muted/50">
+                                    STEM
+                                </div>
+                            </label>
+                            <label class="flex-1 cursor-pointer">
+                                <input 
+                                    type="radio" 
+                                    name="profilefieldofinterest" 
+                                    value="Arts"
+                                    class="peer hidden"
+                                />
+                                <div class="flex items-center justify-center h-10 px-4 rounded-md border border-input bg-background text-sm font-medium transition-all peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary hover:bg-muted/50">
+                                    Arts
+                                </div>
+                            </label>
+                            <label class="flex-1 cursor-pointer">
+                                <input 
+                                    type="radio" 
+                                    name="profilefieldofinterest" 
+                                    value="Both"
+                                    class="peer hidden"
+                                />
+                                <div class="flex items-center justify-center h-10 px-4 rounded-md border border-input bg-background text-sm font-medium transition-all peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary hover:bg-muted/50">
+                                    Both
+                                </div>
+                            </label>
+                        </div>
                     </div>
 
                     <button 
                         type="submit"
-                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-green-600 text-white hover:bg-green-700 h-10 px-4 py-2 w-full"
+                        class="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-base font-semibold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg h-12 px-6 py-3 w-full mt-2"
                     >
-                        Submit Profile
+                        Complete Profile
                     </button>
                 </form>
             </div>
