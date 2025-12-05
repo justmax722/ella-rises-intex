@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take Survey - Ella Rises CRM</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-background min-h-screen flex">
+    <!-- Sidebar Navigation -->
+    <%- include('partials/sidebar', { user: user, currentPage: 'surveys' }) %>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-6 md:p-8">
+        <div class="max-w-3xl mx-auto">
+            <!-- Page Header -->
+            <div class="mb-8">
+                <a href="/surveys" class="inline-flex items-center gap-2 text-primary hover:text-primary/80 mb-4 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to Surveys
+                </a>
+                <h1 class="text-3xl md:text-4xl font-serif text-foreground mb-2">
+                    <%= session.eventname %> Survey
+                </h1>
+                <p class="text-base text-card-foreground/70">
+                    Event Date: <%= new Date(session.eventdatetimestart).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+                </p>
+            </div>
+
+            <!-- Survey Form -->
+            <div class="bg-card rounded-lg shadow-sm overflow-hidden">
+                <div class="p-6 md:p-8">
+                    <form id="surveyForm" method="POST" action="/surveys/submit" onsubmit="return validateSurveyForm(event)">
+                        <input type="hidden" name="sessionId" value="<%= session.sessionid %>">
+                        
+                        <!-- Questions -->
+                        <div class="space-y-8 mb-8">
+                            <% if (typeof surveyMetrics !== 'undefined' && surveyMetrics.length > 0) { %>
+                                <% surveyMetrics.forEach((metric, index) => { %>
+                                <div class="question-container" data-metric-id="<%= metric.metricid %>">
+                                    <label class="block text-lg font-semibold text-card-foreground mb-4">
+                                        Question <%= index + 1 %>: <%= metric.metricquestion || 'Please rate this question' %>
+                                    </label>
+                                    <div class="space-y-3">
+                                        <!-- Slider Container -->
+                                        <div class="relative px-2">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="text-sm text-card-foreground/70 font-medium">Not at all</span>
+                                                <span class="text-lg font-semibold text-primary" id="value_<%= metric.metricid %>">3.0</span>
+                                                <span class="text-sm text-card-foreground/70 font-medium">Extremely</span>
+                                            </div>
+                                            <input 
+                                                type="range" 
+                                                name="metric_<%= metric.metricid %>" 
+                                                id="slider_<%= metric.metricid %>"
+                                                min="1" 
+                                                max="5" 
+                                                step="0.5" 
+                                                value="3"
+                                                class="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
+                                                required
+                                            >
+                                            <!-- Tick marks -->
+                                            <div class="flex justify-between mt-1 px-1">
+                                                <% for (let i = 1; i <= 5; i++) { %>
+                                                <span class="text-xs text-card-foreground/50"><%= i %></span>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="text-center py-8 text-card-foreground/70">
+                                    <p>No survey questions available. Please contact support.</p>
+                                </div>
+                            <% } %>
+                        </div>
+                        
+                        <!-- Comments -->
+                        <div class="mb-8">
+                            <label class="block text-lg font-semibold text-card-foreground mb-3">
+                                Comments (Optional)
+                            </label>
+                            <textarea 
+                                name="comments" 
+                                rows="5" 
+                                class="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
+                                placeholder="Any additional feedback you'd like to share..."
+                            ></textarea>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="flex gap-4">
+                            <a href="/surveys" class="flex-1 px-6 py-3 border border-border text-card-foreground rounded-lg hover:bg-muted/50 transition-colors text-center font-medium">
+                                Cancel
+                            </a>
+                            <button type="submit" class="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-semibold text-lg">
+                                Submit Survey
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <style>
+        /* Custom slider styles */
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: hsl(var(--primary));
+            cursor: pointer;
+            border: 2px solid hsl(var(--background));
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: hsl(var(--primary));
+            cursor: pointer;
+            border: 2px solid hsl(var(--background));
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s;
+        }
+
+        .slider::-moz-range-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .slider::-webkit-slider-runnable-track {
+            height: 8px;
+            background: hsl(var(--muted));
+            border-radius: 4px;
+        }
+
+        .slider::-moz-range-track {
+            height: 8px;
+            background: hsl(var(--muted));
+            border-radius: 4px;
+        }
+    </style>
+
+    <script>
+        // Update slider value displays
+        document.addEventListener('DOMContentLoaded', function() {
+            const sliders = document.querySelectorAll('input[type="range"]');
+            sliders.forEach(slider => {
+                const metricId = slider.id.replace('slider_', '');
+                const valueDisplay = document.getElementById(`value_${metricId}`);
+                
+                // Update on input
+                slider.addEventListener('input', function() {
+                    valueDisplay.textContent = parseFloat(this.value).toFixed(1);
+                });
+                
+                // Initialize display
+                if (valueDisplay) {
+                    valueDisplay.textContent = parseFloat(slider.value).toFixed(1);
+                }
+            });
+        });
+
+        function validateSurveyForm(event) {
+            const form = event.target;
+            const questionContainers = document.querySelectorAll('.question-container');
+            let allAnswered = true;
+            let firstUnanswered = null;
+
+            // Remove previous error highlighting
+            questionContainers.forEach(container => {
+                container.classList.remove('border-2', 'border-destructive', 'rounded-lg', 'p-4', 'bg-destructive/5');
+            });
+
+            // Check each question
+            questionContainers.forEach(container => {
+                const metricId = container.getAttribute('data-metric-id');
+                const slider = container.querySelector(`input[name="metric_${metricId}"]`);
+                const isAnswered = slider && slider.value !== '';
+
+                if (!isAnswered || !slider.value) {
+                    allAnswered = false;
+                    // Highlight this question
+                    container.classList.add('border-2', 'border-destructive', 'rounded-lg', 'p-4', 'bg-destructive/5');
+                    
+                    if (!firstUnanswered) {
+                        firstUnanswered = container;
+                    }
+                }
+            });
+
+            if (!allAnswered) {
+                event.preventDefault();
+                
+                // Scroll to first unanswered question
+                if (firstUnanswered) {
+                    firstUnanswered.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
+                // Show error message
+                const errorMsg = document.getElementById('errorMessage');
+                if (errorMsg) {
+                    errorMsg.remove();
+                }
+                
+                const errorDiv = document.createElement('div');
+                errorDiv.id = 'errorMessage';
+                errorDiv.className = 'mb-6 p-4 bg-destructive/20 border border-destructive rounded-lg text-destructive';
+                errorDiv.textContent = 'Please answer all questions before submitting.';
+                
+                const form = document.getElementById('surveyForm');
+                form.insertBefore(errorDiv, form.firstChild);
+                
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+</body>
+</html>
+
